@@ -1,0 +1,13 @@
+node_modules
+dist
+.next
+.turbo
+*.log
+.env
+.git
+.gitignore
+README.md
+docker-compose.yml
+Dockerfile*
+out
+**/*.tsbuildinfo

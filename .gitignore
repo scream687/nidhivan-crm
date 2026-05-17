@@ -1,0 +1,38 @@
+node_modules
+.next
+dist
+out
+build
+
+# All env files — never commit
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+nginx/ssl/
+*.log
+.turbo
+uploads
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# TypeScript
+*.tsbuildinfo
+
+# Tooling artifacts
+.claude-flow/
+agentdb.rvf
+agentdb.rvf.lock
+.swarm/

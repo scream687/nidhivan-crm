@@ -1,0 +1,38 @@
+# ── Stage 1: builder ──────────────────────────────────────────────────────────
+FROM node:20-slim AS builder
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY packages/ ./packages/
+
+RUN npm install --legacy-peer-deps
+
+COPY apps/api ./apps/api
+
+RUN cd apps/api && npx prisma generate
+RUN cd apps/api && npx tsc -p tsconfig.json
+
+# ── Stage 2: runner ───────────────────────────────────────────────────────────
+FROM node:20-slim AS runner
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_ENV=production
+
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+
+RUN npm install --omit=dev --legacy-peer-deps
+
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+EXPOSE 4000
+
+WORKDIR /app/apps/api
+CMD ["node", "dist/main"]

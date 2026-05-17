@@ -1,0 +1,528 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALES_AGENT
+  TELECALLER
+  MARKETING
+  ACCOUNTANT
+}
+
+enum LeadSource {
+  FACEBOOK
+  INSTAGRAM
+  HOUSING_COM
+  NINETYNINE_ACRES
+  BROKER_REFERRAL
+  WALK_IN
+  WHATSAPP
+  WEBSITE
+  GOOGLE_ADS
+  OTHER
+}
+
+enum InvestmentPurpose {
+  SELF_USE
+  INVESTMENT
+  BOTH
+}
+
+enum ActivityType {
+  NOTE
+  CALL
+  WHATSAPP
+  EMAIL
+  SITE_VISIT
+  TASK
+  STAGE_CHANGE
+  ASSIGNMENT
+  SYSTEM
+}
+
+enum CallType {
+  INCOMING
+  OUTGOING
+}
+
+enum CallStatus {
+  INITIATED
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  BUSY
+  NO_ANSWER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SlaStatus {
+  FIRST_RESPONSE_DUE
+  ROLLING_RESPONSE_DUE
+  FAILED
+  FULFILLED
+}
+
+// ─── Users & Auth ─────────────────────────────────────────────────────────────
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String
+  name                String
+  phone               String?
+  avatarUrl           String?
+  role                Role      @default(SALES_AGENT)
+  isActive            Boolean   @default(true)
+  exotelAgentId       String?
+  targetLeadsMonth    Int?
+  targetRevenueMonth  Decimal?  @db.Decimal(15, 2)
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  assignedLeads       Lead[]          @relation("AssignedLeads")
+  createdLeads        Lead[]          @relation("CreatedLeads")
+  refreshTokens       RefreshToken[]
+  activities          Activity[]
+  callsMade           CallLog[]       @relation("CallerLogs")
+  callsReceived       CallLog[]       @relation("ReceiverLogs")
+  tasks               Task[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  roundRobinConfig    RoundRobinConfig?
+  stageChanges        LeadStageLog[]
+  siteVisits          SiteVisit[]
+  bookings            Booking[]     @relation("AgentBookings")
+  savedFilters        SavedFilter[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model RoundRobinConfig {
+  userId      String   @id
+  queueOrder  Int
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("round_robin_config")
+}
+
+// ─── Leads ────────────────────────────────────────────────────────────────────
+
+model Lead {
+  id                  String             @id @default(cuid())
+  leadNumber          String             @unique
+  name                String
+  phone               String
+  altPhone            String?
+  email               String?
+  city                String?
+  state               String?            @default("Rajasthan")
+  occupation          String?
+  budget              Decimal?           @db.Decimal(15, 2)
+  budgetMin           Decimal?           @db.Decimal(15, 2)
+  budgetMax           Decimal?           @db.Decimal(15, 2)
+  investmentPurpose   InvestmentPurpose?
+  projectInterest     String?
+  source              LeadSource         @default(OTHER)
+  stage               String             @default("NEW")
+  leadScore           Int                @default(0)
+  aiScore             Int?
+  closingProbability  Float?
+  priority            String             @default("NORMAL")
+  isHot               Boolean            @default(false)
+  isDuplicate         Boolean            @default(false)
+  duplicateOfId       String?
+  tags                String[]           @default([])
+  lostReason          String?
+  lostNotes           String?
+
+  slaResponseBy       DateTime?
+  slaStatus           SlaStatus?
+  firstResponseTime   Int?
+  firstRespondedAt    DateTime?
+  lastContactedAt     DateTime?
+  nextFollowUpAt      DateTime?
+
+  facebookLeadId      String?            @unique
+  facebookFormId      String?
+  facebookAdId        String?
+  facebookCampaignId  String?
+  utmSource           String?
+  utmMedium           String?
+  utmCampaign         String?
+  landingPage         String?
+
+  requirements        String?
+  description         String?
+  siteLocation        String?
+  siteVisitDate       DateTime?
+  nextFollowUpInfo    String?
+  reference           String?
+  registryDoneDate    DateTime?
+  leadTitle           String?
+  campaignName        String?
+  campaignTeam        String?
+
+  bookingStatus       String?
+  bookingDate         DateTime?
+  bookingAmount       Decimal?           @db.Decimal(15, 2)
+
+  assignedToId        String?
+  createdById         String
+  isConverted         Boolean            @default(false)
+  convertedAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  assignedTo          User?              @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  createdBy           User               @relation("CreatedLeads", fields: [createdById], references: [id])
+  stageLogs           LeadStageLog[]
+  activities          Activity[]
+  callLogs            CallLog[]
+  tasks               Task[]
+  siteVisits          SiteVisit[]
+  whatsappContacts    WhatsAppContact[]
+  bookings            Booking[]
+
+  @@index([phone])
+  @@index([stage])
+  @@index([assignedToId])
+  @@index([source])
+  @@index([createdAt])
+  @@index([isHot])
+  @@index([nextFollowUpAt])
+  @@index([assignedToId, stage])
+  @@index([assignedToId, createdAt])
+  @@map("leads")
+}
+
+model SiteVisit {
+  id              String    @id @default(cuid())
+  leadId          String
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedToId    String
+  assignedTo      User      @relation(fields: [assignedToId], references: [id])
+  project         String
+  visitDate       DateTime
+  status          String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
+  feedback        String?
+  rating          Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([leadId])
+  @@index([assignedToId])
+  @@index([visitDate])
+  @@map("site_visits")
+}
+
+
+model LeadStageLog {
+  id           String    @id @default(cuid())
+  leadId       String
+  fromStage    String
+  toStage      String
+  changedById  String
+  reason       String?
+  createdAt    DateTime  @default(now())
+
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  changedBy    User      @relation(fields: [changedById], references: [id])
+
+  @@index([leadId])
+  @@map("lead_stage_logs")
+}
+
+// ─── Activities, Tasks, Call Logs ─────────────────────────────────────────────
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  title       String
+  description String?
+  metadata    Json?
+  userId      String
+  leadId      String?
+  createdAt   DateTime     @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+model Task {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  dueDate      DateTime?
+  isCompleted  Boolean   @default(false)
+  completedAt  DateTime?
+  priority     Priority  @default(MEDIUM)
+  assignedToId String
+  leadId       String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedTo   User      @relation(fields: [assignedToId], references: [id])
+  lead         Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([assignedToId])
+  @@index([leadId])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model CallLog {
+  id              String     @id @default(cuid())
+  exotelCallSid   String?    @unique
+  fromNumber      String
+  toNumber        String
+  callType        CallType
+  status          CallStatus @default(INITIATED)
+  duration        Int?
+  startTime       DateTime?
+  endTime         DateTime?
+  recordingUrl    String?
+  recordingS3Key  String?
+  transcription   String?
+  sentimentScore  Float?
+  sentimentLabel  String?
+  callSummary     String?
+  callerId        String?
+  receiverId      String?
+  leadId          String?
+  notes           String?
+  createdAt       DateTime   @default(now())
+
+  caller          User?      @relation("CallerLogs", fields: [callerId], references: [id])
+  receiver        User?      @relation("ReceiverLogs", fields: [receiverId], references: [id])
+  lead            Lead?      @relation(fields: [leadId], references: [id])
+
+  @@index([leadId])
+  @@index([callerId])
+  @@index([createdAt])
+  @@index([callerId, createdAt])
+  @@map("call_logs")
+}
+
+// ─── Notifications & Audit ────────────────────────────────────────────────────
+
+model Notification {
+  id              String    @id @default(cuid())
+  userId          String
+  title           String
+  body            String
+  type            String
+  referenceId     String?
+  referenceType   String?
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entity      String
+  entityId    String?
+  changes     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── WhatsApp ─────────────────────────────────────────────────────────────────
+
+model WhatsAppContact {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  leadId    String?
+  lead      Lead?    @relation(fields: [leadId], references: [id])
+  createdAt DateTime @default(now())
+
+  messages  WhatsAppMessage[]
+
+  @@index([phone])
+  @@map("whatsapp_contacts")
+}
+
+model WhatsAppMessage {
+  id           String   @id @default(cuid())
+  waMessageId  String?  @unique
+  contactId    String
+  contact      WhatsAppContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  direction    String
+  type         String   @default("text")
+  body         String?
+  mediaUrl     String?
+  templateName String?
+  status       String   @default("sent")
+  agentId      String?
+  timestamp    DateTime @default(now())
+
+  @@index([contactId])
+  @@index([timestamp])
+  @@map("whatsapp_messages")
+}
+
+model WhatsAppConfig {
+  id            String   @id @default(cuid())
+  phoneNumberId String
+  wabaId        String
+  accessToken   String
+  verifyToken   String   @default("nidhivan_whatsapp_verify")
+  displayName   String?
+  isActive      Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+
+  @@map("whatsapp_config")
+}
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+
+model Project {
+  id           String    @id @default(cuid())
+  name         String
+  type         String    @default("PLOT") // PLOT, TOWNSHIP, APARTMENT, VILLA
+  location     String
+  city         String    @default("Jaipur")
+  totalUnits   Int       @default(0)
+  available    Int       @default(0)
+  blocked      Int       @default(0)
+  booked       Int       @default(0)
+  sold         Int       @default(0)
+  pricePerSqft Decimal?  @db.Decimal(15, 2)
+  reraNumber   String?
+  description  String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  bookings     Booking[]
+
+  @@map("projects")
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  bookingNumber  String   @unique
+  leadId         String
+  projectId      String
+  unitNumber     String
+  unitType       String   @default("PLOT")
+  unitArea       Decimal? @db.Decimal(10, 2)
+  basePrice      Decimal  @db.Decimal(15, 2)
+  bookingAmount  Decimal  @db.Decimal(15, 2)
+  totalAmount    Decimal  @db.Decimal(15, 2)
+  status         String   @default("CONFIRMED")
+  paymentPlan    Json?
+  notes          String?
+  agentId        String
+  bookingDate    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lead           Lead     @relation(fields: [leadId], references: [id])
+  project        Project  @relation(fields: [projectId], references: [id])
+  agent          User     @relation("AgentBookings", fields: [agentId], references: [id])
+
+  @@index([leadId])
+  @@index([projectId])
+  @@index([agentId])
+  @@map("bookings")
+}
+
+// ─── Stage Config & Saved Filters ─────────────────────────────────────────────
+
+model StageConfig {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  label     String
+  color     String   @default("#6b7280")
+  bgColor   String   @default("#f3f4f6")
+  order     Int      @default(0)
+  isDefault Boolean  @default(false)
+  isWon     Boolean  @default(false)
+  isLost    Boolean  @default(false)
+  isSystem  Boolean  @default(true)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("stage_configs")
+}
+
+model SavedFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  filters   Json
+  isShared  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_filters")
+}
+
+// ─── Integration Configs ──────────────────────────────────────────────────────
+
+model IntegrationConfig {
+  id          String   @id @default(cuid())
+  type        String   @unique // "FACEBOOK", "WEBFLOW" etc
+  accessToken String?
+  metadata    Json?
+  updatedAt   DateTime @updatedAt
+
+  @@map("integration_configs")
+}
