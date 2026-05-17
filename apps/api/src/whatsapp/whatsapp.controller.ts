@@ -2,6 +2,9 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -138,4 +141,34 @@ export class WhatsAppController {
   reorderChatbotRules(@Body() body: { ids: string[] }) {
     return this.whatsapp.reorderChatbotRules(body.ids);
   }
+
+  // ── Chatbot Flows ──────────────────────────────────────────────────────────
+
+  @Get('chatbot-flows')
+  @UseGuards(AuthGuard('jwt'))
+  listFlows() { return this.whatsapp.listFlows(); }
+
+  @Post('chatbot-flows')
+  @UseGuards(AuthGuard('jwt'))
+  createFlow(@Body() body: { name: string; description?: string; triggerKeyword: string; matchType?: string }) {
+    return this.whatsapp.createFlow(body);
+  }
+
+  @Get('chatbot-flows/:id')
+  @UseGuards(AuthGuard('jwt'))
+  getFlow(@Param('id') id: string) { return this.whatsapp.getFlow(id); }
+
+  @Put('chatbot-flows/:id')
+  @UseGuards(AuthGuard('jwt'))
+  updateFlow(@Param('id') id: string, @Body() body: any) {
+    return this.whatsapp.updateFlow(id, body);
+  }
+
+  @Delete('chatbot-flows/:id')
+  @UseGuards(AuthGuard('jwt'))
+  deleteFlow(@Param('id') id: string) { return this.whatsapp.deleteFlow(id); }
+
+  @Patch('chatbot-flows/:id/toggle')
+  @UseGuards(AuthGuard('jwt'))
+  toggleFlow(@Param('id') id: string) { return this.whatsapp.toggleFlow(id); }
 }

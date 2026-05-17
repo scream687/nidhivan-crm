@@ -660,3 +660,36 @@ model ChatbotRule {
   @@map("chatbot_rules")
 }
 
+model ChatbotFlow {
+  id             String        @id @default(cuid())
+  name           String
+  description    String?
+  triggerKeyword String
+  matchType      String        @default("CONTAINS")
+  isActive       Boolean       @default(true)
+  nodes          Json          @default("[]")
+  edges          Json          @default("[]")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  sessions       FlowSession[]
+
+  @@map("chatbot_flows")
+}
+
+model FlowSession {
+  id            String      @id @default(cuid())
+  flowId        String
+  flow          ChatbotFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  contactId     String
+  currentNodeId String
+  collectedData Json?
+  status        String      @default("ACTIVE")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([contactId])
+  @@index([status])
+  @@map("flow_sessions")
+}
+
