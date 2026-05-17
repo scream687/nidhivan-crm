@@ -629,3 +629,34 @@ model NurtureEnrollment {
   @@map("nurture_enrollments")
 }
 
+// ─── Workflows & Chatbot ──────────────────────────────────────────────────────
+
+model WorkflowRule {
+  id            String    @id @default(cuid())
+  name          String
+  trigger       String    // LEAD_CREATED | STAGE_CHANGED | MARKED_HOT | TASK_DUE
+  triggerConfig Json?     // { stage: "SITE_VISIT_DONE" } for STAGE_CHANGED
+  actions       Json      // [{type: "ASSIGN_ROUND_ROBIN"|"CREATE_TASK"|"SEND_NOTIFICATION"|"SEND_WHATSAPP", config: {}}]
+  isActive      Boolean   @default(true)
+  runCount      Int       @default(0)
+  lastRunAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("workflow_rules")
+}
+
+model ChatbotRule {
+  id        String   @id @default(cuid())
+  keyword   String
+  response  String
+  matchType String   @default("CONTAINS")
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0)
+  hitCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chatbot_rules")
+}
+

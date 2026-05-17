@@ -105,10 +105,31 @@ export class WhatsAppController {
   @HttpCode(200)
   receiveWebhook(@Body() payload: any) {
     this.logger.log('Received WhatsApp webhook');
-    // Fire-and-forget; always return 200 quickly to WhatsApp
     this.whatsapp.handleIncomingWebhook(payload).catch((err) =>
       this.logger.error('Webhook processing error', err),
     );
     return { status: 'ok' };
   }
+
+  // ── Chatbot Rules ──────────────────────────────────────────────────────────
+
+  @Get('chatbot-rules')
+  @UseGuards(AuthGuard('jwt'))
+  listChatbotRules() { return this.whatsapp.listChatbotRules(); }
+
+  @Post('chatbot-rules')
+  @UseGuards(AuthGuard('jwt'))
+  createChatbotRule(@Body() body: { keyword: string; response: string; matchType?: string; priority?: number }) {
+    return this.whatsapp.createChatbotRule(body);
+  }
+
+  @Post('chatbot-rules/:id')
+  @UseGuards(AuthGuard('jwt'))
+  updateChatbotRule(@Param('id') id: string, @Body() body: any) {
+    return this.whatsapp.updateChatbotRule(id, body);
+  }
+
+  @Post('chatbot-rules/:id/delete')
+  @UseGuards(AuthGuard('jwt'))
+  deleteChatbotRule(@Param('id') id: string) { return this.whatsapp.deleteChatbotRule(id); }
 }

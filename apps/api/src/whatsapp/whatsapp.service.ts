@@ -125,10 +125,35 @@ export class WhatsAppService {
         },
       });
 
+      // Chatbot auto-reply
+      if (body) {
+        this.matchChatbotRule(phone, body).catch(() => {});
+      }
+
       return { status: 'ok', message, contact };
     } catch (err) {
       this.logger.error('Error handling incoming webhook', err);
       return { status: 'error', error: (err as Error).message };
+    }
+  }
+
+  private async matchChatbotRule(phone: string, incomingText: string) {
+    const rules = await this.prisma.chatbotRule.findMany({
+      where: { isActive: true },
+      orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+    });
+    const text = incomingText.toLowerCase().trim();
+    for (const rule of rules) {
+      const kw = rule.keyword.toLowerCase();
+      const matched =
+        rule.matchType === 'EXACT' ? text === kw :
+        rule.matchType === 'STARTS_WITH' ? text.startsWith(kw) :
+        text.includes(kw);
+      if (matched) {
+        await this.sendMessage(phone, rule.response);
+        await this.prisma.chatbotRule.update({ where: { id: rule.id }, data: { hitCount: { increment: 1 } } });
+        break;
+      }
     }
   }
 
@@ -233,12 +258,27 @@ export class WhatsAppService {
 
   async markRead(contactId: string) {
     await this.prisma.whatsAppMessage.updateMany({
-      where: {
-        contactId,
-        direction: 'in',
-        status: { not: 'read' },
-      },
+      where: { contactId, direction: 'in', status: { not: 'read' } },
       data: { status: 'read' },
     });
+  }
+
+  // ── Chatbot Rules ──────────────────────────────────────────────────────────
+
+  async listChatbotRules() {
+    return this.prisma.chatbotRule.findMany({ orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }] });
+  }
+
+  async createChatbotRule(data: { keyword: string; response: string; matchType?: string; priority?: number }) {
+    return this.prisma.chatbotRule.create({ data });
+  }
+
+  async updateChatbotRule(id: string, data: Partial<{ keyword: string; response: string; matchType: string; isActive: boolean; priority: number }>) {
+    return this.prisma.chatbotRule.update({ where: { id }, data });
+  }
+
+  async deleteChatbotRule(id: string) {
+    await this.prisma.chatbotRule.delete({ where: { id } });
+    return { ok: true };
   }
 }

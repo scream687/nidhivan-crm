@@ -22,6 +22,7 @@ import { StagesModule } from './stages/stages.module';
 import { SavedFiltersModule } from './saved-filters/saved-filters.module';
 import { MailModule } from './mail/mail.module';
 import { MarketingModule } from './marketing/marketing.module';
+import { WorkflowsModule } from './workflows/workflows.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { MarketingModule } from './marketing/marketing.module';
     SavedFiltersModule,
     MailModule,
     MarketingModule,
+    WorkflowsModule,
   ],
   providers: [
     // Enforce throttling globally; individual routes can override with @Throttle / @SkipThrottle

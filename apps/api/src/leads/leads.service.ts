@@ -7,6 +7,7 @@ import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CacheService } from '../common/services/cache.service';
 import { MarketingService } from '../marketing/marketing.service';
+import { WorkflowsService } from '../workflows/workflows.service';
 
 @Injectable()
 export class LeadsService {
@@ -16,6 +17,7 @@ export class LeadsService {
     private notifications: NotificationsService,
     private cache: CacheService,
     @Inject(forwardRef(() => MarketingService)) private marketing: MarketingService,
+    @Inject(forwardRef(() => WorkflowsService)) private workflows: WorkflowsService,
   ) {}
 
   async create(dto: CreateLeadDto, createdById: string) {
@@ -76,6 +78,8 @@ export class LeadsService {
     if (lead.assignedToId) {
       this.gateway.emitToUser(lead.assignedToId, 'lead:created', lead);
     }
+
+    this.workflows.fire('LEAD_CREATED', { leadId: lead.id, name: lead.name, assignedToId: lead.assignedToId }).catch(() => {});
 
     return lead;
   }
@@ -252,6 +256,7 @@ export class LeadsService {
     }
 
     this.marketing.enrollLead(id, dto.stage).catch(() => {});
+    this.workflows.fire('STAGE_CHANGED', { leadId: id, stage: dto.stage, name: updated.name, assignedToId: updated.assignedToId }).catch(() => {});
 
     return updated;
   }
