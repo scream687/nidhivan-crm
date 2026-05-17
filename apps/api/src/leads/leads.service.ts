@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeadSource, Role, User } from '@prisma/client';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -6,6 +6,7 @@ import { UpdateLeadDto, ChangeStageDto, AssignLeadDto } from './dto/update-lead.
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CacheService } from '../common/services/cache.service';
+import { MarketingService } from '../marketing/marketing.service';
 
 @Injectable()
 export class LeadsService {
@@ -14,6 +15,7 @@ export class LeadsService {
     private gateway: NotificationsGateway,
     private notifications: NotificationsService,
     private cache: CacheService,
+    @Inject(forwardRef(() => MarketingService)) private marketing: MarketingService,
   ) {}
 
   async create(dto: CreateLeadDto, createdById: string) {
@@ -248,6 +250,8 @@ export class LeadsService {
     if (updated.assignedToId) {
       this.gateway.emitToUser(updated.assignedToId, 'lead:stage_changed', { leadId: id, stage: dto.stage, updated });
     }
+
+    this.marketing.enrollLead(id, dto.stage).catch(() => {});
 
     return updated;
   }

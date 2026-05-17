@@ -111,6 +111,8 @@ model User {
   siteVisits          SiteVisit[]
   bookings            Booking[]     @relation("AgentBookings")
   savedFilters        SavedFilter[]
+  segments            Segment[]
+  campaigns           Campaign[]
 
   @@map("users")
 }
@@ -541,3 +543,89 @@ model IntegrationConfig {
 
   @@map("integration_configs")
 }
+
+// ─── Marketing Automation ─────────────────────────────────────────────────────
+
+model Segment {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  filters     Json
+  leadCount   Int        @default(0)
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  campaigns   Campaign[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("segments")
+}
+
+model Campaign {
+  id              String       @id @default(cuid())
+  name            String
+  type            String       // "WHATSAPP" | "EMAIL"
+  segmentId       String?
+  segment         Segment?     @relation(fields: [segmentId], references: [id])
+  audienceFilter  Json?
+  messageTemplate String
+  subject         String?
+  status          String       @default("DRAFT")
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  totalCount      Int          @default(0)
+  sentCount       Int          @default(0)
+  deliveredCount  Int          @default(0)
+  failedCount     Int          @default(0)
+  createdById     String
+  createdBy       User         @relation(fields: [createdById], references: [id])
+  logs            CampaignLog[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("campaigns")
+}
+
+model CampaignLog {
+  id         String    @id @default(cuid())
+  campaignId String
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId     String
+  contact    String
+  status     String    @default("PENDING")
+  error      String?
+  sentAt     DateTime?
+
+  @@index([campaignId])
+  @@index([leadId])
+  @@map("campaign_logs")
+}
+
+model NurtureSequence {
+  id           String              @id @default(cuid())
+  name         String
+  triggerStage String
+  isActive     Boolean             @default(true)
+  steps        Json
+  enrollments  NurtureEnrollment[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@map("nurture_sequences")
+}
+
+model NurtureEnrollment {
+  id           String          @id @default(cuid())
+  sequenceId   String
+  sequence     NurtureSequence @relation(fields: [sequenceId], references: [id])
+  leadId       String
+  currentStep  Int             @default(0)
+  status       String          @default("ACTIVE")
+  nextActionAt DateTime?
+  startedAt    DateTime        @default(now())
+
+  @@unique([sequenceId, leadId])
+  @@index([status, nextActionAt])
+  @@map("nurture_enrollments")
+}
+

@@ -10,7 +10,7 @@ import {
   Zap, BarChart3, Phone, PhoneCall, TrendingUp, Trophy,
   MessageSquare, Megaphone, Bot, BarChart2,
   Settings, LogOut, Building2, MapPin, Calculator, FileCheck,
-  GitBranch, UserCog, StickyNote,
+  GitBranch, UserCog, StickyNote, Target, Mail, GitMerge,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -37,6 +37,15 @@ const navSections: { label: string; items: NavItem[] }[] = [
       { href: '/calculator', icon: Calculator, label: 'Calculator' },
       { href: '/reports', icon: BarChart3, label: 'Reports', adminOnly: true },
       { href: '/settings/integrations', icon: Zap, label: 'Integrations', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Marketing',
+    items: [
+      { href: '/marketing/segments', icon: Target, label: 'Segments' },
+      { href: '/marketing/campaigns', icon: Mail, label: 'Campaigns' },
+      { href: '/marketing/attribution', icon: GitMerge, label: 'Attribution' },
+      { href: '/marketing/nurture', icon: Megaphone, label: 'Nurture' },
     ],
   },
   {

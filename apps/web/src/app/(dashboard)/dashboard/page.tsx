@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/stores/authStore';
 import { useSocketStore } from '@/stores/socketStore';
 import api from '@/lib/api';
-import { Users2, Flame, Clock, TrendingUp, Trophy } from 'lucide-react';
+import { Users2, Flame, Clock, TrendingUp, Trophy, CheckSquare, MapPin, CalendarClock } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
@@ -22,6 +22,10 @@ export default function DashboardPage() {
   const [sources, setSources] = useState<any[]>([]);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+  const isAgent = user?.role === 'SALES_AGENT' || user?.role === 'TELECALLER';
+
+  const [myTasks, setMyTasks] = useState<any[]>([]);
+  const [myVisits, setMyVisits] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -53,6 +57,14 @@ export default function DashboardPage() {
         setLeaderboard(lbRes.data);
         setSources(srcRes.data.filter((s: any) => s.total > 0));
       }
+      if (isAgent) {
+        const [tasksRes, visitsRes] = await Promise.all([
+          api.get('/tasks?isCompleted=false&limit=5'),
+          api.get('/site-visits?upcoming=true&limit=5'),
+        ]);
+        setMyTasks(Array.isArray(tasksRes.data) ? tasksRes.data : tasksRes.data?.tasks ?? []);
+        setMyVisits(Array.isArray(visitsRes.data) ? visitsRes.data : visitsRes.data?.visits ?? []);
+      }
     } catch {}
   }
 
@@ -79,6 +91,75 @@ export default function DashboardPage() {
               </motion.div>
             ))}
           </div>
+
+          {isAgent && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="shadow-sm border-gray-100">
+                <CardHeader className="border-b border-gray-50 bg-gray-50/30 pb-3">
+                  <CardTitle className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <CheckSquare size={14} className="text-blue-500" /> MY OPEN TASKS
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-3">
+                  {myTasks.length === 0 ? (
+                    <p className="text-sm text-gray-400 py-4 text-center">No pending tasks</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {myTasks.map((t: any) => (
+                        <li key={t.id} className="flex items-start gap-2 text-sm">
+                          <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${t.priority === 'HIGH' ? 'bg-red-400' : t.priority === 'MEDIUM' ? 'bg-yellow-400' : 'bg-gray-300'}`} />
+                          <div>
+                            <p className="text-gray-800 font-medium leading-tight">{t.title}</p>
+                            {t.dueDate && <p className="text-xs text-gray-400 mt-0.5">{new Date(t.dueDate).toLocaleDateString()}</p>}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm border-gray-100">
+                <CardHeader className="border-b border-gray-50 bg-gray-50/30 pb-3">
+                  <CardTitle className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <MapPin size={14} className="text-green-500" /> UPCOMING SITE VISITS
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-3">
+                  {myVisits.length === 0 ? (
+                    <p className="text-sm text-gray-400 py-4 text-center">No upcoming visits</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {myVisits.map((v: any) => (
+                        <li key={v.id} className="flex items-start gap-2 text-sm">
+                          <CalendarClock size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-gray-800 font-medium leading-tight">{v.project}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{new Date(v.visitDate).toLocaleDateString()}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              {kpis?.targetLeadsMonth && (
+                <Card className="shadow-sm border-gray-100 md:col-span-2">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium text-gray-700">Monthly Lead Target</p>
+                      <p className="text-sm font-bold text-blue-600">{kpis.leadsToday ?? 0} / {kpis.targetLeadsMonth}</p>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, Math.round(((kpis.leadsToday ?? 0) / kpis.targetLeadsMonth) * 100))}%` }} />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <Card className="shadow-sm border-gray-100 overflow-hidden">
