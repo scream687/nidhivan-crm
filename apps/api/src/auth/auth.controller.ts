@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -8,14 +8,36 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  /** Strict: 5 login attempts per minute to limit brute-force */
   @Post('login')
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
   login(@Body() body: { email: string; password: string }) {
     return this.authService.login(body.email, body.password);
   }
 
-  /** Slightly relaxed for refresh — silent background calls */
+  @Post('google')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  googleLogin(@Body() body: { idToken: string }) {
+    return this.authService.googleLogin(body.idToken);
+  }
+
+  @Post('forgot-password')
+  @Throttle({ default: { ttl: 60_000, limit: 3 } })
+  forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Post('verify-otp')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  verifyOtp(@Body() body: { email: string; otp: string }) {
+    return this.authService.verifyOtp(body.email, body.otp);
+  }
+
+  @Post('reset-password')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  resetPassword(@Body() body: { resetToken: string; newPassword: string }) {
+    return this.authService.resetPassword(body.resetToken, body.newPassword);
+  }
+
   @Post('refresh')
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
   refresh(@Body() body: { refreshToken: string }) {

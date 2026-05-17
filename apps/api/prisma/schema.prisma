@@ -83,6 +83,7 @@ model User {
   id                  String    @id @default(cuid())
   email               String    @unique
   passwordHash        String
+  googleId            String?   @unique
   name                String
   phone               String?
   avatarUrl           String?
@@ -98,6 +99,7 @@ model User {
   assignedLeads       Lead[]          @relation("AssignedLeads")
   createdLeads        Lead[]          @relation("CreatedLeads")
   refreshTokens       RefreshToken[]
+  passwordResets      PasswordResetToken[]
   activities          Activity[]
   callsMade           CallLog[]       @relation("CallerLogs")
   callsReceived       CallLog[]       @relation("ReceiverLogs")
@@ -111,6 +113,19 @@ model User {
   savedFilters        SavedFilter[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  otpHash   String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model RefreshToken {
