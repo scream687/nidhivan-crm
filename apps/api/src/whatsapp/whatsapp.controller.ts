@@ -132,4 +132,10 @@ export class WhatsAppController {
   @Post('chatbot-rules/:id/delete')
   @UseGuards(AuthGuard('jwt'))
   deleteChatbotRule(@Param('id') id: string) { return this.whatsapp.deleteChatbotRule(id); }
+
+  @Post('chatbot-rules/reorder')
+  @UseGuards(AuthGuard('jwt'))
+  reorderChatbotRules(@Body() body: { ids: string[] }) {
+    return this.whatsapp.reorderChatbotRules(body.ids);
+  }
 }

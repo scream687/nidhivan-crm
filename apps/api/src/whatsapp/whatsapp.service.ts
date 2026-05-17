@@ -281,4 +281,13 @@ export class WhatsAppService {
     await this.prisma.chatbotRule.delete({ where: { id } });
     return { ok: true };
   }
+
+  async reorderChatbotRules(ids: string[]) {
+    await Promise.all(
+      ids.map((id, idx) =>
+        this.prisma.chatbotRule.update({ where: { id }, data: { priority: ids.length - idx } }),
+      ),
+    );
+    return { ok: true };
+  }
 }
