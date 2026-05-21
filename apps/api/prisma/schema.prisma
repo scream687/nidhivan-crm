@@ -286,6 +286,7 @@ model SiteVisit {
   @@index([leadId])
   @@index([assignedToId])
   @@index([visitDate])
+  @@index([conductedById])
   @@map("site_visits")
 }
 
