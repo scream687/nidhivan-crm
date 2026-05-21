@@ -70,6 +70,20 @@ enum Priority {
   HIGH
 }
 
+enum VisitOutcome {
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+  RESCHEDULED
+}
+
+enum InterestLevel {
+  HOT
+  WARM
+  COLD
+  NOT_INTERESTED
+}
+
 enum SlaStatus {
   FIRST_RESPONSE_DUE
   ROLLING_RESPONSE_DUE
@@ -108,7 +122,8 @@ model User {
   auditLogs           AuditLog[]
   roundRobinConfig    RoundRobinConfig?
   stageChanges        LeadStageLog[]
-  siteVisits          SiteVisit[]
+  siteVisits          SiteVisit[]         @relation("SiteVisitAssignedTo")
+  conductedVisits     SiteVisit[]         @relation("SiteVisitConductedBy")
   bookings            Booking[]     @relation("AgentBookings")
   savedFilters        SavedFilter[]
   segments            Segment[]
@@ -248,12 +263,23 @@ model SiteVisit {
   leadId          String
   lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   assignedToId    String
-  assignedTo      User      @relation(fields: [assignedToId], references: [id])
+  assignedTo      User      @relation("SiteVisitAssignedTo", fields: [assignedToId], references: [id])
   project         String
   visitDate       DateTime
   status          String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
   feedback        String?
   rating          Int?
+  // New outcome-phase fields (all nullable for backward compat)
+  scheduledAt     DateTime?
+  address         String?
+  conductedById   String?
+  conductedBy     User?     @relation("SiteVisitConductedBy", fields: [conductedById], references: [id])
+  outcome         VisitOutcome?
+  interestLevel   InterestLevel?
+  propertyShown   String?
+  objections      String?
+  followUpNotes   String?
+  followUpDate    DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
