@@ -2,7 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ActivityType, Role, User } from '@prisma/client';
+import { ActivityType, Priority, Role, User, VisitOutcome } from '@prisma/client';
+
+const STAGE_ORDER = [
+  'NEW', 'ATTEMPTED', 'CONNECTED', 'INTERESTED', 'HOT',
+  'SITE_VISIT_SCHEDULED', 'SITE_VISIT_COMPLETED', 'NEGOTIATION',
+  'BOOKING_PENDING', 'CLOSED_WON', 'CLOSED_LOST', 'FUTURE_PROSPECT',
+];
 
 @Injectable()
 export class SiteVisitsService {
@@ -12,87 +18,177 @@ export class SiteVisitsService {
     private notifications: NotificationsService,
   ) {}
 
-  async schedule(leadId: string, data: { project: string; visitDate: string; assignedToId: string }, userId: string) {
+  async schedule(
+    leadId: string,
+    data: { scheduledAt: string; address: string; propertyShown?: string },
+    userId: string,
+  ) {
     const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
     if (!lead) throw new NotFoundException('Lead not found');
 
     const visit = await this.prisma.siteVisit.create({
       data: {
         leadId,
-        project: data.project,
-        visitDate: new Date(data.visitDate),
-        assignedToId: data.assignedToId,
+        assignedToId: userId,
+        scheduledAt: new Date(data.scheduledAt),
+        visitDate: new Date(data.scheduledAt),
+        address: data.address,
+        project: data.address,
+        propertyShown: data.propertyShown,
         status: 'SCHEDULED',
       },
-      include: { assignedTo: { select: { id: true, name: true } }, lead: { select: { name: true, leadNumber: true } } },
+      include: {
+        assignedTo: { select: { id: true, name: true } },
+        lead: { select: { name: true, leadNumber: true } },
+      },
     });
 
-    // Log activity
     const activity = await this.prisma.activity.create({
       data: {
         type: ActivityType.SITE_VISIT,
-        title: `Site Visit Scheduled: ${data.project}`,
-        description: `Scheduled for ${new Date(data.visitDate).toLocaleString('en-IN')}`,
+        title: `Site Visit Scheduled`,
+        description: `Scheduled for ${new Date(data.scheduledAt).toLocaleString('en-IN')} at ${data.address}`,
         userId,
         leadId,
       },
       include: { user: { select: { id: true, name: true } }, lead: { select: { name: true, assignedToId: true } } },
     });
 
-    // Update lead stage
-    await this.prisma.lead.update({
-      where: { id: leadId },
-      data: { stage: 'SITE_VISIT_SCHEDULED' },
-    });
+    // Only advance stage if not already past SITE_VISIT_SCHEDULED
+    const currentIdx = STAGE_ORDER.indexOf(lead.stage);
+    const targetIdx = STAGE_ORDER.indexOf('SITE_VISIT_SCHEDULED');
+    if (currentIdx < targetIdx) {
+      await this.prisma.lead.update({ where: { id: leadId }, data: { stage: 'SITE_VISIT_SCHEDULED' } });
+    }
 
-    // Notifications
     await this.notifications.create(
-      data.assignedToId,
+      userId,
       'Site Visit Scheduled',
-      `You have a site visit scheduled for lead ${lead.name} at ${data.project} on ${new Date(data.visitDate).toLocaleString('en-IN')}`,
+      `You have a site visit on ${new Date(data.scheduledAt).toLocaleDateString('en-IN')} at ${data.address}`,
       'site_visit_scheduled',
       visit.id,
       'SiteVisit',
     );
 
     this.gateway.emitToAdmin('activity:new', activity);
-    this.gateway.emitToUser(data.assignedToId, 'activity:new', activity);
-    this.gateway.emitToUser(data.assignedToId, 'notification:new', { title: 'Site Visit Scheduled', body: `Visit for ${lead.name} at ${data.project}` });
+    this.gateway.emitToUser(userId, 'activity:new', activity);
+    this.gateway.emitToUser(userId, 'notification:new', { title: 'Site Visit Scheduled', body: `Visit for ${lead.name}` });
 
     return visit;
   }
 
-  async updateStatus(id: string, status: string, feedback?: string, rating?: number, userId?: string) {
-    const visit = await this.prisma.siteVisit.findUnique({ where: { id }, include: { lead: true } });
+  async findByLead(leadId: string) {
+    return this.prisma.siteVisit.findMany({
+      where: { leadId },
+      include: {
+        assignedTo: { select: { id: true, name: true } },
+        conductedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { scheduledAt: 'desc' },
+    });
+  }
+
+  async findOne(leadId: string, visitId: string) {
+    const visit = await this.prisma.siteVisit.findFirst({
+      where: { id: visitId, leadId },
+      include: {
+        assignedTo: { select: { id: true, name: true } },
+        conductedBy: { select: { id: true, name: true } },
+      },
+    });
+    if (!visit) throw new NotFoundException('Site visit not found');
+    return visit;
+  }
+
+  async updateOutcome(
+    leadId: string,
+    visitId: string,
+    data: {
+      outcome: VisitOutcome;
+      interestLevel?: string;
+      propertyShown?: string;
+      objections?: string;
+      followUpNotes?: string;
+      followUpDate?: string;
+      conductedById?: string;
+    },
+    userId: string,
+  ) {
+    const visit = await this.prisma.siteVisit.findFirst({
+      where: { id: visitId, leadId },
+      include: { lead: true },
+    });
     if (!visit) throw new NotFoundException('Site visit not found');
 
+    const conductedById = data.conductedById ?? visit.assignedToId;
+
     const updated = await this.prisma.siteVisit.update({
-      where: { id },
-      data: { status, feedback, rating },
+      where: { id: visitId },
+      data: {
+        outcome: data.outcome,
+        interestLevel: data.interestLevel as any,
+        propertyShown: data.propertyShown,
+        objections: data.objections,
+        followUpNotes: data.followUpNotes,
+        followUpDate: data.followUpDate ? new Date(data.followUpDate) : undefined,
+        conductedById,
+        status: data.outcome,
+        feedback: data.followUpNotes,
+      },
     });
 
-    if (status === 'COMPLETED') {
-      await this.prisma.lead.update({
-        where: { id: visit.leadId },
-        data: { stage: 'SITE_VISIT_COMPLETED' },
-      });
+    // Stage transitions
+    const stageMap: Partial<Record<VisitOutcome, string>> = {
+      [VisitOutcome.COMPLETED]: 'SITE_VISIT_COMPLETED',
+      [VisitOutcome.NO_SHOW]: 'CONNECTED',
+    };
+    const targetStage = stageMap[data.outcome];
+    if (targetStage) {
+      const currentIdx = STAGE_ORDER.indexOf(visit.lead.stage);
+      const targetIdx = STAGE_ORDER.indexOf(targetStage);
+      if (data.outcome === VisitOutcome.NO_SHOW || currentIdx < targetIdx) {
+        await this.prisma.lead.update({ where: { id: leadId }, data: { stage: targetStage } });
+      }
+    }
 
-      const activity = await this.prisma.activity.create({
+    const activity = await this.prisma.activity.create({
+      data: {
+        type: ActivityType.SITE_VISIT,
+        title: `Site Visit ${data.outcome.replace('_', ' ')}`,
+        description: data.followUpNotes || `Visit outcome recorded`,
+        userId,
+        leadId,
+      },
+      include: { user: { select: { id: true, name: true } }, lead: { select: { name: true, assignedToId: true } } },
+    });
+
+    // Auto follow-up task for COMPLETED visits with a follow-up date
+    if (data.outcome === VisitOutcome.COMPLETED && data.followUpDate) {
+      await this.prisma.task.create({
         data: {
-          type: ActivityType.SITE_VISIT,
-          title: `Site Visit Completed: ${visit.project}`,
-          description: feedback || 'Visit completed successfully',
-          userId: userId || visit.assignedToId,
-          leadId: visit.leadId,
+          title: 'Follow up after site visit',
+          description: data.followUpNotes,
+          dueDate: new Date(data.followUpDate),
+          leadId,
+          assignedToId: conductedById,
+          priority: Priority.HIGH,
         },
-        include: { user: { select: { id: true, name: true } }, lead: { select: { name: true, assignedToId: true } } },
       });
+    }
 
-      this.gateway.emitToAdmin('activity:new', activity);
-      this.gateway.emitToUser(visit.assignedToId, 'activity:new', activity);
+    this.gateway.emitToAdmin('activity:new', activity);
+    this.gateway.emitToUser(visit.assignedToId, 'activity:new', activity);
+    if (visit.lead.assignedToId) {
+      this.gateway.emitToUser(visit.lead.assignedToId, 'lead:updated', { leadId });
     }
 
     return updated;
+  }
+
+  async remove(leadId: string, visitId: string) {
+    const visit = await this.prisma.siteVisit.findFirst({ where: { id: visitId, leadId } });
+    if (!visit) throw new NotFoundException('Site visit not found');
+    return this.prisma.siteVisit.delete({ where: { id: visitId } });
   }
 
   async findAll(user: User) {
@@ -100,14 +196,13 @@ export class SiteVisitsService {
     if (user.role === Role.SALES_AGENT || user.role === Role.TELECALLER) {
       where.assignedToId = user.id;
     }
-
     return this.prisma.siteVisit.findMany({
       where,
       include: {
         lead: { select: { id: true, name: true, leadNumber: true } },
         assignedTo: { select: { id: true, name: true } },
       },
-      orderBy: { visitDate: 'desc' },
+      orderBy: { scheduledAt: 'desc' },
     });
   }
 }
