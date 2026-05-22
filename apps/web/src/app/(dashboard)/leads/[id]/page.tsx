@@ -4,19 +4,48 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLeadsStore } from '@/stores/leadsStore';
 import { cn, timeAgo, formatCurrency } from '@/lib/utils';
-import { LEAD_SOURCE_LABELS } from '@nidhivan/shared';
+import { LEAD_SOURCE_LABELS, LeadStage, LEAD_STAGE_LABELS } from '@nidhivan/shared';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { Role } from '@prisma/client';
 import {
-  ArrowLeft, Phone, Flame, Edit2, CheckCircle, Clock, MessageSquare,
-  PhoneCall, StickyNote, ListTodo, ChevronDown, Zap, MapPin, Mail, DollarSign,
-  UserPlus
+  ArrowLeft, Phone, Flame, CheckCircle, Clock, PhoneCall, StickyNote,
+  ChevronDown, Zap, MapPin, Mail, DollarSign, Calendar, ClipboardList,
 } from 'lucide-react';
 import { ReassignDialog } from '@/components/leads/ReassignDialog';
+import { ScheduleVisitModal } from '@/components/leads/ScheduleVisitModal';
+import { RecordOutcomeModal } from '@/components/leads/RecordOutcomeModal';
 
 const TABS = ['Timeline', 'Calls', 'Tasks', 'Notes', 'Visits'] as const;
+
+const STAGE_COLORS: Record<string, { color: string; bgColor: string }> = {
+  NEW: { color: '#6b7280', bgColor: '#f3f4f6' },
+  ATTEMPTED: { color: '#ea580c', bgColor: '#fff7ed' },
+  CONNECTED: { color: '#2563eb', bgColor: '#eff6ff' },
+  INTERESTED: { color: '#7c3aed', bgColor: '#f5f3ff' },
+  HOT: { color: '#dc2626', bgColor: '#fef2f2' },
+  SITE_VISIT_SCHEDULED: { color: '#7c3aed', bgColor: '#f5f3ff' },
+  SITE_VISIT_COMPLETED: { color: '#0d9488', bgColor: '#f0fdfa' },
+  NEGOTIATION: { color: '#d97706', bgColor: '#fffbeb' },
+  BOOKING_PENDING: { color: '#ca8a04', bgColor: '#fefce8' },
+  CLOSED_WON: { color: '#16a34a', bgColor: '#f0fdf4' },
+  CLOSED_LOST: { color: '#9f1239', bgColor: '#fff1f2' },
+  FUTURE_PROSPECT: { color: '#0891b2', bgColor: '#ecfeff' },
+};
+
+const stages = Object.values(LeadStage).map(name => ({
+  name,
+  label: LEAD_STAGE_LABELS[name],
+  ...(STAGE_COLORS[name] ?? { color: '#374151', bgColor: '#f3f4f6' }),
+}));
+
+const OUTCOME_STYLES: Record<string, { bg: string; text: string }> = {
+  COMPLETED: { bg: 'bg-green-100', text: 'text-green-700' },
+  NO_SHOW: { bg: 'bg-red-100', text: 'text-red-700' },
+  CANCELLED: { bg: 'bg-gray-100', text: 'text-gray-600' },
+  RESCHEDULED: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+};
 
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,14 +56,14 @@ export default function LeadDetailPage() {
   const [timeline, setTimeline] = useState<any>(null);
   const [noteText, setNoteText] = useState('');
   const [showStageMenu, setShowStageMenu] = useState(false);
-  const [stages, setStages] = useState<{ name: string; label: string; color: string; bgColor: string }[]>([]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [outcomeVisitId, setOutcomeVisitId] = useState<string | null>(null);
 
   const isManager = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   useEffect(() => {
     fetchLead(id);
     loadTimeline();
-    api.get('/stages/active').then(r => setStages(r.data)).catch(() => {});
   }, [id]);
 
   async function loadTimeline() {
@@ -112,8 +141,8 @@ export default function LeadDetailPage() {
             </button>
 
             {isManager && (
-              <button className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3.5 py-1.5 rounded-lg transition font-medium">
-                <MapPin size={14} />
+              <button onClick={() => setShowScheduleModal(true)} className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3.5 py-1.5 rounded-lg transition font-medium">
+                <Calendar size={14} />
                 Schedule Visit
               </button>
             )}
@@ -192,7 +221,6 @@ export default function LeadDetailPage() {
           <div className="flex-1 overflow-y-auto p-4">
             {tab === 'Timeline' && (
               <div className="space-y-3">
-                {/* Note input */}
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Add a note…"
                     rows={2} className="w-full text-sm text-gray-700 resize-none focus:outline-none" />
@@ -201,7 +229,6 @@ export default function LeadDetailPage() {
                   </div>
                 </div>
 
-                {/* Activities */}
                 {timeline?.activities?.map((a: any) => (
                   <ActivityItem key={a.id} activity={a} />
                 ))}
@@ -261,29 +288,62 @@ export default function LeadDetailPage() {
 
             {tab === 'Visits' && (
               <div className="space-y-3">
-                {lead.siteVisits?.map((v: any) => (
-                  <div key={v.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-blue-500" />
-                        <span className="text-sm font-bold text-gray-900">{v.project}</span>
-                        <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-bold', 
-                          v.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                          v.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' :
-                          'bg-red-100 text-red-700')}>
-                          {v.status}
-                        </span>
+                {lead.siteVisits?.map((v: any) => {
+                  const outcomeStyle = v.outcome ? OUTCOME_STYLES[v.outcome] : null;
+                  return (
+                    <div key={v.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <MapPin size={14} className="text-blue-500 flex-shrink-0" />
+                          <span className="text-sm font-semibold text-gray-900">{v.address}</span>
+                          {outcomeStyle ? (
+                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-bold', outcomeStyle.bg, outcomeStyle.text)}>
+                              {v.outcome.replace('_', ' ')}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700">SCHEDULED</span>
+                          )}
+                          {v.interestLevel && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-orange-100 text-orange-700">
+                              {v.interestLevel.replace('_', ' ')}
+                            </span>
+                          )}
+                        </div>
+                        {!v.outcome && isManager && (
+                          <button
+                            onClick={() => setOutcomeVisitId(v.id)}
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium border border-blue-200 rounded-lg px-2 py-1 transition flex-shrink-0"
+                          >
+                            <ClipboardList size={11} />
+                            Record
+                          </button>
+                        )}
                       </div>
-                      <span className="text-xs text-gray-400">{new Date(v.visitDate).toLocaleDateString('en-IN')}</span>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                        {v.scheduledAt && (
+                          <span className="flex items-center gap-0.5">
+                            <Calendar size={10} />
+                            {new Date(v.scheduledAt).toLocaleDateString('en-IN')}
+                          </span>
+                        )}
+                        {v.assignedTo && <span>Assigned: {v.assignedTo.name}</span>}
+                        {v.conductedBy && <span>Conducted by: {v.conductedBy.name}</span>}
+                      </div>
+                      {v.propertyShown && <p className="text-xs text-gray-500 mt-1.5">Property: {v.propertyShown}</p>}
+                      {v.objections && <p className="text-xs text-gray-500 mt-1 italic">Concerns: {v.objections}</p>}
+                      {v.followUpNotes && <p className="text-sm text-gray-600 mt-2">"{v.followUpNotes}"</p>}
                     </div>
-                    <p className="text-xs text-gray-500">Assigned: {v.assignedTo?.name}</p>
-                    {v.feedback && <p className="text-sm text-gray-600 mt-2 italic">"{v.feedback}"</p>}
-                  </div>
-                ))}
+                  );
+                })}
                 {lead.siteVisits?.length === 0 && (
                   <div className="py-12 text-center">
                     <MapPin size={32} className="mx-auto text-gray-200 mb-2" />
                     <p className="text-sm text-gray-400">No site visits recorded</p>
+                    {isManager && (
+                      <button onClick={() => setShowScheduleModal(true)} className="mt-3 text-sm text-blue-600 hover:underline">
+                        Schedule the first visit
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -291,6 +351,22 @@ export default function LeadDetailPage() {
           </div>
         </div>
       </div>
+
+      {showScheduleModal && (
+        <ScheduleVisitModal
+          leadId={id}
+          onClose={() => setShowScheduleModal(false)}
+          onSuccess={() => { setShowScheduleModal(false); fetchLead(id); }}
+        />
+      )}
+      {outcomeVisitId && (
+        <RecordOutcomeModal
+          leadId={id}
+          visitId={outcomeVisitId}
+          onClose={() => setOutcomeVisitId(null)}
+          onSuccess={() => { setOutcomeVisitId(null); fetchLead(id); }}
+        />
+      )}
     </div>
   );
 }
