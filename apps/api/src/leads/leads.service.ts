@@ -186,7 +186,13 @@ export class LeadsService {
         activities: { include: { user: { select: { id: true, name: true, avatarUrl: true } } }, orderBy: { createdAt: 'desc' } },
         callLogs: { orderBy: { createdAt: 'desc' } },
         tasks: { include: { assignedTo: { select: { id: true, name: true } } }, orderBy: { dueDate: 'asc' } },
-        siteVisits: { include: { assignedTo: { select: { id: true, name: true } } }, orderBy: { visitDate: 'desc' } },
+        siteVisits: {
+          include: {
+            assignedTo: { select: { id: true, name: true } },
+            conductedBy: { select: { id: true, name: true } },
+          },
+          orderBy: { scheduledAt: 'desc' },
+        },
       },
     });
 
