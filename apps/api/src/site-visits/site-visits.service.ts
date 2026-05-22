@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ActivityType, Priority, Role, User, VisitOutcome } from '@prisma/client';
+import { ActivityType, InterestLevel, Priority, Role, User, VisitOutcome } from '@prisma/client';
 
 const STAGE_ORDER = [
   'NEW', 'ATTEMPTED', 'CONNECTED', 'INTERESTED', 'HOT',
@@ -105,7 +105,7 @@ export class SiteVisitsService {
     visitId: string,
     data: {
       outcome: VisitOutcome;
-      interestLevel?: string;
+      interestLevel?: InterestLevel;
       propertyShown?: string;
       objections?: string;
       followUpNotes?: string;
@@ -126,7 +126,7 @@ export class SiteVisitsService {
       where: { id: visitId },
       data: {
         outcome: data.outcome,
-        interestLevel: data.interestLevel as any,
+        interestLevel: data.interestLevel,
         propertyShown: data.propertyShown,
         objections: data.objections,
         followUpNotes: data.followUpNotes,

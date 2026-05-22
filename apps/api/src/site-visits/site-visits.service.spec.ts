@@ -128,4 +128,32 @@ describe('SiteVisitsService', () => {
       expect(result).toHaveLength(2);
     });
   });
+
+  describe('findOne', () => {
+    it('returns visit when found', async () => {
+      mockPrisma.siteVisit.findFirst.mockResolvedValue({ id: 'v1', leadId: 'lead-1' });
+      const result = await service.findOne('lead-1', 'v1');
+      expect(result).toEqual(expect.objectContaining({ id: 'v1' }));
+    });
+
+    it('throws NotFoundException when visit does not exist', async () => {
+      mockPrisma.siteVisit.findFirst.mockResolvedValue(null);
+      await expect(service.findOne('lead-1', 'bad-id')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('remove', () => {
+    it('deletes visit when found', async () => {
+      mockPrisma.siteVisit.findFirst.mockResolvedValue({ id: 'v1', leadId: 'lead-1' });
+      mockPrisma.siteVisit.delete.mockResolvedValue({ id: 'v1' });
+      const result = await service.remove('lead-1', 'v1');
+      expect(mockPrisma.siteVisit.delete).toHaveBeenCalledWith({ where: { id: 'v1' } });
+      expect(result).toEqual(expect.objectContaining({ id: 'v1' }));
+    });
+
+    it('throws NotFoundException when visit does not exist', async () => {
+      mockPrisma.siteVisit.findFirst.mockResolvedValue(null);
+      await expect(service.remove('lead-1', 'bad-id')).rejects.toThrow(NotFoundException);
+    });
+  });
 });
