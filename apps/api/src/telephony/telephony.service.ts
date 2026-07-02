@@ -92,8 +92,9 @@ export class TelephonyService {
       });
       const json = await res.json();
       return { callSid: json.Call?.Sid, status: 'initiated' };
-    } catch (err) {
-      return { error: 'Exotel API error', details: err.message };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { error: 'Exotel API error', details: msg };
     }
   }
 

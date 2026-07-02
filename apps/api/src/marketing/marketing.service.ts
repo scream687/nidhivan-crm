@@ -1,16 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class MarketingService implements OnModuleInit {
+  private readonly logger = new Logger(MarketingService.name);
+
   constructor(
     private prisma: PrismaService,
     private mail: MailService,
   ) {}
 
   onModuleInit() {
-    // Process due nurture steps every 10 minutes
     setInterval(() => this.processNurtureSteps(), 10 * 60 * 1000);
   }
 
@@ -85,7 +86,6 @@ export class MarketingService implements OnModuleInit {
       data: { status: 'RUNNING', sentAt: new Date(), totalCount: leads.length },
     });
 
-    // Insert log rows
     await this.prisma.campaignLog.createMany({
       data: leads.map(l => ({
         campaignId: id,
@@ -95,7 +95,6 @@ export class MarketingService implements OnModuleInit {
       skipDuplicates: true,
     });
 
-    // Process async without blocking response
     this.processCampaignSends(id, campaign.type, campaign.messageTemplate, campaign.subject ?? undefined, leads).catch(() => {});
     return { queued: leads.length };
   }
@@ -268,7 +267,9 @@ export class MarketingService implements OnModuleInit {
         if (step.type === 'EMAIL' && lead.email) {
           await this.mail.sendOtp(lead.email, lead.name, message);
         }
-      } catch {}
+      } catch (err) {
+        this.logger.warn(`Email send failed: ${err}`);
+      }
       const nextStep = enrollment.currentStep + 1;
       const nextStepData = steps[nextStep];
       if (nextStepData) {

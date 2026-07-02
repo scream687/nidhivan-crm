@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   WebSocketGateway, WebSocketServer, SubscribeMessage,
   OnGatewayConnection, OnGatewayDisconnect,
@@ -22,7 +23,8 @@ import { ConfigService } from '@nestjs/config';
   namespace: '/crm',
 })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer() server: Server;
+  private readonly logger = new Logger(NotificationsGateway.name);
+  @WebSocketServer() server: Server | null = null;
 
   constructor(
     private readonly jwt: JwtService,
@@ -45,7 +47,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       if (payload.role === 'ADMIN' || payload.role === 'MANAGER') {
         client.join('admin');
       }
-    } catch {
+    } catch (e: unknown) {
+      this.logger.warn(`WS auth failed: ${e instanceof Error ? e.message : String(e)}`);
       client.disconnect();
     }
   }
@@ -65,18 +68,18 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   emitToUser(userId: string, event: string, data: unknown) {
-    this.server.to(`user:${userId}`).emit(event, data);
+    this.server!.to(`user:${userId}`).emit(event, data);
   }
 
   emitToAdmin(event: string, data: unknown) {
-    this.server.to('admin').emit(event, data);
+    this.server!.to('admin').emit(event, data);
   }
 
   emitToAll(event: string, data: unknown) {
-    this.server.emit(event, data);
+    this.server!.emit(event, data);
   }
 
   emitKpiUpdate(kpis: unknown) {
-    this.server.to('admin').emit('dashboard:kpi_update', kpis);
+    this.server!.to('admin').emit('dashboard:kpi_update', kpis);
   }
 }

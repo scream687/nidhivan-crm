@@ -39,7 +39,9 @@ export class CacheService {
     if (!this.enabled || !keys.length) return;
     try {
       await this.redis!.del(...keys);
-    } catch {}
+    } catch (e: unknown) {
+      this.logger.warn(`cache.del(${keys.join(',')}) failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
 
   async delPattern(pattern: string): Promise<void> {
@@ -47,6 +49,8 @@ export class CacheService {
     try {
       const keys = await this.redis!.keys(pattern);
       if (keys.length) await this.redis!.del(...keys);
-    } catch {}
+    } catch (e: unknown) {
+      this.logger.warn(`cache.delPattern(${pattern}) failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
 }

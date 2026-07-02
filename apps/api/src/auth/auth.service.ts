@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,6 +9,7 @@ import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private googleClient: OAuth2Client;
 
   constructor(
@@ -41,7 +42,8 @@ export class AuthService {
     try {
       const ticket = await this.googleClient.verifyIdToken({ idToken, audience: clientId });
       payload = ticket.getPayload();
-    } catch {
+    } catch (err) {
+      this.logger.warn(`Google verification failed: ${err}`);
       throw new UnauthorizedException('Invalid Google token');
     }
 
@@ -123,7 +125,8 @@ export class AuthService {
     let payload: any;
     try {
       payload = this.jwt.verify(resetToken, { secret: this.config.get('JWT_SECRET') });
-    } catch {
+    } catch (err) {
+      this.logger.warn(`JWT verify failed: ${err}`);
       throw new UnauthorizedException('Reset token expired or invalid');
     }
 

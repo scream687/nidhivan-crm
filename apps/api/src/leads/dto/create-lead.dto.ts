@@ -1,9 +1,17 @@
-import { IsString, IsOptional, IsEmail, IsEnum, IsNumber, IsBoolean, IsArray } from 'class-validator';
-import { LeadSource, InvestmentPurpose } from '@prisma/client';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+} from "class-validator";
+import { LeadSource, InvestmentPurpose } from "@prisma/client";
 
 export class CreateLeadDto {
-  @IsString() name: string;
-  @IsString() phone: string;
+  @IsString() name = '';
+  @IsString() phone = '';
   @IsOptional() @IsString() altPhone?: string;
   @IsOptional() @IsEmail() email?: string;
   @IsOptional() @IsString() city?: string;
@@ -12,7 +20,9 @@ export class CreateLeadDto {
   @IsOptional() @IsNumber() budget?: number;
   @IsOptional() @IsNumber() budgetMin?: number;
   @IsOptional() @IsNumber() budgetMax?: number;
-  @IsOptional() @IsEnum(InvestmentPurpose) investmentPurpose?: InvestmentPurpose;
+  @IsOptional()
+  @IsEnum(InvestmentPurpose)
+  investmentPurpose?: InvestmentPurpose;
   @IsOptional() @IsString() projectInterest?: string;
   @IsOptional() @IsEnum(LeadSource) source?: LeadSource;
   @IsOptional() @IsString() assignedToId?: string;

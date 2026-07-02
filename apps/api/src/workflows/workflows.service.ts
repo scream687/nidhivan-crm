@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -6,6 +6,8 @@ export type WorkflowTrigger = 'LEAD_CREATED' | 'STAGE_CHANGED' | 'MARKED_HOT' | 
 
 @Injectable()
 export class WorkflowsService {
+  private readonly logger = new Logger(WorkflowsService.name);
+
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
@@ -89,7 +91,9 @@ export class WorkflowsService {
             break;
           }
         }
-      } catch {}
+      } catch (err) {
+            this.logger.warn(`Action execute failed: ${err}`);
+          }
     }
   }
 }
