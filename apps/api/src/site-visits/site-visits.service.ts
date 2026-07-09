@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
+import { BusinessMetricsService } from '../metrics/business-metrics.service';
 import { ActivityType, InterestLevel, Priority, Role, User, VisitOutcome } from '@prisma/client';
 
 const STAGE_ORDER = [
@@ -16,11 +17,12 @@ export class SiteVisitsService {
     private prisma: PrismaService,
     private gateway: NotificationsGateway,
     private notifications: NotificationsService,
+    private metrics: BusinessMetricsService,
   ) {}
 
   async schedule(
     leadId: string,
-    data: { scheduledAt: string; address: string; propertyShown?: string },
+    data: { scheduledAt: string; address: string; propertyShown?: string; driverName?: string; driverPhone?: string; pickupLocation?: string; pickupTime?: string },
     userId: string,
   ) {
     const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
@@ -35,6 +37,10 @@ export class SiteVisitsService {
         address: data.address,
         project: data.address,
         propertyShown: data.propertyShown,
+        driverName: data.driverName,
+        driverPhone: data.driverPhone,
+        pickupLocation: data.pickupLocation,
+        pickupTime: data.pickupTime,
         status: 'SCHEDULED',
       },
       include: {
@@ -70,6 +76,7 @@ export class SiteVisitsService {
       'SiteVisit',
     );
 
+    this.metrics.onVisitChanged().catch((e) => console.error("async", e));
     this.gateway.emitToAdmin('activity:new', activity);
     this.gateway.emitToUser(userId, 'activity:new', activity);
     this.gateway.emitToUser(userId, 'notification:new', { title: 'Site Visit Scheduled', body: `Visit for ${lead.name}` });
@@ -176,6 +183,7 @@ export class SiteVisitsService {
       });
     }
 
+    this.metrics.onVisitChanged().catch((e) => console.error("async", e));
     this.gateway.emitToAdmin('activity:new', activity);
     this.gateway.emitToUser(visit.assignedToId, 'activity:new', activity);
     if (visit.lead.assignedToId) {
@@ -183,6 +191,69 @@ export class SiteVisitsService {
     }
 
     return updated;
+  }
+
+  async checkin(visitId: string, data: { gpsLatitude: number; gpsLongitude: number }) {
+    const visit = await this.prisma.siteVisit.findUnique({ where: { id: visitId } });
+    if (!visit) throw new NotFoundException('Site visit not found');
+
+    return this.prisma.siteVisit.update({
+      where: { id: visitId },
+      data: {
+        gpsLatitude: data.gpsLatitude,
+        gpsLongitude: data.gpsLongitude,
+        gpsCheckedInAt: new Date(),
+      },
+    });
+  }
+
+  async addPhotos(visitId: string, data: { photoUrls: string[] }) {
+    if (!data.photoUrls.length) throw new BadRequestException('At least one photo URL required');
+
+    return this.prisma.siteVisit.update({
+      where: { id: visitId },
+      data: {
+        photos: { push: data.photoUrls },
+      },
+    });
+  }
+
+  async addVoiceNote(visitId: string, fileUrl: string, duration?: number) {
+    const visit = await this.prisma.siteVisit.findUnique({ where: { id: visitId } });
+    if (!visit) throw new NotFoundException('Site visit not found');
+
+    const entry = JSON.stringify({ type: 'voice', url: fileUrl, duration: duration ?? null, uploadedAt: new Date().toISOString() });
+
+    return this.prisma.siteVisit.update({
+      where: { id: visitId },
+      data: { photos: { push: entry } },
+    });
+  }
+
+  async getCalendar(startDate: string, endDate: string) {
+    const visits = await this.prisma.siteVisit.findMany({
+      where: {
+        visitDate: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      },
+      include: {
+        lead: { select: { id: true, name: true, leadNumber: true } },
+        assignedTo: { select: { id: true, name: true } },
+        conductedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { visitDate: 'asc' },
+    });
+
+    const grouped: Record<string, typeof visits> = {};
+    for (const visit of visits) {
+      const dateKey = visit.visitDate.toISOString().slice(0, 10);
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(visit);
+    }
+
+    return Object.entries(grouped).map(([date, visits]) => ({ date, visits }));
   }
 
   async remove(leadId: string, visitId: string) {

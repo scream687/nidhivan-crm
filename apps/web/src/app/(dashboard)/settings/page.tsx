@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Settings, User, Users, Bell, Phone, MessageSquare, Shield, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -47,7 +48,7 @@ function WhatsAppSettings() {
   useEffect(() => {
     api.get('/whatsapp/config').then(r => {
       if (r.data) setWaForm({ phoneNumberId: r.data.phoneNumberId || '', wabaId: r.data.wabaId || '', accessToken: r.data.accessToken || '', verifyToken: r.data.verifyToken || 'nidhivan_crm_webhook', displayName: r.data.displayName || '' });
-    }).catch(() => {}).finally(() => setWaLoading(false));
+    }).catch(() => toast.error('Failed to load WhatsApp config')).finally(() => setWaLoading(false));
   }, []);
 
   async function saveWa() {
@@ -135,6 +136,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadProfile();
+    loadCompany();
   }, []);
 
   useEffect(() => {
@@ -143,10 +145,144 @@ export default function SettingsPage() {
     }
   }, [active, team.length, teamLoading, teamError]);
 
-  const save = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const [companyForm, setCompanyForm] = useState({ name: '', address: '', phone: '', email: '', gstin: '', reraNumber: '' });
+  const [companyLoading, setCompanyLoading] = useState(true);
+  const [companySaving, setCompanySaving] = useState(false);
+
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+
+  // Telephony state
+  const [telForm, setTelForm] = useState({ exotelSid: '', exotelToken: '', exotelPhone: '', virtualNumber: '' });
+  const [telLoading, setTelLoading] = useState(true);
+  const [telSaving, setTelSaving] = useState(false);
+  const [telSaved, setTelSaved] = useState(false);
+
+  useEffect(() => {
+    api.get('/telephony/config').then(r => {
+      if (r.data) setTelForm({ exotelSid: r.data.exotelSid || '', exotelToken: r.data.exotelToken || '', exotelPhone: r.data.exotelPhone || '', virtualNumber: r.data.virtualNumber || '' });
+    }).catch(() => toast.error('Failed to load telephony config')).finally(() => setTelLoading(false));
+  }, []);
+
+  async function saveTelephony() {
+    setTelSaving(true);
+    try {
+      await api.post('/telephony/config', telForm);
+      setTelSaved(true);
+      setTimeout(() => setTelSaved(false), 2000);
+    } catch {
+      toast.error('Failed to save telephony config');
+    } finally {
+      setTelSaving(false);
+    }
+  }
+
+  // Notification preferences
+  const NOTIFICATION_LABELS: Record<string, string> = {
+    newLeadAssigned: 'New lead assigned to me',
+    leadStageChange: 'Lead stage change',
+    hotLeadAlert: 'Hot lead alert',
+    overdueTaskReminder: 'Overdue task reminder',
+    slaBreachWarning: 'SLA breach warning',
+    whatsappReplyReceived: 'WhatsApp reply received',
+    missedCallAlert: 'Missed call alert',
+    dailySummaryReport: 'Daily summary report',
   };
+  const NOTIFICATION_DEFAULTS: Record<string, boolean> = {
+    newLeadAssigned: true, leadStageChange: true, hotLeadAlert: true,
+    overdueTaskReminder: true, slaBreachWarning: true, whatsappReplyReceived: true,
+    missedCallAlert: false, dailySummaryReport: false,
+  };
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>(NOTIFICATION_DEFAULTS);
+  const [notifSaving, setNotifSaving] = useState<string | null>(null);
+  const [notifLoading, setNotifLoading] = useState(true);
+
+  useEffect(() => {
+    setNotifLoading(true);
+    api.get('/users/me').then(r => {
+      if (r.data?.notificationPreferences) {
+        setNotifPrefs({ ...NOTIFICATION_DEFAULTS, ...r.data.notificationPreferences });
+      }
+    }).catch(() => { /* use defaults */ }).finally(() => setNotifLoading(false));
+  }, []);
+
+  async function toggleNotif(key: string) {
+    const next = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(next);
+    setNotifSaving(key);
+    try {
+      await api.patch('/users/me', { notificationPreferences: next });
+    } catch {
+      setNotifPrefs(notifPrefs); // revert
+      toast.error('Failed to save preference');
+    } finally {
+      setNotifSaving(null);
+    }
+  }
+
+  // ─── Sessions (CRM-023) ────────────────────────────────────────────────────
+  const [sessions, setSessions] = useState<{ id: string; userAgent: string; ipAddress: string | null; createdAt: string; expiresAt: string }[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (active === 'security') {
+      setSessionsLoading(true);
+      api.get('/auth/sessions').then(r => setSessions(r.data)).catch(() => {}).finally(() => setSessionsLoading(false));
+    }
+  }, [active]);
+
+  async function revokeSession(id: string) {
+    setRevoking(id);
+    try {
+      await api.delete(`/auth/sessions/${id}`);
+      setSessions(s => s.filter(x => x.id !== id));
+      toast.success('Session revoked');
+    } catch {
+      toast.error('Failed to revoke session');
+    } finally {
+      setRevoking(null);
+    }
+  }
+
+  // ─── Invite Member (CRM-024) ────────────────────────────────────────────────
+  const [showInvite, setShowInvite] = useState(false);
+  const inviteTrapRef = useFocusTrap(showInvite);
+  const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'SALES_AGENT' });
+  const [inviting, setInviting] = useState(false);
+
+  async function inviteMember(e: React.FormEvent) {
+    e.preventDefault();
+    setInviting(true);
+    try {
+      await api.post('/users/invite', inviteForm);
+      toast.success('Invitation sent');
+      setShowInvite(false);
+      setInviteForm({ name: '', email: '', role: 'SALES_AGENT' });
+      loadTeam();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to invite');
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (pwForm.next !== pwForm.confirm) { toast.error('Passwords do not match'); return; }
+    if (pwForm.next.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (!user?.id) return;
+    setPwSaving(true);
+    try {
+      await api.patch(`/users/${user.id}/password`, { currentPassword: pwForm.current, newPassword: pwForm.next });
+      toast.success('Password updated successfully');
+      setPwForm({ current: '', next: '', confirm: '' });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to update password');
+    } finally { setPwSaving(false); }
+  }
 
   async function loadProfile() {
     setProfileLoading(true);
@@ -167,6 +303,30 @@ export default function SettingsPage() {
       });
     } finally {
       setProfileLoading(false);
+    }
+  }
+
+  async function loadCompany() {
+    setCompanyLoading(true);
+    try {
+      const { data } = await api.get('/settings/company');
+      setCompanyForm({ name: data.name || '', address: data.address || '', phone: data.phone || '', email: data.email || '', gstin: data.gstin || '', reraNumber: data.reraNumber || '' });
+    } catch {
+      // defaults stay empty
+    } finally {
+      setCompanyLoading(false);
+    }
+  }
+
+  async function saveCompany() {
+    setCompanySaving(true);
+    try {
+      await api.put('/settings/company', companyForm);
+      toast.success('Company details saved');
+    } catch {
+      toast.error('Failed to save company details');
+    } finally {
+      setCompanySaving(false);
     }
   }
 
@@ -212,10 +372,10 @@ export default function SettingsPage() {
             <h1 className="font-bold text-gray-900 text-sm">Settings</h1>
           </div>
         </div>
-        <nav className="flex-1 p-2 space-y-0.5">
+        <nav className="flex-1 p-2 flex lg:flex-col gap-1 lg:gap-0 lg:space-y-0.5 overflow-x-auto">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setActive(id)}
-              className={cn('w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition text-left',
+              className={cn('flex-shrink-0 w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition text-left',
                 active === id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50')}>
               <Icon size={14} />
               {label}
@@ -292,8 +452,50 @@ export default function SettingsPage() {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Team Members</h2>
-              <button className="text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">+ Invite Member</button>
+              <button onClick={() => setShowInvite(true)} className="text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">+ Invite Member</button>
             </div>
+
+            {/* Invite Modal */}
+            {showInvite && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => !inviting && setShowInvite(false)}>
+                <div ref={inviteTrapRef} tabIndex={-1} className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+                  <h3 className="font-semibold text-gray-900 mb-4">Invite Team Member</h3>
+                  <form onSubmit={inviteMember} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                      <input value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} required
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                      <input type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} required
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
+                      <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="SALES_AGENT">Sales Agent</option>
+                        <option value="TELECALLER">Telecaller</option>
+                        <option value="MANAGER">Manager</option>
+                        <option value="MARKETING">Marketing</option>
+                        <option value="ACCOUNTANT">Accountant</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button type="button" onClick={() => setShowInvite(false)} disabled={inviting}
+                        className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+                      <button type="submit" disabled={inviting}
+                        className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+                        {inviting ? 'Inviting…' : 'Send Invite'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {teamLoading && (
                 <div className="px-5 py-6 text-sm text-gray-400">Loading team members…</div>
@@ -330,15 +532,31 @@ export default function SettingsPage() {
               Exotel integration is scaffolded and ready. Enter your API credentials below to activate click-to-call, call recording, and auto-link.
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-              {[['Exotel SID', 'ex...'], ['Exotel Token', '••••••••'], ['Exotel Phone Number', '+91 XXXXX XXXXX'], ['Virtual Number (ExoPhone)', 'XXXXXXXX']].map(([label, ph]) => (
-                <div key={label}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-                  <input placeholder={ph} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              ))}
-              <button onClick={save} className={cn('w-full py-2 rounded-lg text-sm font-medium transition', saved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}>
-                {saved ? '✓ Saved!' : 'Save & Activate'}
-              </button>
+              {telLoading ? <div className="py-4 text-sm text-gray-400">Loading…</div> : (
+                <>
+                  {[
+                    { label: 'Exotel SID', key: 'exotelSid', placeholder: 'ex...' },
+                    { label: 'Exotel Token', key: 'exotelToken', placeholder: '••••••••', type: 'password' },
+                    { label: 'Exotel Phone Number', key: 'exotelPhone', placeholder: '+91 XXXXX XXXXX' },
+                    { label: 'Virtual Number (ExoPhone)', key: 'virtualNumber', placeholder: 'XXXXXXXX' },
+                  ].map(({ label, key, placeholder, type }) => (
+                    <div key={key}>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+                      <input
+                        type={type || 'text'}
+                        value={(telForm as any)[key]}
+                        onChange={e => setTelForm(f => ({ ...f, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                  <button onClick={saveTelephony} disabled={telSaving}
+                    className={cn('w-full py-2 rounded-lg text-sm font-medium transition disabled:opacity-60', telSaved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}>
+                    {telSaving ? 'Saving…' : telSaved ? '✓ Saved!' : 'Save & Activate'}
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -349,15 +567,34 @@ export default function SettingsPage() {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Company Details</h2>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-              {[['Company Name', 'NIDHIVAN PROPERTY LINKERS®'], ['GSTIN', ''], ['RERA Number', ''], ['Address', 'Jaipur, Rajasthan'], ['Support Email', 'nidhivanproperty@gmail.com'], ['Support Phone', '']].map(([label, val]) => (
-                <div key={label}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-                  <input defaultValue={val} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              ))}
-              <button onClick={save} className={cn('w-full py-2 rounded-lg text-sm font-medium transition', saved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}>
-                {saved ? '✓ Saved!' : 'Save Changes'}
-              </button>
+              {companyLoading ? (
+                <div className="py-4 text-sm text-gray-400">Loading…</div>
+              ) : (
+                <>
+                  {[
+                    { label: 'Company Name', key: 'name', placeholder: 'Nidhivan Property Linkers' },
+                    { label: 'GSTIN', key: 'gstin', placeholder: 'XXXXXXXXXXXXX' },
+                    { label: 'RERA Number', key: 'reraNumber', placeholder: 'UP-RERA-XXXXX' },
+                    { label: 'Address', key: 'address', placeholder: 'Vrindavan, Uttar Pradesh' },
+                    { label: 'Support Email', key: 'email', placeholder: 'nidhivanproperty@gmail.com' },
+                    { label: 'Support Phone', key: 'phone', placeholder: '+91 9876543210' },
+                  ].map(({ label, key, placeholder }) => (
+                    <div key={key}>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+                      <input
+                        value={(companyForm as any)[key]}
+                        onChange={e => setCompanyForm(f => ({ ...f, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                  <button onClick={saveCompany} disabled={companySaving}
+                    className="w-full py-2 rounded-lg text-sm font-medium transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white">
+                    {companySaving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -366,20 +603,13 @@ export default function SettingsPage() {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Notification Preferences</h2>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-              {[
-                ['New lead assigned to me', true],
-                ['Lead stage change', true],
-                ['Hot lead alert', true],
-                ['Overdue task reminder', true],
-                ['SLA breach warning', true],
-                ['WhatsApp reply received', true],
-                ['Missed call alert', false],
-                ['Daily summary report', false],
-              ].map(([label, def]) => (
-                <div key={label as string} className="flex items-center justify-between py-1">
-                  <span className="text-sm text-gray-700">{label as string}</span>
+              {notifLoading ? (
+                <div className="py-4 text-sm text-gray-400">Loading preferences…</div>
+              ) : Object.keys(NOTIFICATION_LABELS).map((key) => (
+                <div key={key} className="flex items-center justify-between py-1">
+                  <span className="text-sm text-gray-700">{NOTIFICATION_LABELS[key]}</span>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" defaultChecked={def as boolean} className="sr-only peer" />
+                    <input type="checkbox" checked={notifPrefs[key] ?? NOTIFICATION_DEFAULTS[key]} onChange={() => toggleNotif(key)} disabled={notifSaving === key} className="sr-only peer" />
                     <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500" />
                   </label>
                 </div>
@@ -391,24 +621,45 @@ export default function SettingsPage() {
         {active === 'security' && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Security</h2>
-            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+            <form onSubmit={changePassword} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               <h3 className="text-sm font-medium text-gray-700">Change Password</h3>
-              {['Current Password', 'New Password', 'Confirm New Password'].map(label => (
-                <div key={label}>
+              {[
+                { label: 'Current Password', key: 'current' },
+                { label: 'New Password', key: 'next' },
+                { label: 'Confirm New Password', key: 'confirm' },
+              ].map(({ label, key }) => (
+                <div key={key}>
                   <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-                  <input type="password" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input
+                    type="password"
+                    value={(pwForm as any)[key]}
+                    onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
+                    required
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               ))}
-              <button onClick={save} className={cn('w-full py-2 rounded-lg text-sm font-medium transition', saved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}>
-                {saved ? '✓ Updated!' : 'Update Password'}
+              <button type="submit" disabled={pwSaving}
+                className="w-full py-2 rounded-lg text-sm font-medium transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white">
+                {pwSaving ? 'Updating…' : 'Update Password'}
               </button>
-            </div>
+            </form>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
               <h3 className="text-sm font-medium text-gray-700">Active Sessions</h3>
-              {[['Chrome · MacBook Pro · Jaipur', 'Current'], ['iPhone · Safari · Jaipur', '2h ago']].map(([session, time]) => (
-                <div key={session} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">{session}</span>
-                  <span className={cn('text-xs', time === 'Current' ? 'text-green-500 font-medium' : 'text-gray-400')}>{time}</span>
+              {sessionsLoading ? (
+                <div className="py-2 text-sm text-gray-400">Loading sessions…</div>
+              ) : sessions.length === 0 ? (
+                <div className="py-2 text-sm text-gray-400">No active sessions</div>
+              ) : sessions.map(s => (
+                <div key={s.id} className="flex items-center justify-between text-sm">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-gray-600 block truncate">{s.userAgent}</span>
+                    {s.ipAddress && <span className="text-xs text-gray-400">{s.ipAddress}</span>}
+                  </div>
+                  <button onClick={() => revokeSession(s.id)} disabled={revoking === s.id}
+                    className="text-xs text-red-500 hover:text-red-700 ml-3 shrink-0 disabled:opacity-50">
+                    {revoking === s.id ? 'Revoking…' : 'Revoke'}
+                  </button>
                 </div>
               ))}
             </div>

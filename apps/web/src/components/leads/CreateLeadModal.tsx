@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { X, Loader2 } from 'lucide-react';
 import { useLeadsStore } from '@/stores/leadsStore';
 import { useUsersStore } from '@/stores/usersStore';
@@ -40,7 +41,7 @@ export default function CreateLeadModal({ onClose }: Props) {
 
   useEffect(() => {
     fetchUsers();
-    api.get('/stages/active').then(r => setStages(r.data)).catch(() => {});
+    api.get('/stages/active').then(r => setStages(r.data)).catch(() => toast.error('Failed to load stages'));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,9 +81,12 @@ export default function CreateLeadModal({ onClose }: Props) {
     }
   };
 
+  const trapRef = useFocusTrap(true);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <motion.div
+        ref={trapRef} tabIndex={-1}
         initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden"
       >
@@ -92,7 +96,7 @@ export default function CreateLeadModal({ onClose }: Props) {
             <h2 className="text-lg font-bold text-gray-900">Create New Lead</h2>
             <p className="text-xs text-gray-500">Add a new prospect to your pipeline</p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition"><X size={18} /></button>
+          <button onClick={onClose} aria-label="Close" className="p-1.5 hover:bg-gray-100 rounded-lg transition"><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
@@ -206,7 +210,7 @@ export default function CreateLeadModal({ onClose }: Props) {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">City</label>
                 <input value={form.city} onChange={e => set('city', e.target.value)}
-                  placeholder="Jaipur"
+                  placeholder="City"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>

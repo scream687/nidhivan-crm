@@ -20,20 +20,17 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
+      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/auth/refresh`, { refreshToken }, { withCredentials: true }).catch(() => ({ data: null }));
+      if (!data) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         window.location.href = '/login';
         return Promise.reject(error);
       }
-      try {
-        const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/auth/refresh`, { refreshToken });
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        original.headers.Authorization = `Bearer ${data.accessToken}`;
-        return api(original);
-      } catch {
-        localStorage.clear();
-        window.location.href = '/login';
-      }
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      original.headers.Authorization = `Bearer ${data.accessToken}`;
+      return api(original);
     }
     return Promise.reject(error);
   },

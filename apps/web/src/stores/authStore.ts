@@ -28,12 +28,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try { await api.post('/auth/logout'); } catch {}
-    localStorage.clear();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     set({ user: null });
     window.location.href = '/login';
   },
 
   fetchMe: async () => {
+    if (!localStorage.getItem('accessToken') && !document.cookie.includes('accessToken=')) {
+      set({ user: null, isLoading: false });
+      return;
+    }
     set({ isLoading: true });
     try {
       const { data } = await api.get('/auth/me');

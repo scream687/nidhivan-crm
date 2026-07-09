@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MarketingService } from './marketing.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -54,4 +54,39 @@ export class MarketingController {
 
   @Patch('nurture/:id')
   updateNurture(@Param('id') id: string, @Body() body: any) { return this.svc.updateNurture(id, body); }
+
+  // Landing Pages
+  @Get('landing-pages')
+  listLandingPages(@Query('projectId') projectId?: string) { return this.svc.listLandingPages(projectId); }
+
+  @Post('landing-pages')
+  createLandingPage(@Body() body: any) { return this.svc.createLandingPage(body); }
+
+  @Get('landing-pages/:id')
+  getLandingPage(@Param('id') id: string) { return this.svc.getLandingPageById(id); }
+
+  @Patch('landing-pages/:id')
+  updateLandingPage(@Param('id') id: string, @Body() body: any) { return this.svc.updateLandingPage(id, body); }
+
+  @Delete('landing-pages/:id')
+  deleteLandingPage(@Param('id') id: string) { return this.svc.deleteLandingPage(id); }
+
+  // Referral Codes
+  @Get('referral-codes')
+  listReferralCodes(@Query('projectId') projectId?: string) { return this.svc.listReferralCodes(projectId); }
+
+  @Post('referral-codes')
+  createReferralCode(@Body() body: any, @CurrentUser('id') uid: string) {
+    return this.svc.createReferralCode({ ...body, createdById: uid });
+  }
+
+  @Get('referral-codes/:code')
+  getReferralByCode(@Param('code') code: string) { return this.svc.getReferralByCode(code); }
+
+  // Reports
+  @Get('campaign-roi')
+  getCampaignROI(@Query('from') from?: string, @Query('to') to?: string) { return this.svc.getCampaignROI(from, to); }
+
+  @Get('referral-report')
+  getReferralReport(@Query('from') from?: string, @Query('to') to?: string) { return this.svc.getReferralReport(from, to); }
 }

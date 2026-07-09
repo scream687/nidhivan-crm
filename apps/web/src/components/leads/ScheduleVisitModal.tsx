@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
-  const [form, setForm] = useState({ scheduledAt: '', address: '', propertyShown: '' });
+  const [form, setForm] = useState({ scheduledAt: '', address: '', propertyShown: '', driverName: '', driverPhone: '', pickupLocation: '', pickupTime: '' });
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,6 +28,10 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
         scheduledAt: new Date(form.scheduledAt).toISOString(),
         address: form.address.trim(),
         propertyShown: form.propertyShown.trim() || undefined,
+        driverName: form.driverName.trim() || undefined,
+        driverPhone: form.driverPhone.trim() || undefined,
+        pickupLocation: form.pickupLocation.trim() || undefined,
+        pickupTime: form.pickupTime.trim() || undefined,
       });
       toast.success('Site visit scheduled');
       onSuccess();
@@ -47,6 +52,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
         <motion.div
+          ref={useFocusTrap(true)} tabIndex={-1}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
@@ -57,7 +63,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
               <MapPin size={16} className="text-blue-600" />
               <h2 className="text-base font-semibold text-gray-900">Schedule Site Visit</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -90,6 +96,53 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.propertyShown}
                 onChange={e => setForm(f => ({ ...f, propertyShown: e.target.value }))}
                 placeholder="e.g. 3BHK Villa Type A"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <hr className="border-gray-100" />
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pickup Details (Optional)</p>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Driver Name</label>
+              <input
+                type="text"
+                value={form.driverName}
+                onChange={e => setForm(f => ({ ...f, driverName: e.target.value }))}
+                placeholder="e.g. Ramesh"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Driver Phone</label>
+              <input
+                type="text"
+                value={form.driverPhone}
+                onChange={e => setForm(f => ({ ...f, driverPhone: e.target.value }))}
+                placeholder="e.g. +91 98765 43210"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Pickup Location</label>
+              <input
+                type="text"
+                value={form.pickupLocation}
+                onChange={e => setForm(f => ({ ...f, pickupLocation: e.target.value }))}
+                placeholder="e.g. Nidhivan Office, Jaipur"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Pickup Time</label>
+              <input
+                type="text"
+                value={form.pickupTime}
+                onChange={e => setForm(f => ({ ...f, pickupTime: e.target.value }))}
+                placeholder="e.g. 10:00 AM"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

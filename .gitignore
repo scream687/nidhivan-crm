@@ -36,3 +36,4 @@ test-results/
 agentdb.rvf
 agentdb.rvf.lock
 .swarm/
+.vercel

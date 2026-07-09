@@ -224,6 +224,34 @@ export class TelephonyService {
       .map((a, i) => ({ rank: i + 1, ...a, badge: badges[i] || '⭐' }));
   }
 
+  // ── Config ──────────────────────────────────────────────────────────────
+
+  async getConfig() {
+    const config = await this.prisma.integrationConfig.findUnique({ where: { type: 'EXOTEL' } });
+    if (!config) return null;
+    return {
+      exotelSid: (config.metadata as any)?.exotelSid || '',
+      exotelToken: config.accessToken || '',
+      exotelPhone: (config.metadata as any)?.exotelPhone || '',
+      virtualNumber: (config.metadata as any)?.virtualNumber || '',
+    };
+  }
+
+  async saveConfig(data: { exotelSid: string; exotelToken: string; exotelPhone: string; virtualNumber: string }) {
+    return this.prisma.integrationConfig.upsert({
+      where: { type: 'EXOTEL' },
+      update: {
+        accessToken: data.exotelToken,
+        metadata: { exotelSid: data.exotelSid, exotelPhone: data.exotelPhone, virtualNumber: data.virtualNumber },
+      },
+      create: {
+        type: 'EXOTEL',
+        accessToken: data.exotelToken,
+        metadata: { exotelSid: data.exotelSid, exotelPhone: data.exotelPhone, virtualNumber: data.virtualNumber },
+      },
+    });
+  }
+
   private mapExotelStatus(s: string): CallStatus {
     const map: Record<string, CallStatus> = {
       completed: CallStatus.COMPLETED, busy: CallStatus.BUSY,

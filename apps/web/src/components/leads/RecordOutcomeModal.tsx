@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckSquare } from 'lucide-react';
+import { X, CheckSquare, MapPin } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -39,6 +40,53 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
     followUpDate: '',
   });
   const [saving, setSaving] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkedInAt, setCheckedInAt] = useState<string | null>(null);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  async function handleGpsCheckin() {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    setCheckingIn(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 })
+      );
+      const { latitude, longitude } = pos.coords;
+      await api.post(`/site-visits/${visitId}/checkin`, { gpsLatitude: latitude, gpsLongitude: longitude });
+      setGpsCoords({ lat: latitude, lng: longitude });
+      setCheckedInAt(new Date().toLocaleString('en-IN'));
+      toast.success('GPS check-in recorded');
+    } catch {
+      toast.error('Could not get GPS location');
+    } finally {
+      setCheckingIn(false);
+    }
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const { data } = await api.post(`/site-visits/${visitId}/photos/upload`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setPhotoUrls(prev => [...prev, data.url]);
+      toast.success('Photo uploaded');
+    } catch {
+      toast.error('Could not upload photo');
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +104,9 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
         followUpNotes: form.followUpNotes.trim() || undefined,
         followUpDate: form.followUpDate ? new Date(form.followUpDate).toISOString() : undefined,
       });
+      if (photoUrls.length) {
+        await api.post(`/site-visits/${visitId}/photos`, { photoUrls });
+      }
       toast.success('Visit outcome recorded');
       onSuccess();
     } catch {
@@ -77,6 +128,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
         <motion.div
+          ref={useFocusTrap(true)} tabIndex={-1}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
@@ -87,7 +139,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
               <CheckSquare size={16} className="text-green-600" />
               <h2 className="text-base font-semibold text-gray-900">Record Visit Outcome</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -173,6 +225,63 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                 <p className="text-[10px] text-gray-400 mt-1">A follow-up task will be auto-created if set</p>
               </div>
             )}
+
+            <hr className="border-gray-100" />
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Visit Logistics</p>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">GPS Check-in</label>
+              {checkedInAt ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-700">
+                  Checked in at {checkedInAt}
+                  {gpsCoords && <span className="block text-[11px] text-green-500 mt-0.5">{gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}</span>}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleGpsCheckin}
+                  disabled={checkingIn}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {checkingIn ? (
+                    <><span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> Locating…</>
+                  ) : (
+                    <><MapPin size={14} /> Check In with GPS</>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Photos</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploadingPhoto}
+                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {uploadingPhoto && <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
+              </div>
+              {photoUrls.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {photoUrls.map((url, i) => (
+                    <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setPhotoUrls(prev => prev.filter((_, j) => j !== i))}
+                        aria-label="Remove photo"
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-bl-lg p-0.5"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex gap-3 pt-1">
               <button

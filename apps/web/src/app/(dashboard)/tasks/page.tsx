@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { CheckSquare, Clock, CheckCircle2, AlertCircle, User, Plus, X } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import toast from 'react-hot-toast';
 
 type Filter = 'all' | 'pending' | 'overdue' | 'done';
@@ -22,6 +24,7 @@ export default function TasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('pending');
   const [showCreate, setShowCreate] = useState(false);
+  const createTrapRef = useFocusTrap(showCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<CreateForm>({
     title: '', description: '', dueDate: '', priority: 'MEDIUM', assignedToId: '',
@@ -29,7 +32,7 @@ export default function TasksPage() {
 
   useEffect(() => { loadTasks(); }, [filter]);
   useEffect(() => {
-    api.get('/users').then(r => setUsers(r.data)).catch(() => {});
+    api.get('/users').then(r => setUsers(r.data)).catch(() => toast.error('Failed to load users'));
   }, []);
 
   async function loadTasks() {
@@ -215,10 +218,7 @@ export default function TasksPage() {
           })}
 
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-gray-400">
-              <CheckSquare size={40} className="mx-auto mb-3 opacity-30" />
-              <p>No {filter} tasks.</p>
-            </div>
+            <EmptyState icon={CheckSquare} title={`No ${filter} tasks`} description="Create a new task to get started." action={{ label: 'New Task', onClick: () => setShowCreate(true) }} />
           )}
         </div>
       )}
@@ -233,15 +233,16 @@ export default function TasksPage() {
             className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setShowCreate(false); }}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md"
+              <motion.div
+                ref={createTrapRef} tabIndex={-1}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-2xl shadow-xl w-full max-w-md"
             >
               <div className="flex items-center justify-between px-6 py-4 border-b">
                 <h2 className="text-base font-semibold text-gray-900">New Task</h2>
-                <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowCreate(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600">
                   <X size={18} />
                 </button>
               </div>

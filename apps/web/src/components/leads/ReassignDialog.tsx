@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useUsersStore } from '@/stores/usersStore';
 import { useLeadsStore } from '@/stores/leadsStore';
 import { UserPlus, Search, Check, Loader2, X } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -64,6 +65,7 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
   }
 
   const selectedUser = users.find(u => u.id === selected);
+  const trapRef = useFocusTrap(open);
 
   return (
     <>
@@ -77,11 +79,11 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div ref={trapRef} tabIndex={-1} className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">Reassign Lead</h2>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 transition">
+              <button onClick={() => setOpen(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600 transition">
                 <X size={18} />
               </button>
             </div>

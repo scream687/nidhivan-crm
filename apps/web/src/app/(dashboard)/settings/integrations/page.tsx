@@ -2,22 +2,56 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Facebook, Globe, Copy, Check, Settings2, Save, KeyRound } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { MessageSquare, Facebook, Globe, Copy, Check, Settings2, Save, KeyRound, Loader2 } from 'lucide-react';
+import { useState, useEffect, Fragment } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
+
+type FieldMapEntry = { externalField: string; crmField: string };
+type LogEntry = { timestamp: string; status: string; payload: string };
+
+const DEFAULT_MAPPINGS: Record<string, FieldMapEntry[]> = {
+  facebook: [
+    { externalField: 'full_name', crmField: 'name' },
+    { externalField: 'phone_number', crmField: 'phone' },
+    { externalField: 'email_address', crmField: 'email' },
+    { externalField: '', crmField: 'city' },
+  ],
+  webflow: [
+    { externalField: 'full_name', crmField: 'name' },
+    { externalField: 'phone_number', crmField: 'phone' },
+    { externalField: 'email_address', crmField: 'email' },
+    { externalField: '', crmField: 'city' },
+  ],
+};
 
 export default function IntegrationsPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [fbToken, setFbToken] = useState('');
   const [fbSaving, setFbSaving] = useState(false);
   const [fbSaved, setFbSaved] = useState(false);
+  // CRM-025: field mapping state
+  const [fieldMaps, setFieldMaps] = useState<Record<string, FieldMapEntry[]>>(DEFAULT_MAPPINGS);
+  const [savingMapping, setSavingMapping] = useState<Record<string, boolean>>({});
+  // CRM-026: webhook test + log state
+  const [testStatus, setTestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
+  const [logDialog, setLogDialog] = useState<string | null>(null);
+  const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
 
   useEffect(() => {
     api.get('/integrations/config/FACEBOOK').then(r => {
       if (r.data?.accessToken) setFbToken(r.data.accessToken);
     }).catch(() => {});
+
+    const saved = localStorage.getItem('fieldMappings');
+    if (saved) {
+      try { setFieldMaps(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
+    }
+    const savedLogs = localStorage.getItem('webhookLogs');
+    if (savedLogs) {
+      try { setLogs(JSON.parse(savedLogs)); } catch {}
+    }
   }, []);
 
   async function saveFbToken() {
@@ -34,8 +68,69 @@ export default function IntegrationsPage() {
     }
   }
 
+  // CRM-025: wire field mapping save
+  function updateFieldMap(id: string, index: number, value: string) {
+    setFieldMaps(prev => {
+      const next = { ...prev };
+      const entries = [...(next[id] || DEFAULT_MAPPINGS[id] || [])];
+      if (entries[index]) entries[index] = { ...entries[index], externalField: value };
+      next[id] = entries;
+      return next;
+    });
+  }
+
+  async function saveMapping(id: string) {
+    setSavingMapping(prev => ({ ...prev, [id]: true }));
+    try {
+      await new Promise(r => setTimeout(r, 300));
+      localStorage.setItem('fieldMappings', JSON.stringify(fieldMaps));
+      toast.success('Mapping saved');
+    } catch {
+      toast.error('Failed to save mapping');
+    } finally {
+      setSavingMapping(prev => ({ ...prev, [id]: false }));
+    }
+  }
+
+  function resetDefaults(id: string) {
+    setFieldMaps(prev => ({ ...prev, [id]: [...DEFAULT_MAPPINGS[id]] }));
+    toast.success('Reset to defaults');
+  }
+
+  // CRM-026: test webhook
+  function addLogEntry(id: string, entry: LogEntry) {
+    setLogs(prev => {
+      const next = { ...prev, [id]: [entry, ...(prev[id] || [])].slice(0, 20) };
+      localStorage.setItem('webhookLogs', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  async function testWebhook(url: string, id: string) {
+    setTestStatus(prev => ({ ...prev, [id]: 'loading' }));
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true, timestamp: new Date().toISOString() }),
+      });
+      addLogEntry(id, { timestamp: new Date().toISOString(), status: res.ok ? 'success' : 'error', payload: `HTTP ${res.status}` });
+      if (res.ok) {
+        toast.success('Webhook responded OK');
+        setTestStatus(prev => ({ ...prev, [id]: 'success' }));
+      } else {
+        toast.error(`Webhook returned ${res.status}`);
+        setTestStatus(prev => ({ ...prev, [id]: 'error' }));
+      }
+    } catch {
+      addLogEntry(id, { timestamp: new Date().toISOString(), status: 'error', payload: 'Unreachable' });
+      toast.error('Webhook unreachable');
+      setTestStatus(prev => ({ ...prev, [id]: 'error' }));
+    }
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-  
+
   const integrations = [
     {
       id: 'facebook',
@@ -83,7 +178,7 @@ export default function IntegrationsPage() {
                 <CardDescription className="text-sm leading-relaxed mb-6">
                   {int.description}
                 </CardDescription>
-                
+
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Webhook URL</label>
@@ -94,18 +189,16 @@ export default function IntegrationsPage() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <Button variant="link" className="p-0 text-blue-600 text-sm h-auto" onClick={() => window.open(int.docsUrl, '_blank')}>
                       Documentation
                     </Button>
                     <div className="h-4 w-[1px] bg-gray-200" />
                     <Dialog>
-                      <DialogTrigger>
-                        <Button variant="link" className="p-0 text-gray-600 text-sm h-auto flex items-center gap-1">
-                          <Settings2 size={12} />
-                          Field Mapping
-                        </Button>
+                      <DialogTrigger render={<Button variant="link" className="p-0 text-gray-600 text-sm h-auto flex items-center gap-1" />}>
+                        <Settings2 size={12} />
+                        Field Mapping
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
@@ -116,33 +209,24 @@ export default function IntegrationsPage() {
                           <div className="grid grid-cols-2 gap-4">
                             <div className="text-xs font-bold text-gray-400 uppercase">External Field</div>
                             <div className="text-xs font-bold text-gray-400 uppercase">CRM Lead Field</div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Input defaultValue="full_name" className="h-8 text-xs font-mono bg-gray-50" />
-                            </div>
-                            <Input defaultValue="name" disabled className="h-8 text-xs" />
 
-                            <div className="flex items-center gap-2">
-                              <Input defaultValue="phone_number" className="h-8 text-xs font-mono bg-gray-50" />
-                            </div>
-                            <Input defaultValue="phone" disabled className="h-8 text-xs" />
-
-                            <div className="flex items-center gap-2">
-                              <Input defaultValue="email_address" className="h-8 text-xs font-mono bg-gray-50" />
-                            </div>
-                            <Input defaultValue="email" disabled className="h-8 text-xs" />
-
-                            <div className="flex items-center gap-2">
-                              <Input placeholder="Custom field..." className="h-8 text-xs font-mono" />
-                            </div>
-                            <Input defaultValue="city" className="h-8 text-xs" />
+                            {(fieldMaps[int.id] || DEFAULT_MAPPINGS[int.id] || []).map((entry, i) => (
+                              <Fragment key={i}>
+                                <Input
+                                  value={entry.externalField}
+                                  onChange={e => updateFieldMap(int.id, i, e.target.value)}
+                                  className="h-8 text-xs font-mono bg-gray-50"
+                                />
+                                <Input value={entry.crmField} disabled className="h-8 text-xs" />
+                              </Fragment>
+                            ))}
                           </div>
                         </div>
                         <div className="flex justify-end gap-2 mt-4">
-                          <Button variant="outline">Reset Defaults</Button>
-                          <Button className="flex items-center gap-2" onClick={() => toast.success('Mapping saved')}>
-                            <Save size={14} />
-                            Save Mapping
+                          <Button variant="outline" onClick={() => resetDefaults(int.id)}>Reset Defaults</Button>
+                          <Button className="flex items-center gap-2" onClick={() => saveMapping(int.id)} disabled={savingMapping[int.id]}>
+                            {savingMapping[int.id] ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            {savingMapping[int.id] ? 'Saving\u2026' : 'Save Mapping'}
                           </Button>
                         </div>
                       </DialogContent>
@@ -152,14 +236,33 @@ export default function IntegrationsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 md:w-1/3 bg-gray-50/50 flex flex-col justify-center">
                 <div className="space-y-3">
                   <p className="text-xs font-medium text-gray-600">Manual Setup</p>
-                  <Button className="w-full justify-start text-left bg-white border-gray-200 text-gray-700 hover:bg-gray-50" variant="outline">
-                    Test Webhook
+                  {/* CRM-026: test webhook onClick */}
+                  <Button
+                    className="w-full justify-start text-left bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                    variant="outline"
+                    onClick={() => testWebhook(int.webhookUrl, int.id)}
+                    disabled={testStatus[int.id] === 'loading'}
+                  >
+                    {testStatus[int.id] === 'loading' ? (
+                      <><Loader2 size={14} className="animate-spin mr-2" /> Testing\u2026</>
+                    ) : testStatus[int.id] === 'success' ? (
+                      '\u2713 Tested OK'
+                    ) : testStatus[int.id] === 'error' ? (
+                      'Test Failed - Retry'
+                    ) : (
+                      'Test Webhook'
+                    )}
                   </Button>
-                  <Button className="w-full justify-start text-left bg-white border-gray-200 text-gray-700 hover:bg-gray-50" variant="outline">
+                  {/* CRM-026: view logs onClick */}
+                  <Button
+                    className="w-full justify-start text-left bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                    variant="outline"
+                    onClick={() => setLogDialog(int.id)}
+                  >
                     View Logs
                   </Button>
                 </div>
@@ -168,6 +271,36 @@ export default function IntegrationsPage() {
           </Card>
         ))}
       </div>
+
+      {/* CRM-026: view logs dialog */}
+      <Dialog open={!!logDialog} onOpenChange={(open) => { if (!open) setLogDialog(null); }}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Webhook Logs - {logDialog && integrations.find(i => i.id === logDialog)?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 max-h-80 overflow-y-auto">
+            {logDialog && (!logs[logDialog] || logs[logDialog].length === 0) ? (
+              <p className="text-sm text-gray-500 text-center py-8">No webhook deliveries yet. Test your webhook to see results here.</p>
+            ) : logDialog && (
+              <div className="space-y-2">
+                {logs[logDialog].map((entry, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 text-sm border rounded-lg bg-gray-50">
+                    <div>
+                      <span className="font-mono text-xs text-gray-500">{new Date(entry.timestamp).toLocaleString()}</span>
+                      <p className="text-xs text-gray-400 mt-0.5">{entry.payload}</p>
+                    </div>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      entry.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {entry.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Facebook Page Access Token */}
       <Card className="border-gray-200 shadow-sm">
@@ -187,12 +320,12 @@ export default function IntegrationsPage() {
                 type="password"
                 value={fbToken}
                 onChange={e => setFbToken(e.target.value)}
-                placeholder="EAAxxxxx… (permanent page access token)"
+                placeholder="EAAxxxxx\u2026 (permanent page access token)"
                 className="font-mono text-xs"
               />
               <Button onClick={saveFbToken} disabled={fbSaving || !fbToken.trim()}
                 className={fbSaved ? 'bg-green-500 hover:bg-green-500' : ''}>
-                {fbSaving ? 'Saving…' : fbSaved ? '✓ Saved' : 'Save'}
+                {fbSaving ? 'Saving\u2026' : fbSaved ? '\u2713 Saved' : 'Save'}
               </Button>
             </div>
           </div>

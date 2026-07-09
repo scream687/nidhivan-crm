@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '@/lib/api';
-import { Trophy, TrendingUp, Phone, Target, Users2 } from 'lucide-react';
+import { Trophy, Users2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
 
 const COLORS = ['#f59e0b', '#94a3b8', '#92400e', '#3b82f6', '#10b981', '#8b5cf6', '#06b6d4'];
@@ -11,14 +12,21 @@ const COLORS = ['#f59e0b', '#94a3b8', '#92400e', '#3b82f6', '#10b981', '#8b5cf6'
 export default function EmployeesPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+  const displayed = showAll ? leaderboard : leaderboard.slice(0, 10);
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     setIsLoading(true);
-    const { data } = await api.get('/users/leaderboard');
-    setLeaderboard(data);
-    setIsLoading(false);
+    try {
+      const { data } = await api.get('/users/leaderboard');
+      setLeaderboard(data);
+    } catch {
+      setLeaderboard([]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -29,7 +37,24 @@ export default function EmployeesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-card overflow-hidden">
+          <div className="p-4 border-b border-gray-100"><div className="h-5 bg-gray-200 rounded animate-pulse w-40" /></div>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-gray-50">
+              <div className="w-6 h-4 bg-gray-200 rounded animate-pulse" />
+              <div className="w-7 h-7 rounded-full bg-gray-200 animate-pulse" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse flex-1" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-12" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-12" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-12" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-16" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-10" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-12" />
+            </div>
+          ))}
+        </div>
+      ) : leaderboard.length === 0 ? (
+        <EmptyState icon={Users2} title="No team data yet" description="Leaderboard will populate once agents start working." />
       ) : (
         <>
           {/* Podium */}
@@ -67,7 +92,7 @@ export default function EmployeesPage() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((agent, i) => (
+                {displayed.map((agent, i) => (
                   <motion.tr key={agent.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                     className="border-b border-gray-50 hover:bg-gray-50 transition">
                     <td className="px-4 py-3">
@@ -90,6 +115,11 @@ export default function EmployeesPage() {
                 ))}
               </tbody>
             </table>
+            {leaderboard.length > 10 && (
+              <button onClick={() => setShowAll(!showAll)} className="w-full py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition">
+                {showAll ? 'Show less' : `Show all (${leaderboard.length})`}
+              </button>
+            )}
           </div>
 
           {/* Bar chart */}

@@ -43,4 +43,18 @@ export class TelephonyController {
   handlePassthru(@Body() body: any) {
     return this.telephony.handleExotelPassthru(body);
   }
+
+  // ── Config ──────────────────────────────────────────────────────────────
+
+  @Get('config')
+  @UseGuards(AuthGuard('jwt'))
+  getConfig() {
+    return this.telephony.getConfig();
+  }
+
+  @Post('config')
+  @UseGuards(AuthGuard('jwt'))
+  saveConfig(@Body() body: { exotelSid: string; exotelToken: string; exotelPhone: string; virtualNumber: string }) {
+    return this.telephony.saveConfig(body);
+  }
 }

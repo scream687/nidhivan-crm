@@ -9,6 +9,23 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [noteText, setNoteText] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('note-draft');
+    if (saved) setNoteText(saved);
+  }, []);
+
+  useEffect(() => {
+    if (!noteText) { setSaveStatus('idle'); return; }
+    setSaveStatus('saving');
+    const timer = setTimeout(() => {
+      localStorage.setItem('note-draft', noteText);
+      setSaveStatus('saved');
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [noteText]);
 
   useEffect(() => { loadNotes(); }, []);
 
@@ -40,6 +57,18 @@ export default function NotesPage() {
           <Search size={13} className="absolute left-3 top-2.5 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search notes…"
             className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <textarea value={noteText} onChange={e => setNoteText(e.target.value)} rows={3} placeholder="Write a quick note…"
+          className="w-full text-sm resize-none border-0 outline-none focus:ring-0 placeholder:text-gray-300" />
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 mt-2">
+          {noteText && (
+            <span className="text-xs text-gray-400">
+              {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : ''}
+            </span>
+          )}
         </div>
       </div>
 

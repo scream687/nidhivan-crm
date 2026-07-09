@@ -8,9 +8,10 @@ import { NotificationBell } from '@/components/layout/NotificationBell';
 import {
   LayoutDashboard, Package, Users2, CheckSquare,
   Zap, BarChart3, Phone, PhoneCall, TrendingUp, Trophy,
-  MessageSquare, Megaphone, Bot, BarChart2,
+  MessageSquare, MessageCircle, Megaphone, Bot, BarChart2,
   Settings, LogOut, Building2, MapPin, Calculator, FileCheck,
-  GitBranch, UserCog, StickyNote, Target, Mail, GitMerge,
+  GitBranch, UserCog, StickyNote, Target, Mail, GitMerge, X,
+  ClipboardList, CalendarClock, Globe, Gift,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -29,10 +30,13 @@ const navSections: { label: string; items: NavItem[] }[] = [
       { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboards' },
       { href: '/leads', icon: Users2, label: 'Leads' },
       { href: '/notes', icon: StickyNote, label: 'Notes' },
+      { href: '/communication', icon: MessageCircle, label: 'Communication' },
       { href: '/site-visits', icon: MapPin, label: 'Site Visits' },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
+      { href: '/follow-ups', icon: CalendarClock, label: 'Follow-ups' },
       { href: '/workflows', icon: GitBranch, label: 'Workflows' },
       { href: '/inventory', icon: Package, label: 'Inventory' },
+      { href: '/visit-requests', icon: ClipboardList, label: 'Visit Requests' },
       { href: '/bookings', icon: FileCheck, label: 'Bookings' },
       { href: '/calculator', icon: Calculator, label: 'Calculator' },
       { href: '/reports', icon: BarChart3, label: 'Reports', adminOnly: true },
@@ -42,10 +46,13 @@ const navSections: { label: string; items: NavItem[] }[] = [
   {
     label: 'Marketing',
     items: [
-      { href: '/marketing/segments', icon: Target, label: 'Segments' },
+      { href: '/marketing', icon: LayoutDashboard, label: 'Dashboard', exact: true },
       { href: '/marketing/campaigns', icon: Mail, label: 'Campaigns' },
-      { href: '/marketing/attribution', icon: GitMerge, label: 'Attribution' },
+      { href: '/marketing/landing-pages', icon: Globe, label: 'Landing Pages' },
+      { href: '/marketing/segments', icon: Target, label: 'Segments' },
       { href: '/marketing/nurture', icon: Megaphone, label: 'Nurture' },
+      { href: '/marketing/referral', icon: Gift, label: 'Referral' },
+      { href: '/marketing/attribution', icon: GitMerge, label: 'Attribution' },
     ],
   },
   {
@@ -76,7 +83,7 @@ const navSections: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onNavigate, onClose }: { onNavigate?: () => void; onClose?: () => void }) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
 
@@ -87,22 +94,30 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-56 bg-[#0f1e36] flex flex-col h-screen fixed left-0 top-0 z-30 overflow-y-auto">
-      {/* Logo */}
+    <aside className="w-56 max-w-[80vw] bg-[#0f1e36] flex flex-col h-screen fixed left-0 top-0 z-30 overflow-y-auto">
+      {/* Logo + close button */}
       <div className="px-4 py-4 border-b border-white/10 flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
             <Building2 size={16} className="text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-white font-bold text-sm leading-tight">NIDHIVAN</p>
             <p className="text-blue-300 text-[10px]">Property CRM</p>
           </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            aria-label="Close navigation menu"
+            aria-controls="sidebar"
+          >
+            <X size={18} />
+          </button>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-3 space-y-4">
+      <nav role="navigation" aria-label="Main navigation" className="flex-1 px-2 py-3 space-y-4">
         {navSections.map((section) => (
           <div key={section.label}>
             <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 mb-1">
@@ -115,7 +130,7 @@ export function Sidebar() {
                 
                 const active = isActive(href, exact);
                 return (
-                  <Link key={href} href={href}>
+                  <Link key={href} href={href} onClick={onNavigate} aria-current={active ? 'page' : undefined}>
                     <motion.div
                       whileHover={{ x: 2 }}
                       className={cn(
@@ -123,6 +138,7 @@ export function Sidebar() {
                         active
                           ? 'bg-blue-600 text-white font-medium'
                           : 'text-gray-400 hover:text-white hover:bg-white/5',
+                        'focus-visible:ring-2 focus-visible:ring-blue-400',
                       )}
                     >
                       <Icon size={15} className="flex-shrink-0" />

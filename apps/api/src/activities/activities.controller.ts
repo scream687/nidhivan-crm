@@ -1,5 +1,9 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { ActivitiesService } from './activities.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -16,6 +20,11 @@ export class ActivitiesController {
   @Post('notes')
   addNote(@Param('leadId') leadId: string, @Body('content') content: string, @CurrentUser('id') userId: string) {
     return this.activities.addNote(leadId, content, userId);
+  }
+
+  @Get('tasks')
+  getTasks(@Param('leadId') leadId: string) {
+    return this.activities.getTasksByLeadId(leadId);
   }
 
   @Post('tasks')
@@ -72,5 +81,35 @@ export class GlobalActivitiesController {
       leadId,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
+  }
+
+  @Post(':leadId/voice-note')
+  @UseInterceptors(FileInterceptor('audio', {
+    storage: diskStorage({
+      destination: (_req, _file, cb) => {
+        const dir = join(process.cwd(), 'public', 'uploads', 'voice');
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+      },
+      filename: (_req, file, cb) => {
+        const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+        cb(null, name);
+      },
+    }),
+    limits: { fileSize: 25 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!file.mimetype.startsWith('audio/')) return cb(new BadRequestException('Only audio files allowed'), false);
+      cb(null, true);
+    },
+  }))
+  async addVoiceNote(
+    @Param('leadId') leadId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') userId: string,
+    @Body('duration') duration?: string,
+  ) {
+    if (!file) throw new BadRequestException('No audio file uploaded');
+    const url = `/uploads/voice/${file.filename}`;
+    return this.activities.addVoiceNoteActivity(leadId, userId, url, duration ? parseFloat(duration) : undefined);
   }
 }

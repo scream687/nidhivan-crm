@@ -10,6 +10,8 @@ export enum Role {
 export enum LeadStage {
   NEW = 'NEW',
   ATTEMPTED = 'ATTEMPTED',
+  NOT_REACHABLE = 'NOT_REACHABLE',
+  WRONG_NUMBER = 'WRONG_NUMBER',
   CONNECTED = 'CONNECTED',
   INTERESTED = 'INTERESTED',
   HOT = 'HOT',
@@ -17,8 +19,12 @@ export enum LeadStage {
   SITE_VISIT_COMPLETED = 'SITE_VISIT_COMPLETED',
   NEGOTIATION = 'NEGOTIATION',
   BOOKING_PENDING = 'BOOKING_PENDING',
+  LOAN_PROCESSING = 'LOAN_PROCESSING',
+  DOCUMENTATION_PENDING = 'DOCUMENTATION_PENDING',
+  PAYMENT_PENDING = 'PAYMENT_PENDING',
   CLOSED_WON = 'CLOSED_WON',
   CLOSED_LOST = 'CLOSED_LOST',
+  DUPLICATE = 'DUPLICATE',
   FUTURE_PROSPECT = 'FUTURE_PROSPECT',
 }
 
@@ -32,6 +38,12 @@ export enum LeadSource {
   WHATSAPP = 'WHATSAPP',
   WEBSITE = 'WEBSITE',
   GOOGLE_ADS = 'GOOGLE_ADS',
+  MAGICBRICKS = 'MAGICBRICKS',
+  INDIAMART = 'INDIAMART',
+  QR_CODE = 'QR_CODE',
+  REFERRAL = 'REFERRAL',
+  YOUTUBE = 'YOUTUBE',
+  JUST_DIAL = 'JUST_DIAL',
   OTHER = 'OTHER',
 }
 
@@ -84,6 +96,8 @@ export enum SlaStatus {
 export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
   [LeadStage.NEW]: 'New',
   [LeadStage.ATTEMPTED]: 'Attempted',
+  [LeadStage.NOT_REACHABLE]: 'Not Reachable',
+  [LeadStage.WRONG_NUMBER]: 'Wrong Number',
   [LeadStage.CONNECTED]: 'Connected',
   [LeadStage.INTERESTED]: 'Interested',
   [LeadStage.HOT]: 'Hot',
@@ -91,8 +105,12 @@ export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
   [LeadStage.SITE_VISIT_COMPLETED]: 'Site Visit Completed',
   [LeadStage.NEGOTIATION]: 'Negotiation',
   [LeadStage.BOOKING_PENDING]: 'Booking Pending',
+  [LeadStage.LOAN_PROCESSING]: 'Loan Processing',
+  [LeadStage.DOCUMENTATION_PENDING]: 'Documentation Pending',
+  [LeadStage.PAYMENT_PENDING]: 'Payment Pending',
   [LeadStage.CLOSED_WON]: 'Closed Won',
   [LeadStage.CLOSED_LOST]: 'Closed Lost',
+  [LeadStage.DUPLICATE]: 'Duplicate',
   [LeadStage.FUTURE_PROSPECT]: 'Future Prospect',
 };
 
@@ -106,5 +124,11 @@ export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {
   [LeadSource.WHATSAPP]: 'WhatsApp',
   [LeadSource.WEBSITE]: 'Website',
   [LeadSource.GOOGLE_ADS]: 'Google Ads',
+  [LeadSource.MAGICBRICKS]: 'MagicBricks',
+  [LeadSource.INDIAMART]: 'IndiaMART',
+  [LeadSource.QR_CODE]: 'QR Code',
+  [LeadSource.REFERRAL]: 'Referral',
+  [LeadSource.YOUTUBE]: 'YouTube',
+  [LeadSource.JUST_DIAL]: 'JustDial',
   [LeadSource.OTHER]: 'Other',
 };

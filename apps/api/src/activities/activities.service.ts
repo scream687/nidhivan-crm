@@ -42,7 +42,16 @@ export class ActivitiesService {
     return activity;
   }
 
-  async createTask(leadId: string, data: { title: string; dueDate?: string; priority?: Priority; assignedToId: string }, userId: string) {
+  async getTasksByLeadId(leadId: string) {
+    const tasks = await this.prisma.task.findMany({
+      where: { leadId },
+      include: { assignedTo: { select: { id: true, name: true } } },
+      orderBy: { dueDate: 'asc' },
+    });
+    return { data: tasks };
+  }
+
+  async createTask(leadId: string, data: any, userId: string) {
     const task = await this.prisma.task.create({
       data: { title: data.title, dueDate: data.dueDate ? new Date(data.dueDate) : undefined, priority: data.priority || Priority.MEDIUM, assignedToId: data.assignedToId, leadId },
       include: { assignedTo: { select: { id: true, name: true } } },
@@ -122,6 +131,25 @@ export class ActivitiesService {
         lead: { select: { id: true, name: true, leadNumber: true } },
       },
     });
+  }
+
+  async addVoiceNoteActivity(leadId: string, userId: string, voiceNoteUrl: string, duration?: number) {
+    const activity = await this.prisma.activity.create({
+      data: {
+        type: ActivityType.NOTE,
+        title: 'Voice note added',
+        description: null,
+        userId,
+        leadId,
+        metadata: { hasVoiceNote: true, voiceNoteUrl, duration: duration ?? null },
+      },
+      include: { user: { select: { id: true, name: true, avatarUrl: true } }, lead: { select: { name: true, assignedToId: true } } },
+    });
+    this.gateway.emitToAdmin('activity:new', activity);
+    if (activity.lead?.assignedToId) {
+      this.gateway.emitToUser(activity.lead.assignedToId, 'activity:new', activity);
+    }
+    return activity;
   }
 
   async getAllActivities(user: any, filters: { type?: string; leadId?: string; limit?: number }) {

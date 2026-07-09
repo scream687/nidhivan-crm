@@ -74,6 +74,28 @@ export class WhatsAppService {
       },
     });
 
+    let activityUserId = agentId || 'system';
+    if (!contact.leadId) {
+      const foundLead = await this.prisma.lead.findFirst({ where: { phone: to } });
+      if (foundLead) {
+        await this.prisma.whatsAppContact.update({ where: { id: contact.id }, data: { leadId: foundLead.id } });
+        contact.leadId = foundLead.id;
+        activityUserId = foundLead.assignedToId || activityUserId;
+      }
+    }
+    if (contact.leadId) {
+      const waActivity = await this.prisma.activity.create({
+        data: {
+          type: 'WHATSAPP' as any,
+          title: 'WhatsApp message sent',
+          description: body.substring(0, 200),
+          metadata: { waMessageId: message.id, direction: 'out', type: 'text' },
+          userId: activityUserId,
+          leadId: contact.leadId,
+        },
+      });
+    }
+
     return { message, contact };
   }
 
@@ -120,8 +142,28 @@ export class WhatsAppService {
         },
       });
 
+      if (!contact.leadId) {
+        const foundLead = await this.prisma.lead.findFirst({ where: { phone } });
+        if (foundLead) {
+          await this.prisma.whatsAppContact.update({ where: { id: contact.id }, data: { leadId: foundLead.id } });
+          contact.leadId = foundLead.id;
+        }
+      }
+      if (contact.leadId) {
+        await this.prisma.activity.create({
+          data: {
+            type: 'WHATSAPP' as any,
+            title: 'WhatsApp message received',
+            description: body ? body.substring(0, 200) : null,
+            metadata: { waMessageId: message.id, direction: 'in', type: msgType },
+            userId: 'system',
+            leadId: contact.leadId,
+          },
+        });
+      }
+
       if (body) {
-        this.processIncomingMessage(contact.id, phone, body).catch(() => {});
+        this.processIncomingMessage(contact.id, phone, body).catch((e) => console.error("async", e));
       }
 
       return { status: 'ok', message, contact };

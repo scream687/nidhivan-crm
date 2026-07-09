@@ -35,7 +35,11 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     try {
       const token =
         client.handshake.auth?.token ||
-        client.handshake.headers?.authorization?.split(' ')[1];
+        client.handshake.headers?.authorization?.split(' ')[1] ||
+        client.handshake.headers?.cookie
+          ?.split(';')
+          .find((c) => c.trim().startsWith('accessToken='))
+          ?.split('=')[1];
       const payload = this.jwt.verify(token, {
         secret: this.config.get('JWT_SECRET'),
       });

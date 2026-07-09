@@ -80,9 +80,12 @@ function StageRow({ stage, onUpdate, onDelete, onDragStart, onDragOver, onDrop }
       onDragStart={() => onDragStart(stage.id)}
       onDragOver={onDragOver}
       onDrop={() => onDrop(stage.id)}
+      role="button"
+      aria-label={`Reorder ${stage.label}`}
+      tabIndex={0}
       className="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition"
     >
-      <GripVertical size={14} className="text-gray-300 flex-shrink-0" />
+      <GripVertical size={16} className="text-gray-300 flex-shrink-0 touch-none" />
 
       <span
         className="px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
@@ -121,11 +124,11 @@ function StageRow({ stage, onUpdate, onDelete, onDragStart, onDragOver, onDrop }
 
         {editing ? (
           <>
-            <button onClick={save} className="text-green-500 hover:text-green-600"><Check size={14} /></button>
-            <button onClick={cancel} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+            <button onClick={save} aria-label="Save stage" className="text-green-500 hover:text-green-600"><Check size={14} /></button>
+            <button onClick={cancel} aria-label="Cancel" className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
           </>
         ) : (
-          <button onClick={() => setEditing(true)} className="text-gray-400 hover:text-blue-500"><Edit2 size={13} /></button>
+          <button onClick={() => setEditing(true)} aria-label="Edit stage" className="text-gray-400 hover:text-blue-500"><Edit2 size={13} /></button>
         )}
 
         {!stage.isSystem && (

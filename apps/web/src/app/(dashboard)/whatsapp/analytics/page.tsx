@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { TrendingUp, MessageSquare, CheckCheck, Reply, Loader2 } from 'lucide-react';
+import { TrendingUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 
@@ -16,6 +16,7 @@ export default function WhatsAppAnalyticsPage() {
     setLoading(true);
     api.get(`/whatsapp/analytics?days=${days}`)
       .then(r => setData(r.data))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [days]);
 

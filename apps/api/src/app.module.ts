@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { join } from 'path';
 import { envValidationSchema } from './config/env.validation';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './health/health.module';
@@ -23,12 +25,25 @@ import { SavedFiltersModule } from './saved-filters/saved-filters.module';
 import { MailModule } from './mail/mail.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { WorkflowsModule } from './workflows/workflows.module';
+import { FollowUpModule } from './follow-up/follow-up.module';
+import { TasksModule } from './tasks/tasks.module';
+import { BusinessMetricsModule } from './metrics/business-metrics.module';
+import { PublicModule } from './public/public.module';
+import { VisitRequestsModule } from './visit-requests/visit-requests.module';
+import { CommunicationModule } from './communication/communication.module';
+import { AiModule } from './ai/ai.module';
+import { CompanyModule } from './company/company.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: envValidationSchema,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public', 'uploads'),
+      serveRoot: '/uploads',
     }),
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60_000, limit: 120 }, // 120 req/min globally
@@ -53,6 +68,15 @@ import { WorkflowsModule } from './workflows/workflows.module';
     MailModule,
     MarketingModule,
     WorkflowsModule,
+    FollowUpModule,
+    TasksModule,
+    PublicModule,
+    VisitRequestsModule,
+    CommunicationModule,
+    AiModule,
+    BusinessMetricsModule,
+    CompanyModule,
+    AuditModule,
   ],
   providers: [
     // Enforce throttling globally; individual routes can override with @Throttle / @SkipThrottle

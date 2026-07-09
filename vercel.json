@@ -1,0 +1,5 @@
+{
+  "buildCommand": "turbo run build --filter=@nidhivan/web",
+  "framework": "nextjs",
+  "outputDirectory": "apps/web/.next"
+}

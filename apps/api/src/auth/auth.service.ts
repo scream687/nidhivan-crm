@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -21,7 +21,7 @@ export class AuthService {
     this.googleClient = new OAuth2Client(config.get('GOOGLE_CLIENT_ID'));
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, userAgent?: string, ipAddress?: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.isActive) throw new UnauthorizedException('Invalid credentials');
 
@@ -31,10 +31,10 @@ export class AuthService {
     await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
     const { passwordHash, ...safeUser } = user;
-    return { accessToken: await this.signAccess(user), refreshToken: await this.createRefresh(user.id), user: safeUser };
+    return { accessToken: await this.signAccess(user), refreshToken: await this.createRefresh(user.id, userAgent, ipAddress), user: safeUser };
   }
 
-  async googleLogin(idToken: string) {
+  async googleLogin(idToken: string, userAgent?: string, ipAddress?: string) {
     const clientId = this.config.get('GOOGLE_CLIENT_ID');
     if (!clientId) throw new BadRequestException('Google login not configured');
 
@@ -66,7 +66,7 @@ export class AuthService {
     if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
 
     const { passwordHash, ...safeUser } = user;
-    return { accessToken: await this.signAccess(user), refreshToken: await this.createRefresh(user.id), user: safeUser };
+    return { accessToken: await this.signAccess(user), refreshToken: await this.createRefresh(user.id, userAgent, ipAddress), user: safeUser };
   }
 
   async forgotPassword(email: string) {
@@ -131,7 +131,7 @@ export class AuthService {
     }
 
     if (payload.purpose !== 'password_reset') throw new UnauthorizedException('Invalid token');
-    if (newPassword.length < 6) throw new BadRequestException('Password must be at least 6 characters');
+    if (newPassword.length < 8) throw new BadRequestException('Password must be at least 8 characters');
 
     const hash = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({ where: { id: payload.sub }, data: { passwordHash: hash } });
@@ -171,6 +171,30 @@ export class AuthService {
     return safe;
   }
 
+  async getSessions(userId: string) {
+    const tokens = await this.prisma.refreshToken.findMany({
+      where: { userId, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return tokens.map(t => ({
+      id: t.id,
+      userAgent: t.userAgent || 'Unknown device',
+      ipAddress: t.ipAddress,
+      createdAt: t.createdAt,
+      expiresAt: t.expiresAt,
+      isCurrent: false, // caller can override
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const token = await this.prisma.refreshToken.findFirst({
+      where: { id: sessionId, userId },
+    });
+    if (!token) throw new NotFoundException('Session not found');
+    await this.prisma.refreshToken.delete({ where: { id: sessionId } });
+    return { message: 'Session revoked' };
+  }
+
   private async signAccess(user: any) {
     return this.jwt.sign(
       { sub: user.id, email: user.email, role: user.role, name: user.name },
@@ -178,11 +202,11 @@ export class AuthService {
     );
   }
 
-  private async createRefresh(userId: string) {
+  private async createRefresh(userId: string, userAgent?: string, ipAddress?: string) {
     const raw = uuid();
     const hash = await bcrypt.hash(raw, 10);
     await this.prisma.refreshToken.create({
-      data: { tokenHash: hash, userId, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+      data: { tokenHash: hash, userId, userAgent: userAgent || null, ipAddress: ipAddress || null, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
     });
     return raw;
   }

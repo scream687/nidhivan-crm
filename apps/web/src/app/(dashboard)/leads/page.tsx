@@ -4,28 +4,44 @@ import { useRouter } from 'next/navigation';
 import { useLeadsStore } from '@/stores/leadsStore';
 import { LeadKanbanBoard } from '@/components/leads/LeadKanbanBoard';
 import { cn } from '@/lib/utils';
-import { LEAD_SOURCE_LABELS, LeadSource } from '@nidhivan/shared';
-import { Plus, Search, Filter, Download, Upload, Kanban, List, X, Save, Bookmark, ChevronDown } from 'lucide-react';
+import { LEAD_SOURCE_LABELS, LEAD_STAGE_LABELS, LeadSource, LeadStage } from '@nidhivan/shared';
+import { STAGE_COLORS } from '@/lib/utils';
+import { Plus, Search, Filter, Download, Upload, Kanban, List, X, Save, Bookmark, ChevronDown, Brain, Inbox } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import CreateLeadModal from '@/components/leads/CreateLeadModal';
 import ImportLeadsModal from '@/components/leads/ImportLeadsModal';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/stores/authStore';
+import { Role } from '@prisma/client';
 
 type ViewMode = 'kanban' | 'list';
 
-type Stage = { id: string; name: string; label: string; color: string; bgColor: string };
 type SavedFilter = { id: string; name: string; filters: any; isShared: boolean; user?: { name: string } };
+
+const STAGE_LIST = Object.values(LeadStage).map((s) => ({ name: s, label: LEAD_STAGE_LABELS[s] }));
 
 const SOURCES = Object.values(LeadSource);
 
 export default function LeadsPage() {
   const { kanban, leads, total, isLoading, fetchKanban, fetchLeads } = useLeadsStore();
+  const { user } = useAuthStore();
+  const isManager = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
   const [view, setView] = useState<ViewMode>('kanban');
   const [search, setSearch] = useState('');
+  const filteredLeads = search
+    ? leads.filter(lead => {
+        const q = search.toLowerCase();
+        return (
+          lead.name.toLowerCase().includes(q) ||
+          lead.phone.toLowerCase().includes(q) ||
+          ((lead as any).city || '').toLowerCase().includes(q)
+        );
+      })
+    : leads;
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [stages, setStages] = useState<Stage[]>([]);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showSaveFilter, setShowSaveFilter] = useState(false);
   const [saveFilterName, setSaveFilterName] = useState('');
@@ -41,6 +57,7 @@ export default function LeadsPage() {
   }>({ stages: [], source: '', assignedToId: '', isHot: '', city: '', budgetMin: '', budgetMax: '', dateFrom: '', dateTo: '' });
 
   const [agents, setAgents] = useState<any[]>([]);
+  // stages come from the shared enum — no API call needed
 
   const activeFilterCount = [
     filters.stages.length > 0, filters.source, filters.isHot,
@@ -66,9 +83,8 @@ export default function LeadsPage() {
   useEffect(() => {
     fetchKanban();
     fetchLeads();
-    api.get('/stages/active').then(r => setStages(r.data)).catch(() => {});
-    api.get('/saved-filters').then(r => setSavedFilters(r.data)).catch(() => {});
-    api.get('/users').then(r => setAgents(r.data)).catch(() => {});
+    api.get('/saved-filters').then(r => setSavedFilters(r.data)).catch(() => toast.error('Failed to load saved filters'));
+    api.get('/users').then(r => setAgents(r.data)).catch(() => toast.error('Failed to load agents'));
   }, []);
 
   useEffect(() => {
@@ -162,7 +178,7 @@ export default function LeadsPage() {
                   savedFilters.map(sf => (
                     <div key={sf.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
                       <button onClick={() => applyPreset(sf)} className="text-sm text-gray-700 text-left flex-1 hover:text-blue-600">{sf.name}</button>
-                      <button onClick={() => deletePreset(sf.id)} className="text-gray-300 hover:text-red-400 ml-2"><X size={12} /></button>
+                      <button onClick={() => deletePreset(sf.id)} aria-label="Delete preset" className="text-gray-300 hover:text-red-400 ml-2"><X size={12} /></button>
                     </div>
                   ))
                 )}
@@ -170,23 +186,44 @@ export default function LeadsPage() {
             )}
           </div>
 
-          <button onClick={() => setShowImport(true)} title="Import CSV"
+          <button onClick={() => setShowImport(true)} aria-label="Import CSV"
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition">
             <Upload size={14} />
           </button>
-          <button onClick={exportCsv} title="Export CSV"
+          <button onClick={exportCsv} aria-label="Export CSV"
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition">
             <Download size={14} />
           </button>
 
           <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-            <button onClick={() => setView('kanban')} className={cn('p-1.5 rounded-md transition', view === 'kanban' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
+            <button onClick={() => setView('kanban')} aria-label="Kanban view" className={cn('p-1.5 rounded-md transition', view === 'kanban' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
               <Kanban size={14} />
             </button>
-            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-md transition', view === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
+            <button onClick={() => setView('list')} aria-label="List view" className={cn('p-1.5 rounded-md transition', view === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
               <List size={14} />
             </button>
           </div>
+
+          {isManager && (
+            <button
+              onClick={async () => {
+                toast.loading('Batch scoring leads…');
+                try {
+                  await api.post('/leads/batch-score');
+                  toast.dismiss();
+                  toast.success('Scoring complete');
+                  fetchLeads(buildParams());
+                  fetchKanban();
+                } catch {
+                  toast.dismiss();
+                  toast.error('Batch scoring failed');
+                }
+              }}
+              className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition"
+            >
+              <Brain size={14} /> Batch Score
+            </button>
+          )}
 
           <button onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition">
@@ -202,12 +239,13 @@ export default function LeadsPage() {
           <div>
             <p className="text-xs font-semibold text-gray-500 mb-1.5">Stage</p>
             <div className="flex gap-1.5 flex-wrap">
-              {stages.map(s => (
+              {STAGE_LIST.map(s => (
                 <button key={s.name} onClick={() => toggleStage(s.name)}
                   className={cn('px-2.5 py-1 rounded-full text-xs font-medium border transition',
-                    filters.stages.includes(s.name) ? 'border-transparent text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                  )}
-                  style={filters.stages.includes(s.name) ? { backgroundColor: s.color, borderColor: s.color } : {}}>
+                    filters.stages.includes(s.name)
+                      ? STAGE_COLORS[s.name] + ' border-transparent'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  )}>
                   {s.label}
                 </button>
               ))}
@@ -248,7 +286,7 @@ export default function LeadsPage() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">City</label>
               <input value={filters.city} onChange={e => setFilters(f => ({ ...f, city: e.target.value }))}
-                placeholder="Jaipur…"
+                placeholder="City…"
                 className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
 
@@ -296,7 +334,7 @@ export default function LeadsPage() {
                 placeholder="Filter name…"
                 className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <button onClick={saveCurrentFilter} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Save</button>
-              <button onClick={() => setShowSaveFilter(false)} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+              <button onClick={() => setShowSaveFilter(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
             </div>
           )}
         </div>
@@ -310,21 +348,21 @@ export default function LeadsPage() {
           </div>
         ) : view === 'kanban' ? (
           <LeadKanbanBoard />
+        ) : leads.length === 0 ? (
+          <EmptyState icon={Inbox} title="No leads yet" description="Create your first lead to get started" action={{ label: 'Add Lead', onClick: () => setShowCreate(true) }} />
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px]">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {['Lead Owner', 'Lead Date', 'Contact Name', 'Mobile Number', 'Lead Stage', 'Project Name', 'Site Location', 'Next Follow-Up On', 'Next Follow-Up Info', 'Requirements', 'Description'].map(h => (
+                  {['Lead Owner', 'Lead Date', 'Contact Name', 'Mobile Number', 'Lead Stage', 'AI Score', 'Project Name', 'Site Location', 'Next Follow-Up On', 'Next Follow-Up Info', 'Requirements', 'Description'].map(h => (
                     <th key={h} className="text-left text-xs font-semibold text-gray-500 px-3 py-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => {
-                  const stageConfig = stages.find(s => s.name === lead.stage);
-                  return (
+                {filteredLeads.map((lead) => (
                     <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)}
                       className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition">
                       <td className="px-3 py-3 text-sm text-gray-700 whitespace-nowrap">{lead.assignedTo?.name || '—'}</td>
@@ -335,10 +373,26 @@ export default function LeadsPage() {
                       </td>
                       <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{lead.phone}</td>
                       <td className="px-3 py-3">
-                        <span className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
-                          style={stageConfig ? { color: stageConfig.color, backgroundColor: stageConfig.bgColor } : { color: '#6b7280', backgroundColor: '#f3f4f6' }}>
-                          {stageConfig?.label || lead.stage}
+                        <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap', STAGE_COLORS[lead.stage] || 'bg-gray-100 text-gray-600')}>
+                          {LEAD_STAGE_LABELS[lead.stage as LeadStage] || lead.stage}
                         </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        {(lead as any).aiScore != null ? (
+                          <span className={cn(
+                            'inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                            (lead as any).aiScore >= 70
+                              ? 'bg-green-100 text-green-700'
+                              : (lead as any).aiScore >= 40
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700',
+                          )}>
+                            <Brain size={10} />
+                            {(lead as any).aiScore}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-300 font-mono">—</span>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-sm text-gray-600 max-w-[120px] truncate">{(lead as any).projectInterest || '—'}</td>
                       <td className="px-3 py-3 text-sm text-gray-600 max-w-[120px] truncate">{(lead as any).siteLocation || '—'}</td>
@@ -349,8 +403,7 @@ export default function LeadsPage() {
                       <td className="px-3 py-3 text-sm text-gray-600 max-w-[140px] truncate">{(lead as any).requirements || '—'}</td>
                       <td className="px-3 py-3 text-sm text-gray-600 max-w-[160px] truncate">{(lead as any).description || '—'}</td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
             </div>

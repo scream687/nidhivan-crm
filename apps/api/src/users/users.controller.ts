@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -17,7 +17,7 @@ export class UsersController {
   }
 
   @Patch('me')
-  updateMe(@CurrentUser() user: any, @Body() body: { name?: string; phone?: string }) {
+  updateMe(@CurrentUser() user: any, @Body() body: { name?: string; phone?: string; notificationPreferences?: Record<string, boolean> }) {
     return this.users.updateSelf(user.id, body);
   }
 
@@ -27,10 +27,16 @@ export class UsersController {
     return this.users.create(body);
   }
 
+  @Post('invite')
+  @Roles(Role.ADMIN)
+  invite(@Body() body: { name: string; email: string; role?: Role; phone?: string }) {
+    return this.users.invite(body);
+  }
+
   @Get()
   @Roles(Role.ADMIN, Role.MANAGER)
-  findAll() {
-    return this.users.findAll();
+  findAll(@Query() query: { page?: string; limit?: string; search?: string; role?: string }) {
+    return this.users.findAll(query);
   }
 
   @Get('leaderboard')
@@ -58,5 +64,11 @@ export class UsersController {
   @Patch(':id/password')
   changePassword(@Param('id') id: string, @Body() body: { currentPassword: string; newPassword: string }) {
     return this.users.changePassword(id, body.currentPassword, body.newPassword);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  deactivate(@Param('id') id: string) {
+    return this.users.deactivate(id);
   }
 }

@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import * as cookieParser from 'cookie-parser';
 
 // Sentry must initialise before any other imports touch instrumented modules
 if (process.env.SENTRY_DSN) {
@@ -23,20 +24,33 @@ async function bootstrap() {
   app.use(
     helmet({
       crossOriginEmbedderPolicy: false,
-      contentSecurityPolicy: false, // Next.js controls its own CSP
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:"],
+          connectSrc: ["'self'", "wss:"],
+          fontSrc: ["'self'", "data:"],
+          objectSrc: ["'none'"],
+          upgradeInsecureRequests: [],
+        },
+      },
     }),
   );
 
+  app.use(cookieParser());
   app.setGlobalPrefix('api/v1');
 
   // Strict CORS — only allow the configured frontend origin
   const allowed = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
+    'http://localhost:4000',
   ];
   app.enableCors({
     origin: (origin, cb) => {
-      if (!origin || allowed.includes(origin)) cb(null, true);
+      if (!origin || allowed.includes(origin) || origin.startsWith('http://192.168.')) cb(null, true);
       else cb(new Error(`CORS: ${origin} not allowed`));
     },
     credentials: true,
@@ -51,8 +65,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  const port = parseInt(process.env.PORT || '4000', 10);
-  await app.listen(port);
+  const port = parseInt(process.env.PORT || '3001', 10);
+  await app.listen(port, '0.0.0.0');
   logger.log(
     `Nidhivan CRM API on :${port} [${process.env.NODE_ENV ?? 'development'}]`,
   );

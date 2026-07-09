@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { X, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -32,9 +33,12 @@ export default function ImportLeadsModal({ onClose, onImported }: Props) {
     }
   };
 
+  const trapRef = useFocusTrap(true);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <motion.div
+        ref={trapRef} tabIndex={-1}
         initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
       >
@@ -43,7 +47,7 @@ export default function ImportLeadsModal({ onClose, onImported }: Props) {
             <h2 className="text-lg font-bold text-gray-900">Import Leads from CSV</h2>
             <p className="text-xs text-gray-500">Upload a Cratio or Nidhivan CSV export</p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition"><X size={18} /></button>
+          <button onClick={onClose} aria-label="Close" className="p-1.5 hover:bg-gray-100 rounded-lg transition"><X size={18} /></button>
         </div>
 
         <div className="px-6 py-5">

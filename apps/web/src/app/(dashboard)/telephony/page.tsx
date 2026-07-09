@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import api from '@/lib/api';
 import { cn, timeAgo } from '@/lib/utils';
-import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Clock, User } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { Phone, PhoneIncoming, PhoneOutgoing } from 'lucide-react';
 
 export default function TelephonyPage() {
   const [calls, setCalls] = useState<any[]>([]);
@@ -87,6 +88,7 @@ export default function TelephonyPage() {
 }
 
 function LogCallModal({ onClose, onLogged }: { onClose: () => void; onLogged: () => void }) {
+  const trapRef = useFocusTrap(true);
   const [form, setForm] = useState({ fromNumber: '', toNumber: '', callType: 'OUTGOING', duration: '', notes: '' });
   const [loading, setLoading] = useState(false);
 
@@ -99,7 +101,7 @@ function LogCallModal({ onClose, onLogged }: { onClose: () => void; onLogged: ()
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+      <motion.div ref={trapRef} tabIndex={-1} initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Log Call</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           {[

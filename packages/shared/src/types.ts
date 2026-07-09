@@ -68,16 +68,81 @@ export interface DashboardKpis {
   avgResponseTime: number;
 }
 
-export interface AgentStats {
-  userId: string;
+export interface NearbyPlace {
   name: string;
-  avatarUrl?: string;
-  totalLeads: number;
-  callsToday: number;
-  followUpsCompleted: number;
-  conversions: number;
-  productivityScore: number;
+  type: string;
+  distance: string;
+  icon?: string;
 }
+
+export interface Plot {
+  id: string;
+  projectId: string;
+  block?: string;
+  road?: string;
+  plotNumber: string;
+  facing?: string;
+  dimensions?: string;
+  area?: number;
+  areaUnit: string;
+  ratePerUnit?: number;
+  totalPrice?: number;
+  status: string;
+  isCorner: boolean;
+  isAvenue: boolean;
+  roadWidth?: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlotFilters {
+  status?: string;
+  facing?: string;
+  block?: string;
+  priceMin?: number;
+  priceMax?: number;
+}
+
+export interface TimelineEntry {
+  id: string;
+  type: 'CALL' | 'WHATSAPP' | 'NOTE' | 'TASK' | 'ACTIVITY' | 'SITE_VISIT' | 'BOOKING';
+  direction?: 'INCOMING' | 'OUTGOING';
+  title?: string;
+  description?: string;
+  content?: string;
+  createdAt: string;
+  user?: { id: string; name: string };
+  // Call-specific
+  phoneNumber?: string;
+  duration?: number;
+  recordingUrl?: string;
+  callStatus?: string;
+  // WhatsApp-specific
+  mediaUrl?: string;
+  mediaType?: string;
+  // Activity-specific
+  activityType?: string;
+  // Task-specific
+  isCompleted?: boolean;
+  dueDate?: string;
+  // Visit-specific
+  visitStatus?: string;
+  visitOutcome?: string;
+  // Booking-specific
+  bookingNumber?: string;
+  bookingStatus?: string;
+}
+
+export interface TimelineResponse {
+  items: TimelineEntry[];
+  nextCursor: string | null;
+  total: number;
+}
+
+export type TimelineFilter = 'ALL' | 'CALL' | 'WHATSAPP' | 'NOTE' | 'ACTIVITY' | 'TASK' | 'SITE_VISIT' | 'BOOKING';
 
 export interface SocketEvents {
   'lead:assigned': { leadId: string; agentId: string; leadNumber: string };

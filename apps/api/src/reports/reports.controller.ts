@@ -32,6 +32,41 @@ export class ReportsController {
     return this.reports.getSalesFunnel();
   }
 
+  @Get('pipeline-value')
+  pipelineValue() {
+    return this.reports.getPipelineValue();
+  }
+
+  @Get('site-visits')
+  siteVisits(@Query() q: any) {
+    return this.reports.getSiteVisitReport(q.from ? new Date(q.from) : undefined, q.to ? new Date(q.to) : undefined);
+  }
+
+  @Get('bookings')
+  bookings(@Query() q: any) {
+    return this.reports.getBookingReport(q.from ? new Date(q.from) : undefined, q.to ? new Date(q.to) : undefined);
+  }
+
+  @Get('follow-ups')
+  followUps(@Query() q: any) {
+    return this.reports.getFollowUpReport(q.from ? new Date(q.from) : undefined, q.to ? new Date(q.to) : undefined);
+  }
+
+  @Get('activities')
+  activities(@Query() q: any) {
+    return this.reports.getActivityReport(q.from ? new Date(q.from) : undefined, q.to ? new Date(q.to) : undefined);
+  }
+
+  @Get('conversion')
+  conversion() {
+    return this.reports.getConversionReport();
+  }
+
+  @Get('dashboard-overview')
+  dashboardOverview() {
+    return this.reports.getDashboardOverview();
+  }
+
   @Get('export/leads')
   async exportLeads(@Query() q: any, @Res() res: Response) {
     const csv = await this.reports.exportLeadsCsv({});

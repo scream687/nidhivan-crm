@@ -95,7 +95,7 @@ export class MarketingService implements OnModuleInit {
       skipDuplicates: true,
     });
 
-    this.processCampaignSends(id, campaign.type, campaign.messageTemplate, campaign.subject ?? undefined, leads).catch(() => {});
+    this.processCampaignSends(id, campaign.type, campaign.messageTemplate, campaign.subject ?? undefined, leads).catch((e) => console.error("async", e));
     return { queued: leads.length };
   }
 
@@ -177,6 +177,262 @@ export class MarketingService implements OnModuleInit {
         update: { status: 'ACTIVE', currentStep: 0, nextActionAt },
       });
     }
+  }
+
+  // ── Landing Pages ─────────────────────────────────────────────────────────
+
+  async createLandingPage(data: {
+    title: string;
+    slug: string;
+    projectId: string;
+    headTitle?: string;
+    headDescription?: string;
+    heroHeadline?: string;
+    heroSubheadline?: string;
+    heroCtaText?: string;
+    heroImageUrl?: string;
+    sections?: any;
+    showGallery?: boolean;
+    showAmenities?: boolean;
+    showForm?: boolean;
+    showMap?: boolean;
+  }) {
+    const existing = await this.prisma.landingPage.findUnique({ where: { slug: data.slug } });
+    if (existing) throw new BadRequestException('Landing page slug already exists');
+    return this.prisma.landingPage.create({ data });
+  }
+
+  async updateLandingPage(id: string, data: Partial<{
+    title: string;
+    slug: string;
+    isActive: boolean;
+    headTitle: string;
+    headDescription: string;
+    heroHeadline: string;
+    heroSubheadline: string;
+    heroCtaText: string;
+    heroImageUrl: string;
+    sections: any;
+    showGallery: boolean;
+    showAmenities: boolean;
+    showForm: boolean;
+    showMap: boolean;
+  }>) {
+    const page = await this.prisma.landingPage.findUnique({ where: { id } });
+    if (!page) throw new NotFoundException('Landing page not found');
+    if (data.slug && data.slug !== page.slug) {
+      const existing = await this.prisma.landingPage.findUnique({ where: { slug: data.slug } });
+      if (existing) throw new BadRequestException('Slug already in use');
+    }
+    return this.prisma.landingPage.update({ where: { id }, data });
+  }
+
+  async listLandingPages(projectId?: string) {
+    const where = projectId ? { projectId } : {};
+    return this.prisma.landingPage.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { project: { select: { id: true, name: true, slug: true } } },
+    });
+  }
+
+  async getLandingPageById(id: string) {
+    const page = await this.prisma.landingPage.findUnique({
+      where: { id },
+      include: { project: true },
+    });
+    if (!page) throw new NotFoundException('Landing page not found');
+    return page;
+  }
+
+  async deleteLandingPage(id: string) {
+    const page = await this.prisma.landingPage.findUnique({ where: { id } });
+    if (!page) throw new NotFoundException('Landing page not found');
+    await this.prisma.landingPage.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  async submitLandingPageLead(slug: string, data: { name: string; phone: string; email?: string; message?: string }) {
+    const page = await this.prisma.landingPage.findUnique({ where: { slug } });
+    if (!page) throw new NotFoundException('Landing page not found');
+    if (!page.isActive) throw new BadRequestException('Landing page is not active');
+
+    const leadNumber = `LP-${Date.now().toString(36).toUpperCase()}`;
+
+    await this.prisma.lead.create({
+      data: {
+        leadNumber,
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        description: data.message,
+        source: 'WEBSITE',
+        landingPageId: page.id,
+        landingPage: slug,
+        projectInterest: page.projectId,
+        createdById: page.projectId,
+      },
+    });
+
+    await this.prisma.landingPage.update({
+      where: { id: page.id },
+      data: { leadsGenerated: { increment: 1 } },
+    });
+
+    return { success: true, leadNumber };
+  }
+
+  // ── Referral Codes ────────────────────────────────────────────────────────
+
+  async createReferralCode(data: {
+    code: string;
+    projectId: string;
+    name?: string;
+    phone?: string;
+    discountPct?: number;
+    discountAmt?: number;
+    maxUses?: number;
+    createdById: string;
+  }) {
+    const existing = await this.prisma.referralCode.findUnique({ where: { code: data.code.toUpperCase() } });
+    if (existing) throw new BadRequestException('Referral code already exists');
+    return this.prisma.referralCode.create({
+      data: { ...data, code: data.code.toUpperCase() },
+    });
+  }
+
+  async listReferralCodes(projectId?: string) {
+    const where = projectId ? { projectId } : {};
+    return this.prisma.referralCode.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getReferralByCode(code: string) {
+    const ref = await this.prisma.referralCode.findUnique({ where: { code: code.toUpperCase() } });
+    if (!ref) throw new NotFoundException('Referral code not found');
+    return ref;
+  }
+
+  async incrementReferralUse(code: string) {
+    const ref = await this.prisma.referralCode.findUnique({ where: { code: code.toUpperCase() } });
+    if (!ref) throw new NotFoundException('Referral code not found');
+    if (!ref.isActive) throw new BadRequestException('Referral code is not active');
+    if (ref.maxUses > 0 && ref.useCount >= ref.maxUses) {
+      throw new BadRequestException('Referral code has reached max uses');
+    }
+    return this.prisma.referralCode.update({
+      where: { id: ref.id },
+      data: { useCount: { increment: 1 } },
+    });
+  }
+
+  async getReferralReport(from?: string, to?: string) {
+    const where: any = {};
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = new Date(from);
+      if (to) where.createdAt.lte = new Date(to);
+    }
+
+    const leads = await this.prisma.lead.findMany({
+      where: { ...where, referralCode: { not: null } },
+      select: { id: true, referralCode: true, isConverted: true, bookingAmount: true, bookingStatus: true },
+    });
+
+    const byCode = new Map<string, { leads: number; converted: number; revenue: number }>();
+    for (const lead of leads) {
+      const key = lead.referralCode!;
+      const cur = byCode.get(key) ?? { leads: 0, converted: 0, revenue: 0 };
+      cur.leads++;
+      if (lead.isConverted) cur.converted++;
+      if (lead.bookingAmount) cur.revenue += Number(lead.bookingAmount);
+      byCode.set(key, cur);
+    }
+
+    const codes = await this.prisma.referralCode.findMany({
+      where: { code: { in: Array.from(byCode.keys()) } },
+    });
+    const codeMap = new Map(codes.map(c => [c.code, c]));
+
+    const breakdown = Array.from(byCode.entries()).map(([code, stats]) => {
+      const ref = codeMap.get(code);
+      const discountTotal = ref
+        ? (ref.discountPct
+            ? stats.revenue * (Number(ref.discountPct) / 100)
+            : Number(ref.discountAmt ?? 0)) * stats.converted
+        : 0;
+      return { code, referrer: ref?.name ?? null, ...stats, discountCost: discountTotal };
+    });
+
+    const totals = breakdown.reduce(
+      (acc, r) => ({ leads: acc.leads + r.leads, converted: acc.converted + r.converted, revenue: acc.revenue + r.revenue, discountCost: acc.discountCost + r.discountCost }),
+      { leads: 0, converted: 0, revenue: 0, discountCost: 0 },
+    );
+
+    return { breakdown, totals };
+  }
+
+  // ── Campaign ROI ──────────────────────────────────────────────────────────
+
+  async getCampaignROI(from?: string, to?: string) {
+    const campaigns = await this.prisma.campaign.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { logs: true } } },
+    });
+
+    const leadWhere: any = {};
+    if (from || to) {
+      leadWhere.createdAt = {};
+      if (from) leadWhere.createdAt.gte = new Date(from);
+      if (to) leadWhere.createdAt.lte = new Date(to);
+    }
+
+    const results = await Promise.all(
+      campaigns.map(async campaign => {
+        const leads = await this.prisma.lead.findMany({
+          where: { ...leadWhere, campaignName: campaign.name },
+          select: { id: true, isConverted: true, bookingAmount: true, bookingStatus: true },
+        });
+
+        const totalLeads = leads.length;
+        const converted = leads.filter(l => l.isConverted).length;
+        const revenue = leads.reduce((sum, l) => sum + Number(l.bookingAmount ?? 0), 0);
+
+        const integrationCost = await this.getIntegrationCost(campaign.name);
+
+        const cost = integrationCost ?? 0;
+        const roi = cost > 0 ? ((revenue - cost) / cost) * 100 : null;
+
+        return {
+          campaignId: campaign.id,
+          campaignName: campaign.name,
+          campaignType: campaign.type,
+          status: campaign.status,
+          cost,
+          leads: totalLeads,
+          converted,
+          revenue,
+          roi: roi != null ? Math.round(roi * 100) / 100 : null,
+        };
+      }),
+    );
+
+    return results;
+  }
+
+  private async getIntegrationCost(campaignName: string): Promise<number | null> {
+    const configs = await this.prisma.integrationConfig.findMany();
+    for (const config of configs) {
+      const meta = config.metadata as any;
+      if (meta?.costs) {
+        if (typeof meta.costs === 'object' && meta.costs[campaignName] != null) {
+          return Number(meta.costs[campaignName]);
+        }
+      }
+    }
+    return null;
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

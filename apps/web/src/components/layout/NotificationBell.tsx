@@ -58,7 +58,7 @@ export function NotificationBell() {
     try {
       const { data } = await api.get('/notifications');
       setNotifications(data);
-    } catch {}
+    } catch { toast.error('Failed to load notifications'); }
   }
 
   async function markRead(id: string) {
@@ -83,6 +83,7 @@ export function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
+        title="Notifications (Alt+N)"
         className="relative p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition"
       >
         <Bell size={15} />

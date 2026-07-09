@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @import "tw-animate-css";
 
 @import "shadcn/tailwind.css";
@@ -98,8 +96,8 @@
 }
 
 /* Kanban scroll */
-.kanban-board { @apply flex gap-3 overflow-x-auto pb-4; min-height: calc(100vh - 200px); }
-.kanban-column { @apply flex-shrink-0 w-72 bg-gray-50 rounded-xl p-3 flex flex-col gap-2; }
+.kanban-board { @apply flex-col md:flex-row gap-3 overflow-x-auto pb-4; min-height: calc(100vh - 200px); }
+.kanban-column { @apply flex-shrink-0 w-full md:w-72 bg-gray-50 rounded-xl p-3 flex flex-col gap-2; }
 .kanban-card { @apply bg-white rounded-lg p-3 shadow-card hover:shadow-card-hover cursor-pointer transition-shadow; }
 
 /* Softphone widget */
@@ -109,3 +107,7 @@
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { @apply bg-transparent; }
 ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

@@ -28,6 +28,12 @@ enum LeadSource {
   WHATSAPP
   WEBSITE
   GOOGLE_ADS
+  MAGICBRICKS
+  INDIAMART
+  QR_CODE
+  REFERRAL
+  YOUTUBE
+  JUST_DIAL
   OTHER
 }
 
@@ -105,9 +111,10 @@ model User {
   isActive            Boolean   @default(true)
   exotelAgentId       String?
   targetLeadsMonth    Int?
-  targetRevenueMonth  Decimal?  @db.Decimal(15, 2)
-  lastLoginAt         DateTime?
-  createdAt           DateTime  @default(now())
+  targetRevenueMonth    Decimal?     @db.Decimal(15, 2)
+  notificationPreferences Json?      @default("{}")
+  lastLoginAt            DateTime?
+  createdAt              DateTime     @default(now())
   updatedAt           DateTime  @updatedAt
 
   assignedLeads       Lead[]          @relation("AssignedLeads")
@@ -142,6 +149,7 @@ model PasswordResetToken {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("password_reset_tokens")
 }
 
@@ -149,11 +157,14 @@ model RefreshToken {
   id         String   @id @default(cuid())
   tokenHash  String   @unique
   userId     String
+  userAgent  String?
+  ipAddress  String?
   expiresAt  DateTime
   createdAt  DateTime @default(now())
 
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("refresh_tokens")
 }
 
@@ -213,6 +224,8 @@ model Lead {
   utmMedium           String?
   utmCampaign         String?
   landingPage         String?
+  landingPageId       String?
+  referralCode        String?
 
   requirements        String?
   description         String?
@@ -255,6 +268,8 @@ model Lead {
   @@index([nextFollowUpAt])
   @@index([assignedToId, stage])
   @@index([assignedToId, createdAt])
+  @@index([createdById])
+  @@index([updatedAt])
   @@map("leads")
 }
 
@@ -280,6 +295,14 @@ model SiteVisit {
   objections      String?
   followUpNotes   String?
   followUpDate    DateTime?
+  driverName      String?
+  driverPhone     String?
+  pickupLocation  String?
+  pickupTime      String?
+  gpsLatitude     Float?
+  gpsLongitude    Float?
+  gpsCheckedInAt  DateTime?
+  photos          String[]         @default([])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -287,6 +310,7 @@ model SiteVisit {
   @@index([assignedToId])
   @@index([visitDate])
   @@index([conductedById])
+  @@index([scheduledAt])
   @@map("site_visits")
 }
 
@@ -329,24 +353,33 @@ model Activity {
 }
 
 model Task {
-  id           String    @id @default(cuid())
-  title        String
-  description  String?
-  dueDate      DateTime?
-  isCompleted  Boolean   @default(false)
-  completedAt  DateTime?
-  priority     Priority  @default(MEDIUM)
-  assignedToId String
-  leadId       String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  dueDate         DateTime?
+  isCompleted     Boolean   @default(false)
+  completedAt     DateTime?
+  priority        Priority  @default(MEDIUM)
+  assignedToId    String
+  leadId          String?
+  reminderAt      DateTime?
+  reminderSent    Boolean   @default(false)
+  reminderNote    String?
+  followupType    String?
+  escalationLevel Int       @default(0)
+  escalatedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  assignedTo   User      @relation(fields: [assignedToId], references: [id])
-  lead         Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedTo      User      @relation(fields: [assignedToId], references: [id])
+  lead            Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([assignedToId])
   @@index([leadId])
   @@index([dueDate])
+  @@index([reminderAt])
+  @@index([escalationLevel])
+  @@index([isCompleted])
   @@map("tasks")
 }
 
@@ -378,6 +411,7 @@ model CallLog {
 
   @@index([leadId])
   @@index([callerId])
+  @@index([receiverId])
   @@index([createdAt])
   @@index([callerId, createdAt])
   @@map("call_logs")
@@ -476,6 +510,7 @@ model WhatsAppConfig {
 model Project {
   id           String    @id @default(cuid())
   name         String
+  slug         String    @unique
   type         String    @default("PLOT") // PLOT, TOWNSHIP, APARTMENT, VILLA
   location     String
   city         String    @default("Jaipur")
@@ -485,15 +520,79 @@ model Project {
   booked       Int       @default(0)
   sold         Int       @default(0)
   pricePerSqft Decimal?  @db.Decimal(15, 2)
+  priceMin     Decimal?  @db.Decimal(15, 2)
+  priceMax     Decimal?  @db.Decimal(15, 2)
   reraNumber   String?
   description  String?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  images       String[]  @default([])
+  brochureUrl  String?
+  videoUrl     String?
+  amenities     String[]  @default([])
+  highlights    String[]  @default([])
+  possession    String?
+  masterPlanUrl String?
+  virtualTourUrl String?
+  nearbyPlaces  Json?
+  googleMapsEmbed String?
+  isPublished   Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  bookings     Booking[]
+  bookings      Booking[]
+  visitRequests SiteVisitRequest[]
+  plots         Plot[]
+  landingPages  LandingPage[]
+  referralCodes ReferralCode[]
 
   @@map("projects")
+}
+
+model Plot {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  block          String?
+  road           String?
+  plotNumber     String
+  facing         String?
+  dimensions     String?
+  area           Decimal?  @db.Decimal(10, 2)
+  areaUnit       String    @default("SQ_YD")
+  ratePerUnit    Decimal?  @db.Decimal(15, 2)
+  totalPrice     Decimal?  @db.Decimal(15, 2)
+  status         String    @default("AVAILABLE")
+  isCorner       Boolean   @default(false)
+  isAvenue       Boolean   @default(false)
+  roadWidth      String?
+  gpsLatitude    Float?
+  gpsLongitude   Float?
+  isPublished    Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@index([plotNumber])
+  @@map("plots")
+}
+
+model SiteVisitRequest {
+  id            String    @id @default(cuid())
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id])
+  name          String
+  phone         String
+  email         String?
+  preferredDate DateTime?
+  message       String?
+  status        String    @default("PENDING") // PENDING | CONTACTED | SCHEDULED | REJECTED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@map("site_visit_requests")
 }
 
 model Booking {
@@ -508,9 +607,22 @@ model Booking {
   bookingAmount  Decimal  @db.Decimal(15, 2)
   totalAmount    Decimal  @db.Decimal(15, 2)
   status         String   @default("CONFIRMED")
-  paymentPlan    Json?
-  notes          String?
-  agentId        String
+  paymentPlan        Json?
+  agentCommission    Decimal?   @db.Decimal(15, 2)
+  commissionStatus   String?    @default("PENDING")
+  commissionPaidAt   DateTime?
+  commissionNotes    String?
+  registryStatus     String?    @default("TOKEN")
+  registryDate       DateTime?
+  registryNumber     String?
+  documents          Json?      @default("[]")
+  tokenAmount        Decimal?   @db.Decimal(15, 2)
+  tokenDate          DateTime?
+  bookingLetterUrl   String?
+  receiptUrl         String?
+  bookingTimeline    Json?      @default("[]")
+  notes              String?
+  agentId            String
   bookingDate    DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -522,6 +634,7 @@ model Booking {
   @@index([leadId])
   @@index([projectId])
   @@index([agentId])
+  @@index([createdAt])
   @@map("bookings")
 }
 
@@ -654,6 +767,69 @@ model NurtureEnrollment {
   @@unique([sequenceId, leadId])
   @@index([status, nextActionAt])
   @@map("nurture_enrollments")
+}
+
+model LandingPage {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  isActive        Boolean   @default(true)
+  headTitle       String?
+  headDescription String?
+  heroHeadline    String?
+  heroSubheadline String?
+  heroCtaText     String?
+  heroImageUrl    String?
+  sections        Json?     @default("[]")
+  showGallery     Boolean   @default(true)
+  showAmenities   Boolean   @default(true)
+  showForm        Boolean   @default(true)
+  showMap         Boolean   @default(true)
+  visitorCount    Int       @default(0)
+  leadsGenerated  Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([projectId])
+  @@map("landing_pages")
+}
+
+model ReferralCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  name        String?
+  phone       String?
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  discountPct Decimal?  @db.Decimal(5, 2)
+  discountAmt Decimal?  @db.Decimal(15, 2)
+  maxUses     Int       @default(0)
+  useCount    Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([projectId])
+  @@map("referral_codes")
+}
+
+// ─── Company Settings ─────────────────────────────────────────────────────────
+
+model Company {
+  id         String   @id @default(cuid())
+  name       String?
+  address    String?
+  phone      String?
+  email      String?
+  gstin      String?
+  reraNumber String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("company_settings")
 }
 
 // ─── Workflows & Chatbot ──────────────────────────────────────────────────────

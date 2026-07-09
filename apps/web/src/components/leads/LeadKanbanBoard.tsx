@@ -6,7 +6,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useLeadsStore } from '@/stores/leadsStore';
 import { LeadKanbanCard } from './LeadKanbanCard';
-import { cn } from '@/lib/utils';
+import { cn, COLUMN_HEADER_COLORS } from '@/lib/utils';
 import { useState } from 'react';
 
 function SortableCard({ lead, onClick }: { lead: any; onClick: () => void }) {
@@ -14,7 +14,7 @@ function SortableCard({ lead, onClick }: { lead: any; onClick: () => void }) {
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
       {...attributes} {...listeners}>
-      <LeadKanbanCard lead={lead} onClick={onClick} />
+      <LeadKanbanCard lead={lead} onClick={onClick} isDragging={isDragging} />
     </div>
   );
 }
@@ -38,14 +38,14 @@ export function LeadKanbanBoard() {
       <div className="kanban-board">
         {kanban.map((col) => (
           <div key={col.stage} id={col.stage} className="kanban-column">
-            <div className="flex items-center justify-between mb-1 px-1">
+            <div className={cn('flex items-center justify-between mb-1 px-2 py-1.5 rounded-lg', COLUMN_HEADER_COLORS[col.stage] ?? 'bg-gray-50')}>
               <h3 className={cn('text-xs font-semibold uppercase tracking-wide',
                 col.isWon ? 'text-green-600' : col.isLost ? 'text-red-400' : 'text-gray-500'
               )}
                 style={col.color ? { color: col.color } : undefined}>
                 {col.label || col.stage}
               </h3>
-              <span className="bg-gray-200 text-gray-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{col.count}</span>
+              <span className="bg-white/70 text-gray-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{col.count}</span>
             </div>
 
             <SortableContext items={col.leads.map((l: any) => l.id)} strategy={verticalListSortingStrategy}>

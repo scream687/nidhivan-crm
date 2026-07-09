@@ -139,7 +139,7 @@ export default function LoginPage() {
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-sm font-medium text-gray-700">Password</label>
                     <button type="button" onClick={() => { setFpEmail(email); setScreen('forgot'); }}
-                      className="text-xs text-blue-600 hover:text-blue-700 hover:underline">
+                      className="text-xs text-blue-600 hover:text-blue-700 hover:underline min-h-[44px] inline-flex items-center">
                       Forgot password?
                     </button>
                   </div>
@@ -246,7 +246,7 @@ export default function LoginPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">New password</label>
                   <div className="relative">
                     <input type={showNewPw ? 'text' : 'password'} value={newPass} onChange={e => setNewPass(e.target.value)} required
-                      minLength={6} placeholder="Min 6 characters"
+                      minLength={8} placeholder="Min 8 characters"
                       className="w-full px-3.5 py-2.5 pr-10 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
                     <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
                       {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

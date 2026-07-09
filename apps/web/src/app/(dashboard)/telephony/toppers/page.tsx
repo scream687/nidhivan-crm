@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Phone, Clock, TrendingUp, Loader2 } from 'lucide-react';
+import { Trophy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 
