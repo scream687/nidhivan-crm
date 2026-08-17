@@ -11,7 +11,15 @@ const nextConfig = {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:4000/api/v1/:path*',
+        destination: 'http://127.0.0.1:3001/api/v1/:path*',
+      },
+      {
+        source: '/uploads/:path*',
+        destination: 'http://127.0.0.1:3001/uploads/:path*',
+      },
+      {
+        source: '/socket.io/:path*',
+        destination: 'http://127.0.0.1:3001/socket.io/:path*',
       },
     ];
   },

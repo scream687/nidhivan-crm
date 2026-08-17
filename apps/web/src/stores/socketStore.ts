@@ -23,7 +23,9 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       existing.disconnect();
     }
 
-    const socket = io(`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000'}/crm`, {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const socketUrl = apiBase.startsWith('/') ? '/crm' : `${apiBase.replace('/api/v1', '')}/crm`;
+    const socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket'],
       reconnection: true,
