@@ -8,6 +8,11 @@ export function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
+    // Files under public/ — sw.js, manifest.json, icons. A logged-out browser
+    // must still be able to fetch these. Redirecting /sw.js is especially bad:
+    // browsers reject a redirected worker script, so a stale service worker can
+    // never be updated or unregistered.
+    pathname.includes('.') ||
     pathname === '/login' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password'
