@@ -22,8 +22,9 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api/v1',
   },
-  // One next/image call site in the whole app — not worth standing up
-  // Cloudflare Images or a custom loader to serve it.
+  // Nothing renders through next/image today, so this is inert. It stays as a
+  // guard: Workers has no Next image optimizer, so the first next/image added
+  // without this would need Cloudflare Images or a custom loader.
   images: { unoptimized: true },
   async rewrites() {
     // Dev only. These proxy to the API running on localhost; in production the
