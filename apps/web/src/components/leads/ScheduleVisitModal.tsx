@@ -60,7 +60,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
         >
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-blue-600" />
+              <MapPin size={16} className="text-[#E04020]" />
               <h2 className="text-base font-semibold text-gray-900">Schedule Site Visit</h2>
             </div>
             <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
@@ -73,7 +73,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 type="datetime-local"
                 value={form.scheduledAt}
                 onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -84,7 +84,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.address}
                 onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
                 placeholder="e.g. Nidhivan Plot No. 5, Sector 12"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
                 autoFocus
               />
             </div>
@@ -96,7 +96,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.propertyShown}
                 onChange={e => setForm(f => ({ ...f, propertyShown: e.target.value }))}
                 placeholder="e.g. 3BHK Villa Type A"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -110,7 +110,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.driverName}
                 onChange={e => setForm(f => ({ ...f, driverName: e.target.value }))}
                 placeholder="e.g. Ramesh"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -121,7 +121,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.driverPhone}
                 onChange={e => setForm(f => ({ ...f, driverPhone: e.target.value }))}
                 placeholder="e.g. +91 98765 43210"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -132,7 +132,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.pickupLocation}
                 onChange={e => setForm(f => ({ ...f, pickupLocation: e.target.value }))}
                 placeholder="e.g. Nidhivan Office, Jaipur"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -143,7 +143,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
                 value={form.pickupTime}
                 onChange={e => setForm(f => ({ ...f, pickupTime: e.target.value }))}
                 placeholder="e.g. 10:00 AM"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -158,7 +158,7 @@ export function ScheduleVisitModal({ leadId, onClose, onSuccess }: Props) {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
+                className="flex-1 bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
               >
                 {saving ? 'Scheduling...' : 'Schedule Visit'}
               </button>

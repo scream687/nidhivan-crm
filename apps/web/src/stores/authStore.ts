@@ -23,6 +23,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
+    if (typeof document !== 'undefined') {
+      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+    }
     set({ user: data.user });
   },
 

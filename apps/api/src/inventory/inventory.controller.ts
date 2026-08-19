@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, UseGuards,
+  Controller, Get, Post, Patch, Delete, Put, Param, Body, UseGuards,
   UseInterceptors, UploadedFile, BadRequestException, Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -122,6 +122,29 @@ export class InventoryController {
     const url = `/uploads/projects/${id}/${file.filename}`;
     const project = await this.inventoryService.setBrochure(id, url);
     return { url, project };
+  }
+
+  @Post(':id/upload-master-plan')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @UseInterceptors(FileInterceptor('file', {
+    storage: projectStorage('master-plan'),
+    limits: { fileSize: 20 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.mimetype)) return cb(new BadRequestException('Only PNG, JPEG, or PDF allowed'), false);
+      cb(null, true);
+    },
+  }))
+  async uploadMasterPlan(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No file uploaded');
+    const url = `/uploads/projects/${id}/${file.filename}`;
+    const project = await this.inventoryService.setMasterPlan(id, url);
+    return { url, project };
+  }
+
+  @Put(':id/nearby-places')
+  updateNearbyPlaces(@Param('id') id: string, @Body() body: { places: any }) {
+    return this.inventoryService.setNearbyPlaces(id, body.places);
   }
 
   @Post(':id/publish')

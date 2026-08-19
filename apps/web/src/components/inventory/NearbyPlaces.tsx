@@ -78,7 +78,7 @@ function SortablePlace({
       style={style}
       className={cn(
         'flex items-center gap-3 rounded-lg border bg-white px-3 py-2.5 text-sm',
-        isDragging ? 'border-blue-300 shadow-md z-10' : 'border-gray-100',
+        isDragging ? 'border-[#FDECE6] shadow-md z-10' : 'border-gray-100',
       )}
     >
       {!readOnly && (
@@ -86,7 +86,7 @@ function SortablePlace({
           <GripVertical size={16} />
         </button>
       )}
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FDECE6] text-[#E04020]">
         <Icon size={16} />
       </div>
       <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ export default function NearbyPlaces({ places, onChange, readOnly }: Props) {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="e.g. Fortis Hospital"
-                    className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                     onKeyDown={e => e.key === 'Enter' && addPlace()}
                   />
                 </div>
@@ -192,7 +192,7 @@ export default function NearbyPlaces({ places, onChange, readOnly }: Props) {
                     value={distance}
                     onChange={e => setDistance(e.target.value)}
                     placeholder="1.5"
-                    className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                     onKeyDown={e => e.key === 'Enter' && addPlace()}
                   />
                 </div>
@@ -202,7 +202,7 @@ export default function NearbyPlaces({ places, onChange, readOnly }: Props) {
                 <select
                   value={type}
                   onChange={e => setType(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                 >
                   {Object.entries(TYPE_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
@@ -218,7 +218,7 @@ export default function NearbyPlaces({ places, onChange, readOnly }: Props) {
                 </button>
                 <button
                   onClick={addPlace}
-                  className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  className="px-3 py-1.5 text-xs bg-[#E04020] text-white rounded-lg hover:bg-[#C02F12] font-medium"
                 >
                   Add
                 </button>
@@ -227,7 +227,7 @@ export default function NearbyPlaces({ places, onChange, readOnly }: Props) {
           ) : (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium"
+              className="flex items-center gap-1.5 text-xs text-[#E04020] hover:text-[#C02F12] font-medium"
             >
               <Plus size={13} /> Add Nearby Place
             </button>

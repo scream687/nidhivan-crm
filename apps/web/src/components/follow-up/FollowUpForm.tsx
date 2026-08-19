@@ -105,7 +105,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
         >
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <div className="flex items-center gap-2">
-              <CalendarClock size={16} className="text-blue-600" />
+              <CalendarClock size={16} className="text-[#E04020]" />
               <h2 className="text-base font-semibold text-gray-900">
                 {leadId ? `Follow-up: ${leadName}` : 'Schedule Follow-up'}
               </h2>
@@ -122,7 +122,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="Follow-up title"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                 autoFocus
               />
             </div>
@@ -134,7 +134,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 <select
                   value={form.followupType}
                   onChange={e => setForm(f => ({ ...f, followupType: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                 >
                   {FOLLOWUP_TYPES.map(t => (
                     <option key={t} value={t}>{t}</option>
@@ -146,7 +146,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 <select
                   value={form.priority}
                   onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                 >
                   {PRIORITIES.map(p => (
                     <option key={p} value={p}>{p}</option>
@@ -163,7 +163,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 value={form.dueDate}
                 onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
                 min={minDate}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
               />
             </div>
 
@@ -175,7 +175,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 value={form.reminderAt}
                 onChange={e => setForm(f => ({ ...f, reminderAt: e.target.value }))}
                 min={minDate}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
               />
             </div>
 
@@ -187,7 +187,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 onChange={e => setForm(f => ({ ...f, reminderNote: e.target.value }))}
                 placeholder="Note to show with reminder..."
                 rows={2}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none"
               />
             </div>
 
@@ -199,7 +199,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="Additional notes..."
                 rows={2}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none"
               />
             </div>
 
@@ -209,7 +209,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
               <select
                 value={form.assignedToId}
                 onChange={e => setForm(f => ({ ...f, assignedToId: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
               >
                 <option value="">Select agent...</option>
                 {users.map((u: User) => (
@@ -220,7 +220,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
 
             {/* Lead link (read-only if provided) */}
             {leadId && leadName && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+              <div className="bg-[#FDECE6] border border-[#FDECE6] rounded-lg px-3 py-2 text-xs text-[#C02F12]">
                 Linked to lead: <strong>{leadName}</strong>
               </div>
             )}
@@ -236,7 +236,7 @@ export function FollowUpForm({ leadId, leadName, onClose, onSuccess }: Props) {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
+                className="flex-1 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
               >
                 {saving ? 'Creating...' : 'Create Follow-up'}
               </button>

@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'nidhivanproperty@gmail.com';
+
 type FieldMapEntry = { externalField: string; crmField: string };
 type LogEntry = { timestamp: string; status: string; payload: string };
 
@@ -136,7 +138,7 @@ export default function IntegrationsPage() {
       id: 'facebook',
       name: 'Facebook Lead Ads',
       description: 'Automatically capture leads from your Facebook & Instagram ad forms.',
-      icon: <Facebook className="text-blue-600" />,
+      icon: <Facebook className="text-[#E04020]" />,
       webhookUrl: `${baseUrl}/integrations/facebook`,
       docsUrl: 'https://developers.facebook.com/docs/marketing-api/guides/lead-ads/webhooks',
     },
@@ -144,7 +146,7 @@ export default function IntegrationsPage() {
       id: 'webflow',
       name: 'Webflow',
       description: 'Connect your Webflow forms to Nidhivan CRM instantly.',
-      icon: <Globe className="text-blue-500" />,
+      icon: <Globe className="text-[#E04020]" />,
       webhookUrl: `${baseUrl}/integrations/webflow`,
       docsUrl: 'https://developers.webflow.com/reference/webhooks',
     },
@@ -158,9 +160,9 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Integrations</h1>
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Integrations</h1>
         <p className="text-gray-500 mt-2">Connect your lead sources and marketing tools to Nidhivan CRM.</p>
       </div>
 
@@ -191,7 +193,7 @@ export default function IntegrationsPage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <Button variant="link" className="p-0 text-blue-600 text-sm h-auto" onClick={() => window.open(int.docsUrl, '_blank')}>
+                    <Button variant="link" className="p-0 text-[#E04020] text-sm h-auto" onClick={() => window.open(int.docsUrl, '_blank')}>
                       Documentation
                     </Button>
                     <div className="h-4 w-[1px] bg-gray-200" />
@@ -306,7 +308,7 @@ export default function IntegrationsPage() {
       <Card className="border-gray-200 shadow-sm">
         <div className="p-6 flex items-start gap-4">
           <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
-            <KeyRound size={18} className="text-blue-600" />
+            <KeyRound size={18} className="text-[#E04020]" />
           </div>
           <div className="flex-1 space-y-3">
             <div>
@@ -332,11 +334,16 @@ export default function IntegrationsPage() {
         </div>
       </Card>
 
-      <Card className="bg-blue-600 border-none text-white overflow-hidden relative">
+      <Card className="bg-[#E04020] border-none text-white overflow-hidden relative">
         <div className="p-8 relative z-10">
           <h3 className="text-xl font-bold mb-2">Need a custom integration?</h3>
-          <p className="text-blue-100 text-sm max-w-md mb-6">Our API is open for custom lead capture. Contact the development team for more technical details.</p>
-          <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold">
+          <p className="text-[#FDECE6] text-sm max-w-md mb-6">Our API is open for custom lead capture. Contact the development team for more technical details.</p>
+          <Button
+            className="bg-white text-[#E04020] hover:bg-[#FDECE6] font-semibold"
+            onClick={() => {
+              window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Custom integration request')}&body=${encodeURIComponent('Which system do you want to connect?\n\nWhat data should flow into the CRM?\n\n')}`;
+            }}
+          >
             Request Custom Integration
           </Button>
         </div>

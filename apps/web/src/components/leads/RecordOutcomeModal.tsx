@@ -136,7 +136,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
         >
           <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
             <div className="flex items-center gap-2">
-              <CheckSquare size={16} className="text-green-600" />
+              <CheckSquare size={16} className="text-[#047857]" />
               <h2 className="text-base font-semibold text-gray-900">Record Visit Outcome</h2>
             </div>
             <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
@@ -154,7 +154,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                     className={cn(
                       'py-2 px-3 rounded-lg text-sm font-medium border transition',
                       form.outcome === o.value
-                        ? 'bg-blue-600 border-blue-600 text-white'
+                        ? 'bg-[#C02F12] border-[#C02F12] text-white'
                         : 'border-gray-200 text-gray-600 hover:border-gray-300'
                     )}
                   >
@@ -170,7 +170,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                 <select
                   value={form.interestLevel}
                   onChange={e => setForm(f => ({ ...f, interestLevel: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
                 >
                   <option value="">Select interest level...</option>
                   {INTEREST_LEVELS.map(l => (
@@ -187,7 +187,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                 value={form.propertyShown}
                 onChange={e => setForm(f => ({ ...f, propertyShown: e.target.value }))}
                 placeholder="e.g. 3BHK Villa Type A"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
               />
             </div>
 
@@ -198,7 +198,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                 onChange={e => setForm(f => ({ ...f, objections: e.target.value }))}
                 placeholder="What concerns did the client raise?"
                 rows={2}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60 resize-none"
               />
             </div>
 
@@ -209,7 +209,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                 onChange={e => setForm(f => ({ ...f, followUpNotes: e.target.value }))}
                 placeholder="Key takeaways and next steps..."
                 rows={2}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60 resize-none"
               />
             </div>
 
@@ -220,7 +220,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                   type="date"
                   value={form.followUpDate}
                   onChange={e => setForm(f => ({ ...f, followUpDate: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">A follow-up task will be auto-created if set</p>
               </div>
@@ -232,9 +232,9 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">GPS Check-in</label>
               {checkedInAt ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-700">
+                <div className="bg-[#E7F6EE] border border-[#BDE6D3] rounded-lg px-3 py-2 text-sm text-[#047857]">
                   Checked in at {checkedInAt}
-                  {gpsCoords && <span className="block text-[11px] text-green-500 mt-0.5">{gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}</span>}
+                  {gpsCoords && <span className="block text-[11px] text-[#047857] mt-0.5">{gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}</span>}
                 </div>
               ) : (
                 <button
@@ -260,9 +260,9 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
                   accept="image/*"
                   onChange={handlePhotoUpload}
                   disabled={uploadingPhoto}
-                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[#FDECE6] file:text-[#C02F12] hover:file:bg-[#FADFD4]"
                 />
-                {uploadingPhoto && <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
+                {uploadingPhoto && <span className="w-4 h-4 border-2 border-[#E04020] border-t-transparent rounded-full animate-spin" />}
               </div>
               {photoUrls.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -294,7 +294,7 @@ export function RecordOutcomeModal({ leadId, visitId, onClose, onSuccess }: Prop
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
+                className="flex-1 bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
               >
                 {saving ? 'Saving...' : 'Save Outcome'}
               </button>

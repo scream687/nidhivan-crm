@@ -23,25 +23,25 @@ export default function ReferralPage() {
 
   const load = useCallback(async () => {
     try {
-      const { data } = await api.get('/marketing/referral');
-      setCodes(data);
+      const { data } = await api.get('/marketing/referral-codes');
+      setCodes(Array.isArray(data) ? data : data?.data ?? []);
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
     load();
-    api.get('/projects').then(r => setProjects(r.data)).catch(() => toast.error('Failed to load projects'));
+    api.get('/inventory').then(r => setProjects(Array.isArray(r.data) ? r.data : r.data?.data ?? [])).catch(() => toast.error('Failed to load projects'));
   }, [load]);
 
   async function toggle(id: string, isActive: boolean) {
-    await api.patch(`/marketing/referral/${id}`, { isActive: !isActive });
+    await api.patch(`/marketing/referral-codes/${id}`, { isActive: !isActive });
     toast.success(isActive ? 'Deactivated' : 'Activated');
     load();
   }
 
   async function remove(id: string, code: string) {
     if (!confirm(`Delete referral code "${code}"?`)) return;
-    await api.delete(`/marketing/referral/${id}`);
+    await api.delete(`/marketing/referral-codes/${id}`);
     toast.success('Referral code deleted');
     load();
   }
@@ -60,12 +60,20 @@ export default function ReferralPage() {
       toast.error('Code, name, and discount value required');
       return;
     }
+    if (!form.projectId) {
+      toast.error('Please select a project');
+      return;
+    }
     setSaving(true);
     try {
-      await api.post('/marketing/referral', {
-        ...form,
-        discountValue: Number(form.discountValue),
-        maxUses: form.maxUses ? Number(form.maxUses) : null,
+      await api.post('/marketing/referral-codes', {
+        code: form.code,
+        name: form.name,
+        phone: form.phone.trim() || undefined,
+        projectId: form.projectId,
+        discountPct: form.discountType === 'PERCENTAGE' ? Number(form.discountValue) : undefined,
+        discountAmt: form.discountType === 'FIXED' ? Number(form.discountValue) : undefined,
+        maxUses: form.maxUses ? Number(form.maxUses) : 0,
       });
       toast.success('Referral code created');
       setShowModal(false);
@@ -79,11 +87,11 @@ export default function ReferralPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Gift className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Referral Codes</h1>
+          <Gift className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Referral Codes</h1>
         </div>
         <Button onClick={() => { resetForm(); setShowModal(true); }}>
           <Plus className="w-4 h-4 mr-1" /> Create Referral Code
@@ -118,17 +126,17 @@ export default function ReferralPage() {
               {codes.map((c: any) => (
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    <code className="text-blue-600 font-medium text-xs bg-blue-50 px-1.5 py-0.5 rounded">{c.code}</code>
+                    <code className="text-[#E04020] font-medium text-xs bg-[#FDECE6] px-1.5 py-0.5 rounded">{c.code}</code>
                   </td>
                   <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
                   <td className="px-4 py-3 text-gray-500">{c.phone ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{c.project?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500">{c.projectId ? projects.find(p => p.id === c.projectId)?.name ?? '—' : '—'}</td>
                   <td className="px-4 py-3">
-                    {c.discountType === 'PERCENTAGE'
-                      ? <span>{c.discountValue}%</span>
-                      : <span>₹{c.discountValue?.toLocaleString()}</span>}
+                    {c.discountPct
+                      ? <span>{c.discountPct}%</span>
+                      : <span>₹{(c.discountAmt ?? 0).toLocaleString()}</span>}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{c.uses ?? 0}/{c.maxUses ?? '∞'}</td>
+                  <td className="px-4 py-3 text-gray-500">{c.useCount ?? 0}/{c.maxUses ?? '∞'}</td>
                   <td className="px-4 py-3">
                     <Badge variant={c.isActive ? 'default' : 'secondary'}>
                       {c.isActive ? 'Active' : 'Inactive'}
@@ -192,7 +200,6 @@ export default function ReferralPage() {
                   <SelectValue placeholder="Any / All projects" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any / All</SelectItem>
                   {projects.map((p: any) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}

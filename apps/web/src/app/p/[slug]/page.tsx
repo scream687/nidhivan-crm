@@ -257,7 +257,7 @@ export default function PublicProjectPage() {
             <SectionTitle>Key Highlights</SectionTitle>
             <div className="highlights-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 18 }}>
               {highlights.map((h, i) => (
-                <div key={i} style={{ background: '#F7F7F7', padding: '18px 22px', borderRadius: 10, borderLeft: '4px solid #C8593A' }}>
+                <div key={i} style={{ background: '#F7F7F7', padding: '18px 22px', borderRadius: 10, borderLeft: '1px solid #C8593A' }}>
                   {h.title && <div style={{ fontSize: 11, fontWeight: 700, color: '#999', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.8 }}>{h.title}</div>}
                   <div style={{ fontSize: 15, color: '#333', fontWeight: 600 }}>{h.value}</div>
                 </div>

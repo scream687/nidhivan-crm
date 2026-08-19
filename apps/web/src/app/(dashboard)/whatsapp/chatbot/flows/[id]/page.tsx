@@ -36,7 +36,7 @@ const nodeTypes = {
 };
 
 const PALETTE = [
-  { type: 'message', label: 'Message', color: 'bg-blue-100 text-blue-700 border-blue-200', desc: 'Bot sends text' },
+  { type: 'message', label: 'Message', color: 'bg-[#FDECE6] text-[#C02F12] border-[#FDECE6]', desc: 'Bot sends text' },
   { type: 'question', label: 'Question', color: 'bg-purple-100 text-purple-700 border-purple-200', desc: 'Ask & wait for reply' },
   { type: 'condition', label: 'Condition', color: 'bg-amber-100 text-amber-700 border-amber-200', desc: 'Branch on keyword' },
   { type: 'action', label: 'Action', color: 'bg-gray-100 text-gray-700 border-gray-200', desc: 'CRM action' },
@@ -102,7 +102,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
           <Field label="Message Text *">
             <textarea value={d.text ?? ''} onChange={e => set('text', e.target.value)} rows={4}
               placeholder="Hi {{name}}, thanks for reaching out!"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none" />
             <p className="text-[11px] text-gray-400 mt-1">Use {'{{name}}'} for contact name</p>
           </Field>
         )}
@@ -315,7 +315,7 @@ export default function FlowEditorPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#E04020]" />
       </div>
     );
   }
@@ -338,7 +338,7 @@ export default function FlowEditorPage() {
         <div className="flex-1" />
         <span className="text-xs text-gray-400 hidden sm:block">Trigger: <strong>{triggerKeyword || '—'}</strong></span>
         <button onClick={save} disabled={saving}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+          className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save
         </button>
@@ -367,11 +367,11 @@ export default function FlowEditorPage() {
               setTriggerKeyword(e.target.value);
               setNodes(nds => nds.map(n => n.type === 'trigger' ? { ...n, data: { ...n.data, keyword: e.target.value } } : n));
             }} placeholder="Trigger keyword"
-              className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+              className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#E04020]" />
             <select value={matchType} onChange={e => {
               setMatchType(e.target.value);
               setNodes(nds => nds.map(n => n.type === 'trigger' ? { ...n, data: { ...n.data, matchType: e.target.value } } : n));
-            }} className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
+            }} className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#E04020]">
               {MATCH_TYPES.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>

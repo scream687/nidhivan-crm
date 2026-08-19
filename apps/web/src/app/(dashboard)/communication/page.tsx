@@ -15,8 +15,8 @@ export default function CommunicationPage() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get('/communication/unread-count');
-        setUnreadTotal(typeof data === 'number' ? data : data?.count ?? 0);
+        const { data } = await api.get('/communication/unread');
+        setUnreadTotal(typeof data === 'number' ? data : (data?.total ?? 0));
       } catch {
         toast.error('Failed to load unread count');
       } finally {
@@ -30,14 +30,14 @@ export default function CommunicationPage() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-            <MessageCircle size={18} className="text-blue-600" />
+          <div className="w-9 h-9 rounded-lg bg-[#FDECE6] flex items-center justify-center">
+            <MessageCircle size={18} className="text-[#E04020]" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-lg font-bold text-gray-900">Communication</h1>
+              <h1 className="text-xl font-bold text-[#111113] tracking-tight">Communication</h1>
               {!loadingUnread && unreadTotal > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold text-white bg-blue-500 rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold text-white bg-[#E04020] rounded-full">
                   {unreadTotal > 99 ? '99+' : unreadTotal} unread
                 </span>
               )}
@@ -81,8 +81,8 @@ function DefaultState() {
         transition={{ duration: 0.3 }}
         className="max-w-sm"
       >
-        <div className="w-20 h-20 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-5">
-          <MessageCircle size={36} className="text-blue-300" />
+        <div className="w-20 h-20 rounded-2xl bg-[#FDECE6] flex items-center justify-center mx-auto mb-5">
+          <MessageCircle size={36} className="text-[#E04020]" />
         </div>
         <h2 className="text-lg font-bold text-gray-800 mb-2">Select a lead to view communication</h2>
         <p className="text-sm text-gray-400 leading-relaxed">

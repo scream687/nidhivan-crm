@@ -60,7 +60,7 @@ export function LandingPageBuilder({ open, onClose, onSaved, edit }: Props) {
   const [slugEdited, setSlugEdited] = useState(false);
 
   useEffect(() => {
-    api.get('/projects').then(r => setProjects(r.data)).catch(() => toast.error('Failed to load projects'));
+    api.get('/inventory').then(r => setProjects(Array.isArray(r.data) ? r.data : r.data?.data ?? [])).catch(() => toast.error('Failed to load projects'));
   }, []);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export function LandingPageBuilder({ open, onClose, onSaved, edit }: Props) {
     setSaving(true);
     try {
       if (edit) {
-        await api.put(`/marketing/landing-pages/${edit.id}`, form);
+        await api.patch(`/marketing/landing-pages/${edit.id}`, form);
         toast.success('Landing page updated');
       } else {
         await api.post('/marketing/landing-pages', form);
@@ -124,7 +124,7 @@ export function LandingPageBuilder({ open, onClose, onSaved, edit }: Props) {
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`w-9 h-5 rounded-full transition relative flex-shrink-0 ${checked ? 'bg-blue-600' : 'bg-gray-200'}`}
+        className={`w-9 h-5 rounded-full transition relative flex-shrink-0 ${checked ? 'bg-[#E04020]' : 'bg-gray-200'}`}
       >
         <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-4' : ''}`} />
       </button>

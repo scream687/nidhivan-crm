@@ -49,7 +49,7 @@ const STATUS_BADGE: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-700 border-green-200',
   BLOCKED: 'bg-orange-100 text-orange-700 border-orange-200',
   RESERVED: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  BOOKED: 'bg-blue-100 text-blue-700 border-blue-200',
+  BOOKED: 'bg-[#FDECE6] text-[#C02F12] border-[#FDECE6]',
   SOLD: 'bg-red-100 text-red-700 border-red-200',
 };
 
@@ -81,6 +81,7 @@ export default function ProjectDetailPage() {
 
   // Add/Edit plot modal
   const [plotModal, setPlotModal] = useState<{ open: boolean; edit?: Plot }>({ open: false });
+  const [bulkImport, setBulkImport] = useState(false);
 
   // Upload refs
   const imgRef = useRef<HTMLInputElement>(null);
@@ -111,7 +112,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 size={24} className="animate-spin text-blue-600" />
+        <Loader2 size={24} className="animate-spin text-[#E04020]" />
       </div>
     );
   }
@@ -119,7 +120,7 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-        <Loader2 size={24} className="animate-spin text-blue-600 mb-4" />
+        <Loader2 size={24} className="animate-spin text-[#E04020] mb-4" />
         <p className="text-sm">Project not found. Redirecting...</p>
       </div>
     );
@@ -155,10 +156,11 @@ export default function ProjectDetailPage() {
   async function applyBulkStatus() {
     if (!bulkStatus || selectedPlotIds.size === 0) return;
     try {
-      await api.patch(`/inventory/${id}/plots/bulk-status`, {
-        ids: Array.from(selectedPlotIds),
-        status: bulkStatus,
-      });
+      await Promise.all(
+        Array.from(selectedPlotIds).map(plotId =>
+          api.patch(`/inventory/plots/${plotId}/status`, { status: bulkStatus }),
+        ),
+      );
       toast.success(`${selectedPlotIds.size} plots updated`);
       setSelectedPlotIds(new Set());
       setBulkStatus('');
@@ -212,7 +214,7 @@ export default function ProjectDetailPage() {
   async function savePlot(data: Partial<Plot>) {
     try {
       if (data.id) {
-        await api.patch(`/inventory/${id}/plots/${data.id}`, data);
+        await api.patch(`/inventory/plots/${data.id}`, data);
       } else {
         await api.post(`/inventory/${id}/plots`, data);
       }
@@ -224,9 +226,20 @@ export default function ProjectDetailPage() {
     }
   }
 
+  async function bulkCreatePlots(plots: Record<string, unknown>[]) {
+    try {
+      const { data } = await api.post(`/inventory/${id}/plots/bulk`, { plots });
+      toast.success(`${data?.count ?? plots.length} plots imported`);
+      setBulkImport(false);
+      load();
+    } catch {
+      toast.error('Bulk import failed — check for duplicate plot numbers');
+    }
+  }
+
   async function deletePlot(plotId: string) {
     try {
-      await api.delete(`/inventory/${id}/plots/${plotId}`);
+      await api.delete(`/inventory/plots/${plotId}`);
       toast.success('Plot deleted');
       load();
     } catch {
@@ -246,7 +259,7 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
@@ -257,7 +270,7 @@ export default function ProjectDetailPage() {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
+            <h1 className="text-xl font-bold text-[#111113] tracking-tight">{project.name}</h1>
             <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
               <MapPin size={14} />
               <span>{project.location}</span>
@@ -289,7 +302,7 @@ export default function ProjectDetailPage() {
           { label: 'Total Plots', value: plots.length, color: 'text-gray-900 bg-gray-50' },
           { label: 'Available', value: plots.filter(p => p.status === 'AVAILABLE').length, color: 'text-green-600 bg-green-50' },
           { label: 'Blocked', value: plots.filter(p => p.status === 'BLOCKED').length, color: 'text-orange-600 bg-orange-50' },
-          { label: 'Booked / Reserved', value: plots.filter(p => p.status === 'BOOKED' || p.status === 'RESERVED').length, color: 'text-blue-600 bg-blue-50' },
+          { label: 'Booked / Reserved', value: plots.filter(p => p.status === 'BOOKED' || p.status === 'RESERVED').length, color: 'text-[#E04020] bg-[#FDECE6]' },
           { label: 'Sold', value: plots.filter(p => p.status === 'SOLD').length, color: 'text-red-600 bg-red-50' },
         ].map(({ label, value, color }) => (
           <div key={label} className={cn('rounded-xl p-3 text-center', color)}>
@@ -310,7 +323,7 @@ export default function ProjectDetailPage() {
           <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Gallery</h2>
           <button
             onClick={() => imgRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+            className="flex items-center gap-1.5 text-xs bg-[#E04020] text-white px-3 py-1.5 rounded-lg hover:bg-[#C02F12] transition"
           >
             <Upload size={11} /> Upload
           </button>
@@ -320,7 +333,7 @@ export default function ProjectDetailPage() {
         {project.images.length === 0 ? (
           <div
             onClick={() => imgRef.current?.click()}
-            className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-blue-300 transition"
+            className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-[#FDECE6] transition"
           >
             <Upload size={28} className="mx-auto text-gray-300 mb-2" />
             <p className="text-sm text-gray-400">Click to upload project images</p>
@@ -378,7 +391,7 @@ export default function ProjectDetailPage() {
         ) : (
           <div
             onClick={() => masterPlanRef.current?.click()}
-            className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-blue-300 transition"
+            className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-[#FDECE6] transition"
           >
             <Upload size={28} className="mx-auto text-gray-300 mb-2" />
             <p className="text-sm text-gray-400">Click to upload master plan image</p>
@@ -404,7 +417,7 @@ export default function ProjectDetailPage() {
             href={`${API_URL}${project.brochureUrl}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 text-sm text-blue-600 hover:underline bg-blue-50 rounded-lg px-4 py-3 border border-blue-100"
+            className="flex items-center gap-2 text-sm text-[#E04020] hover:underline bg-[#FDECE6] rounded-lg px-4 py-3 border border-[#FDECE6]"
           >
             <FileText size={16} />
             <span className="font-medium">Download Brochure</span>
@@ -413,7 +426,7 @@ export default function ProjectDetailPage() {
         ) : (
           <div
             onClick={() => brochureRef.current?.click()}
-            className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-blue-300 transition"
+            className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#FDECE6] transition"
           >
             <FileText size={24} className="mx-auto text-gray-300 mb-2" />
             <p className="text-sm text-gray-400">Click to upload brochure PDF</p>
@@ -436,7 +449,7 @@ export default function ProjectDetailPage() {
       {project.videoUrl && (
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <Video size={14} className="text-blue-600" />
+            <Video size={14} className="text-[#E04020]" />
             <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Virtual Tour</h2>
           </div>
           <div className="aspect-video rounded-xl overflow-hidden border border-gray-200">
@@ -454,7 +467,7 @@ export default function ProjectDetailPage() {
       {(project.gpsLat && project.gpsLng) ? (
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <MapPin size={14} className="text-blue-600" />
+            <MapPin size={14} className="text-[#E04020]" />
             <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Location</h2>
           </div>
           <div className="aspect-[21/9] rounded-xl overflow-hidden border border-gray-200">
@@ -485,8 +498,14 @@ export default function ProjectDetailPage() {
               {viewMode === 'grid' ? <List size={16} /> : <Grid3X3 size={16} />}
             </button>
             <button
+              onClick={() => setBulkImport(true)}
+              className="flex items-center gap-1.5 text-xs text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition font-medium"
+            >
+              <Upload size={12} /> Bulk Import
+            </button>
+            <button
               onClick={() => setPlotModal({ open: true })}
-              className="flex items-center gap-1.5 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition font-medium"
+              className="flex items-center gap-1.5 text-xs bg-[#E04020] text-white px-3 py-1.5 rounded-lg hover:bg-[#C02F12] transition font-medium"
             >
               <Plus size={12} /> Add Plot
             </button>
@@ -501,21 +520,21 @@ export default function ProjectDetailPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search plot #..."
-              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E04020]"
             />
           </div>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E04020]">
             <option value="">All Status</option>
             {PLOT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={filterFacing} onChange={e => setFilterFacing(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E04020]">
             <option value="">All Facing</option>
             {PLOT_FACINGS.map(f => <option key={f} value={f}>{f}</option>)}
           </select>
           <select value={filterBlock} onChange={e => setFilterBlock(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E04020]">
             <option value="">All Blocks</option>
             {uniqueBlocks.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
@@ -531,12 +550,12 @@ export default function ProjectDetailPage() {
 
         {/* Bulk action bar */}
         {selectedPlotIds.size > 0 && (
-          <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 mb-3">
-            <span className="text-xs font-medium text-blue-700">{selectedPlotIds.size} selected</span>
+          <div className="flex items-center gap-3 bg-[#FDECE6] border border-[#FDECE6] rounded-lg px-4 py-2.5 mb-3">
+            <span className="text-xs font-medium text-[#C02F12]">{selectedPlotIds.size} selected</span>
             <select
               value={bulkStatus}
               onChange={e => setBulkStatus(e.target.value)}
-              className="border border-blue-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="border border-[#FDECE6] rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#E04020] bg-white"
             >
               <option value="">Set status…</option>
               {PLOT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -544,7 +563,7 @@ export default function ProjectDetailPage() {
             <button
               onClick={applyBulkStatus}
               disabled={!bulkStatus}
-              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40 font-medium"
+              className="text-xs bg-[#E04020] text-white px-3 py-1.5 rounded-lg hover:bg-[#C02F12] disabled:opacity-40 font-medium"
             >
               Apply
             </button>
@@ -589,12 +608,12 @@ export default function ProjectDetailPage() {
                     key={plot.id}
                     className={cn(
                       'hover:bg-gray-50 transition cursor-pointer',
-                      selectedPlotIds.has(plot.id) && 'bg-blue-50/50',
+                      selectedPlotIds.has(plot.id) && 'bg-[#FDECE6]/50',
                     )}
                   >
                     <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
                       <button onClick={() => toggleSelect(plot.id)} className="text-gray-400 hover:text-gray-600">
-                        {selectedPlotIds.has(plot.id) ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} />}
+                        {selectedPlotIds.has(plot.id) ? <CheckSquare size={14} className="text-[#E04020]" /> : <Square size={14} />}
                       </button>
                     </td>
                     <td className="px-3 py-2 font-medium text-gray-900">{plot.plotNumber}</td>
@@ -618,7 +637,7 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={() => setPlotModal({ open: true, edit: plot })}
                           aria-label="Edit plot"
-                          className="text-blue-600 hover:bg-blue-50 p-1 rounded"
+                          className="text-[#E04020] hover:bg-[#FDECE6] p-1 rounded"
                         >
                           <Edit3 size={13} />
                         </button>
@@ -645,13 +664,13 @@ export default function ProjectDetailPage() {
                 layout
                 className={cn(
                   'rounded-lg border p-3 cursor-pointer transition hover:shadow-sm',
-                  selectedPlotIds.has(plot.id) ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white',
+                  selectedPlotIds.has(plot.id) ? 'border-[#E04020] bg-[#FDECE6]' : 'border-gray-200 bg-white',
                 )}
                 onClick={() => toggleSelect(plot.id)}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-bold text-gray-900">{plot.plotNumber}</span>
-                  <span className={cn('rounded-full border px-1.5 py-0.5 text-[9px] font-semibold', STATUS_BADGE[plot.status] || 'bg-gray-100 text-gray-600')}>
+                  <span className={cn('rounded-full border px-1.5 py-0.5 text-[10px] font-semibold', STATUS_BADGE[plot.status] || 'bg-gray-100 text-gray-600')}>
                     {plot.status}
                   </span>
                 </div>
@@ -666,7 +685,7 @@ export default function ProjectDetailPage() {
                 <div className="flex gap-1 mt-2 pt-2 border-t border-gray-50">
                   <button
                     onClick={(e) => { e.stopPropagation(); setPlotModal({ open: true, edit: plot }); }}
-                    className="flex-1 text-[10px] text-blue-600 hover:bg-blue-50 rounded py-1 transition"
+                    className="flex-1 text-[10px] text-[#E04020] hover:bg-[#FDECE6] rounded py-1 transition"
                   >
                     Edit
                   </button>
@@ -857,12 +876,12 @@ function PlotFormModal({
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.isCorner} onChange={e => set('isCorner', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                className="rounded border-gray-300 text-[#E04020] focus:ring-[#E04020]" />
               Corner Plot
             </label>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.isAvenue} onChange={e => set('isAvenue', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                className="rounded border-gray-300 text-[#E04020] focus:ring-[#E04020]" />
               Avenue Plot
             </label>
           </div>
@@ -882,7 +901,7 @@ function PlotFormModal({
           {form.area && form.ratePerUnit && (
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500">Total Price</p>
-              <p className="text-lg font-bold text-blue-600">
+              <p className="text-lg font-bold text-[#E04020]">
                 ₹{(parseFloat(form.area) * parseFloat(form.ratePerUnit)).toLocaleString('en-IN')}
               </p>
             </div>
@@ -894,7 +913,7 @@ function PlotFormModal({
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-[#E04020] text-white rounded-lg hover:bg-[#C02F12] disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {plot ? 'Update Plot' : 'Add Plot'}
             </button>
@@ -907,7 +926,7 @@ function PlotFormModal({
 
 // ── Shared ──────────────────────────────────────────────────────────────────────
 
-const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

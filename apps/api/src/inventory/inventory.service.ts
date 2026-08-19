@@ -125,6 +125,18 @@ export class InventoryService {
     return this.prisma.project.update({ where: { id }, data: { brochureUrl: url } });
   }
 
+  async setMasterPlan(id: string, url: string) {
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project) throw new NotFoundException('Project not found');
+    return this.prisma.project.update({ where: { id }, data: { masterPlanUrl: url } });
+  }
+
+  async setNearbyPlaces(id: string, places: any) {
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project) throw new NotFoundException('Project not found');
+    return this.prisma.project.update({ where: { id }, data: { nearbyPlaces: places } });
+  }
+
   async publish(id: string) {
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException('Project not found');

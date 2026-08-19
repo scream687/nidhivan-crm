@@ -12,7 +12,7 @@ const PERIODS = [
 ];
 
 const SCORE_COLOR = (score: number) =>
-  score >= 80 ? 'text-green-600 bg-green-50' : score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-gray-600 bg-gray-100';
+  score >= 80 ? 'text-green-600 bg-green-50' : score >= 60 ? 'text-[#E04020] bg-[#FDECE6]' : 'text-gray-600 bg-gray-100';
 
 export default function CallToppersPage() {
   const [toppers, setToppers] = useState<any[]>([]);
@@ -27,11 +27,11 @@ export default function CallToppersPage() {
   }, [period]);
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy size={20} className="text-amber-500" />
-          <h1 className="text-lg font-bold text-gray-900">Call Toppers</h1>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Call Toppers</h1>
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
           {PERIODS.map(p => (
@@ -44,7 +44,7 @@ export default function CallToppersPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-blue-600" /></div>
+        <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-[#E04020]" /></div>
       ) : toppers.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <Trophy size={40} className="mx-auto mb-3 opacity-20" />

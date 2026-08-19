@@ -18,13 +18,13 @@ interface Alert {
 const ICON_MAP = {
   danger: <AlertTriangle className="size-4 text-red-500" />,
   warning: <AlertCircle className="size-4 text-amber-500" />,
-  info: <Info className="size-4 text-blue-500" />,
+  info: <Info className="size-4 text-[#E04020]" />,
 };
 
 const COLOR_MAP = {
   danger: 'border-l-red-400 bg-red-50/30',
   warning: 'border-l-amber-400 bg-amber-50/30',
-  info: 'border-l-blue-400 bg-blue-50/30',
+  info: 'border-l-[#E04020] bg-[#FDECE6]/30',
 };
 
 export function AlertsWidget() {
@@ -58,7 +58,7 @@ export function AlertsWidget() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${COLOR_MAP[alert.type]}`}
+              className={`flex items-start gap-3 p-3 rounded-lg border-l ${COLOR_MAP[alert.type]}`}
             >
               <div className="mt-0.5">{ICON_MAP[alert.type]}</div>
               <div className="flex-1 min-w-0">
@@ -70,7 +70,7 @@ export function AlertsWidget() {
                 </div>
                 <p className="text-[11px] text-gray-500 mt-0.5">{alert.description}</p>
                 {alert.link && (
-                  <Link href={alert.link} className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 mt-1 inline-block">
+                  <Link href={alert.link} className="text-[10px] font-semibold text-[#E04020] hover:text-[#C02F12] mt-1 inline-block">
                     View details →
                   </Link>
                 )}

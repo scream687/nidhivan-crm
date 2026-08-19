@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { GitBranch, Plus, Play, Pause, Trash2, Loader2, Zap, CheckCircle2, Clock } from 'lucide-react';
@@ -56,13 +55,13 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Name *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Auto-assign new leads"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FDECE6]0" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Trigger</label>
             <select value={trigger} onChange={e => setTrigger(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FDECE6]0">
               {TRIGGERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
@@ -71,7 +70,7 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">When stage becomes</label>
               <select value={triggerStage} onChange={e => setTriggerStage(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FDECE6]0">
                 <option value="">— Any stage —</option>
                 {STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
               </select>
@@ -81,7 +80,7 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">Actions</label>
-              <button onClick={addAction} className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              <button onClick={addAction} className="text-xs text-[#E04020] hover:text-[#C02F12] flex items-center gap-1">
                 <Plus className="w-3 h-3" /> Add
               </button>
             </div>
@@ -89,7 +88,7 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
               {actions.map((action, i) => (
                 <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-2">
                   <select value={action.type} onChange={e => setActionType(i, e.target.value)}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0">
                     {ACTION_TYPES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                   </select>
 
@@ -97,25 +96,25 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
                     <div className="grid grid-cols-2 gap-2">
                       <input placeholder="Title" value={(action.config as any).title ?? ''}
                         onChange={e => setActionConfig(i, 'title', e.target.value)}
-                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0" />
                       <input placeholder="Body ({{name}})" value={(action.config as any).body ?? ''}
                         onChange={e => setActionConfig(i, 'body', e.target.value)}
-                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0" />
                     </div>
                   )}
                   {action.type === 'CREATE_TASK' && (
                     <div className="grid grid-cols-2 gap-2">
                       <input placeholder="Task title ({{name}})" value={(action.config as any).title ?? ''}
                         onChange={e => setActionConfig(i, 'title', e.target.value)}
-                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0" />
                       <input type="number" placeholder="Due in X days" value={(action.config as any).dueDays ?? ''}
                         onChange={e => setActionConfig(i, 'dueDays', e.target.value)}
-                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                        className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0" />
                     </div>
                   )}
                   {action.type === 'CHANGE_STAGE' && (
                     <select value={(action.config as any).stage ?? ''} onChange={e => setActionConfig(i, 'stage', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                      className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0">
                       <option value="">— Select stage —</option>
                       {STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                     </select>
@@ -128,7 +127,7 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
         <div className="p-5 border-t border-gray-100 flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm">Cancel</button>
           <button onClick={save} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
+            className="flex-1 flex items-center justify-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />} Create
           </button>
         </div>
@@ -164,11 +163,11 @@ export default function WorkflowsPage() {
   const triggerLabel = (t: string) => TRIGGERS.find(x => x.value === t)?.label ?? t;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <GitBranch className="w-6 h-6 text-indigo-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
+          <GitBranch className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Workflows</h1>
           {workflows.length > 0 && (
             <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-0.5 rounded-full">
               {workflows.filter(w => w.isActive).length} active
@@ -176,7 +175,7 @@ export default function WorkflowsPage() {
           )}
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+          className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
           <Plus className="w-4 h-4" /> New Workflow
         </button>
       </div>
@@ -192,13 +191,13 @@ export default function WorkflowsPage() {
       ) : (
         <div className="space-y-3">
           {workflows.map((wf, i) => (
-            <motion.div key={wf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+            <div key={wf.id}
               className={`bg-white rounded-xl border p-5 transition ${wf.isActive ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-gray-900">{wf.name}</h3>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${wf.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${wf.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
                       {wf.isActive ? 'ACTIVE' : 'PAUSED'}
                     </span>
                   </div>
@@ -209,7 +208,7 @@ export default function WorkflowsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setExpanded(expanded === wf.id ? null : wf.id)} className="text-xs text-blue-500 hover:underline">
+                  <button onClick={() => setExpanded(expanded === wf.id ? null : wf.id)} className="text-xs text-[#E04020] hover:underline">
                     {expanded === wf.id ? 'Hide' : 'Actions'}
                   </button>
                   <button onClick={() => toggle(wf.id, wf.isActive)}
@@ -225,15 +224,15 @@ export default function WorkflowsPage() {
               {expanded === wf.id && (
                 <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                   {(wf.actions as any[]).map((action: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-1.5 bg-indigo-50 rounded-lg px-3 py-1.5 text-xs text-indigo-700 font-medium">
-                      <span className="w-4 h-4 rounded-full bg-indigo-200 flex items-center justify-center text-[9px] font-bold">{idx + 1}</span>
+                    <div key={idx} className="flex items-center gap-1.5 bg-[#FDECE6] rounded-lg px-3 py-1.5 text-xs text-[#C02F12] font-medium">
+                      <span className="w-4 h-4 rounded-full bg-border-[#FDECE6] flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
                       {ACTION_TYPES.find(a => a.value === action.type)?.label ?? action.type}
                       {action.config?.title ? `: ${action.config.title}` : ''}
                     </div>
                   ))}
                 </div>
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

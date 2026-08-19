@@ -8,6 +8,9 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class MarketingController {
   constructor(private svc: MarketingService) {}
 
+  @Get('summary')
+  getMarketingSummary() { return this.svc.getMarketingSummary(); }
+
   // Segments
   @Get('segments')
   listSegments(@CurrentUser('id') uid: string) { return this.svc.listSegments(uid); }
@@ -82,6 +85,14 @@ export class MarketingController {
 
   @Get('referral-codes/:code')
   getReferralByCode(@Param('code') code: string) { return this.svc.getReferralByCode(code); }
+
+  @Patch('referral-codes/:id')
+  updateReferralCode(@Param('id') id: string, @Body() body: { isActive?: boolean }) {
+    return this.svc.updateReferralCode(id, body);
+  }
+
+  @Delete('referral-codes/:id')
+  deleteReferralCode(@Param('id') id: string) { return this.svc.deleteReferralCode(id); }
 
   // Reports
   @Get('campaign-roi')

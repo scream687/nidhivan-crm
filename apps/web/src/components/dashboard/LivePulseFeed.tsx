@@ -69,10 +69,10 @@ export function LivePulseFeed() {
       <CardHeader className="px-0 pt-0 pb-4">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Activity className="size-4 text-blue-500" />
+            <Activity className="size-4 text-[#E04020]" />
             <span className="absolute -top-1 -right-1 flex size-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full size-2 bg-blue-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E04020] opacity-75"></span>
+              <span className="relative inline-flex rounded-full size-2 bg-[#E04020]"></span>
             </span>
           </div>
           <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Live Pulse</CardTitle>
@@ -102,7 +102,7 @@ export function LivePulseFeed() {
                     <div className="flex items-start gap-3">
                       <Avatar className="size-8 border border-white shadow-sm">
                         <AvatarImage src={item.user.avatarUrl} />
-                        <AvatarFallback className="text-[10px] bg-blue-50 text-blue-600 font-bold">
+                        <AvatarFallback className="text-[10px] bg-[#FDECE6] text-[#E04020] font-bold">
                           {item.user.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -125,7 +125,7 @@ export function LivePulseFeed() {
                           </p>
                         )}
                         {item.lead && (
-                          <Badge variant="secondary" className="mt-2 text-[9px] px-1.5 py-0 h-4 bg-blue-50 text-blue-600 border-none">
+                          <Badge variant="secondary" className="mt-2 text-[10px] px-1.5 py-0 h-4 bg-[#FDECE6] text-[#E04020] border-none">
                             {item.lead.name}
                           </Badge>
                         )}

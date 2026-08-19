@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { LivePulseFeed } from '@/components/dashboard/LivePulseFeed';
@@ -86,9 +85,9 @@ export function ManagerView() {
         <div className="flex-1 space-y-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {METRICS.map((m, i) => (
-              <motion.div key={m.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <div key={m.key}>
                 <KpiCard title={m.label} value={metricValue(m)} icon={m.icon} color={m.color} />
-              </motion.div>
+              </div>
             ))}
           </div>
 
@@ -204,7 +203,7 @@ export function ManagerView() {
               <CardHeader className="border-b border-gray-50 bg-gray-50/30">
                 <CardTitle className="text-sm font-bold text-gray-700 flex items-center justify-between">
                   <span>REVENUE PIPELINE</span>
-                  <span className="text-blue-600 text-base font-bold">
+                  <span className="text-[#E04020] text-base font-bold">
                     ₹{(pipelineValue.totalExpectedRevenue).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </span>
                 </CardTitle>
@@ -238,10 +237,10 @@ export function ManagerView() {
               <CardContent className="pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {leaderboard.slice(0, 6).map((agent: any, i: number) => (
-                    <motion.div key={agent.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
+                      <div key={agent.id}
                       className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white transition-all">
                       <div className="relative">
-                        <div className="size-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center text-blue-700 text-xs font-bold ring-2 ring-blue-50">
+                        <div className="size-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center text-[#C02F12] text-xs font-bold ring-2 ring-[#FDECE6]">
                           {agent.name.slice(0, 2).toUpperCase()}
                         </div>
                         {i < 3 && (
@@ -258,7 +257,7 @@ export function ManagerView() {
                         <p className="text-xs font-bold text-green-600">{agent.conversions} won</p>
                         <p className="text-[10px] text-gray-400">Score: {agent.productivityScore}</p>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </CardContent>

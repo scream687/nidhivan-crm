@@ -61,6 +61,14 @@ export class SiteVisitsController {
     return this.siteVisits.findAll(user);
   }
 
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() data: { status: string },
+  ) {
+    return this.siteVisits.updateStatus(id, data.status);
+  }
+
   @Post(':id/checkin')
   checkin(
     @Param('id') id: string,

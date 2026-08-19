@@ -111,32 +111,34 @@ export default function TasksPage() {
   ];
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CheckSquare size={20} className="text-blue-600" />
-          <h1 className="text-lg font-bold text-gray-900">Tasks</h1>
-          {overdueCount > 0 && (
-            <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
-              {overdueCount} overdue
-            </span>
-          )}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[#111113] tracking-tight">Tasks & Operational Queue</h1>
+            {overdueCount > 0 && (
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                {overdueCount} overdue
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[#6b7280] font-medium mt-0.5">Follow-up callbacks, document verifications, and reminders</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+          className="btn-frappe-primary"
         >
-          <Plus size={15} />
-          New Task
+          <Plus size={13} />
+          <span>New Task</span>
         </button>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-[#f3f4f6] rounded-lg p-0.5 border border-[#e5e7eb] w-fit">
         {TABS.map(({ k, l }) => (
           <button key={k} onClick={() => setFilter(k)}
-            className={cn('px-4 py-1.5 text-sm font-medium rounded-lg transition',
-              filter === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700')}>
+            className={cn('px-3 py-1 text-xs font-medium rounded-md transition',
+              filter === k ? 'bg-white shadow-sm text-[#111827] font-semibold' : 'text-[#6b7280]')}>
             {l}
           </button>
         ))}
@@ -144,7 +146,7 @@ export default function TasksPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#E04020] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="space-y-2">
@@ -187,7 +189,7 @@ export default function TasksPage() {
                     {task.title}
                   </p>
                   {task.lead && (
-                    <a href={`/leads/${task.lead.id}`} className="text-xs text-blue-500 hover:underline mt-0.5 block">
+                    <a href={`/leads/${task.lead.id}`} className="text-xs text-[#E04020] hover:underline mt-0.5 block">
                       {task.lead.name}{task.lead.leadNumber ? ` · ${task.lead.leadNumber}` : ''}
                     </a>
                   )}
@@ -255,7 +257,7 @@ export default function TasksPage() {
                     value={form.title}
                     onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                     placeholder="What needs to be done?"
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                     autoFocus
                   />
                 </div>
@@ -267,7 +269,7 @@ export default function TasksPage() {
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                     placeholder="Optional details..."
                     rows={2}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none"
                   />
                 </div>
 
@@ -278,7 +280,7 @@ export default function TasksPage() {
                       type="date"
                       value={form.dueDate}
                       onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                     />
                   </div>
                   <div>
@@ -286,7 +288,7 @@ export default function TasksPage() {
                     <select
                       value={form.priority}
                       onChange={e => setForm(f => ({ ...f, priority: e.target.value as any }))}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                     >
                       <option value="LOW">Low</option>
                       <option value="MEDIUM">Medium</option>
@@ -300,7 +302,7 @@ export default function TasksPage() {
                   <select
                     value={form.assignedToId}
                     onChange={e => setForm(f => ({ ...f, assignedToId: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                   >
                     <option value="">Select agent...</option>
                     {users.map((u: any) => (
@@ -320,7 +322,7 @@ export default function TasksPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
+                    className="flex-1 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
                   >
                     {saving ? 'Creating...' : 'Create Task'}
                   </button>

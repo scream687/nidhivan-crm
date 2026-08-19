@@ -24,8 +24,10 @@ export class LoggingInterceptor implements NestInterceptor {
         next: () => {
           const res = context.switchToHttp().getResponse();
           const ms = Date.now() - start;
-          res.setHeader('X-Request-Id', requestId);
-          res.setHeader('X-Response-Time', `${ms}ms`);
+          if (!res.headersSent) {
+            res.setHeader('X-Request-Id', requestId);
+            res.setHeader('X-Response-Time', `${ms}ms`);
+          }
           this.logger.log(
             `${method} ${url} ${res.statusCode} ${ms}ms [${requestId}]`,
           );

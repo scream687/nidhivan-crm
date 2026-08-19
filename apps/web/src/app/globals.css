@@ -8,39 +8,39 @@
 
 @layer base {
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --background: #F3F4F6;
+    --foreground: #111113;
+    --card: #FFFFFF;
+    --card-foreground: #111113;
+    --popover: #FFFFFF;
+    --popover-foreground: #111113;
+    --primary: #E04020;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F3F4F6;
+    --secondary-foreground: #111113;
+    --muted: #F3F4F6;
+    --muted-foreground: #5A6470;
+    --accent: #F3F4F6;
+    --accent-foreground: #111113;
     --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: 0 0% 98%;
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --radius: 0.625rem;
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --destructive-foreground: #FFFFFF;
+    --border: #E5E7EB;
+    --input: #E5E7EB;
+    --ring: #E04020;
+    --radius: 0.75rem;
+    --chart-1: #E04020;
+    --chart-2: #047857;
+    --chart-3: #111113;
+    --chart-4: #626B76;
+    --chart-5: #FDECE6;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #111113;
+    --sidebar-primary: #E04020;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #FDECE6;
+    --sidebar-accent-foreground: #111113;
+    --sidebar-border: #E5E7EB;
+    --sidebar-ring: #E04020;
   }
   .theme {
     --font-heading: var(--font-sans);
@@ -82,23 +82,59 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
   }
 }
 
+/* Money Floor tokens */
+:root {
+  --fnx-canvas: #F3F4F6;
+  --fnx-card: #FFFFFF;
+  --fnx-ink: #111113;
+  --fnx-muted: #5A6470;
+  --fnx-faint: #626B76;
+  --fnx-hairline: #E5E7EB;
+  --fnx-accent: #E04020;
+  --fnx-accent-deep: #C02F12;
+  --fnx-accent-soft: #FDECE6;
+  --fnx-up: #047857;
+}
+
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground font-sans antialiased; }
+  body { @apply bg-[var(--fnx-canvas)] text-[var(--fnx-ink)] font-sans antialiased; }
+}
+
+/* Fintech Component Tokens — names kept, semantics swapped to money-floor */
+.frappe-card {
+  @apply bg-[var(--fnx-card)] border border-[var(--fnx-hairline)] rounded-xl transition-colors;
+}
+
+.frappe-card-hover {
+  @apply bg-[var(--fnx-card)] border border-[var(--fnx-hairline)] rounded-xl hover:border-[#E04020]/60 transition-colors shadow-sm;
+}
+
+.btn-frappe-primary {
+  @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full bg-[#C02F12] hover:bg-[#A82717] text-white text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#E04020] focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none shadow-sm;
+}
+
+.btn-frappe-secondary {
+  @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full bg-[var(--fnx-card)] hover:bg-[var(--fnx-canvas)] text-[var(--fnx-ink)] border border-[var(--fnx-hairline)] text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--fnx-hairline)] disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.btn-frappe-subtle {
+  @apply inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-full hover:bg-[var(--fnx-canvas)] text-[var(--fnx-muted)] hover:text-[var(--fnx-ink)] text-xs font-medium transition-colors focus:outline-none;
+}
+
+.frappe-pill {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border;
 }
 
 /* Kanban scroll */
-.kanban-board { @apply flex-col md:flex-row gap-3 overflow-x-auto pb-4; min-height: calc(100vh - 200px); }
-.kanban-column { @apply flex-shrink-0 w-full md:w-72 bg-gray-50 rounded-xl p-3 flex flex-col gap-2; }
-.kanban-card { @apply bg-white rounded-lg p-3 shadow-card hover:shadow-card-hover cursor-pointer transition-shadow; }
+.kanban-board { @apply flex flex-row gap-3 overflow-x-auto pb-4 items-start; min-height: calc(100vh - 200px); }
+.kanban-column { @apply flex-shrink-0 w-[300px] min-w-[300px] bg-[var(--fnx-canvas)] rounded-xl p-2.5 flex flex-col gap-2.5 border border-[var(--fnx-hairline)]; }
+.kanban-card { @apply bg-[var(--fnx-card)] rounded-xl p-3 border border-[var(--fnx-hairline)] cursor-pointer transition-colors hover:border-[#E04020]/40 shadow-sm; }
 
 /* Softphone widget */
 .softphone { @apply fixed bottom-6 right-6 z-50 bg-navy-900 text-white rounded-2xl shadow-2xl; }
@@ -106,7 +142,7 @@
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { @apply bg-transparent; }
-::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+::-webkit-scrollbar-thumb { @apply bg-[var(--fnx-hairline)] rounded-full; }
 
 /* Hide scrollbar utility */
 .scrollbar-hide::-webkit-scrollbar { display: none; }

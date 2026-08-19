@@ -50,6 +50,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.warn(`${req.method} ${req.url} → ${status}: ${JSON.stringify(message)}`);
     }
 
+    if (res.headersSent) {
+      this.logger.warn(`Headers already sent for ${req.method} ${req.url}, skipping error response body.`);
+      return;
+    }
+
     res.status(status).json(body);
   }
 }

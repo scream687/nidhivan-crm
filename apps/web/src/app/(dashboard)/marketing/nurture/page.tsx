@@ -15,12 +15,12 @@ function StepRow({ step, onChange, onRemove }: { step: any; onChange: (s: any) =
           <label className="text-xs text-gray-500">Delay (days)</label>
           <input type="number" min={0} value={step.delayDays ?? 0}
             onChange={e => onChange({ ...step, delayDays: Number(e.target.value) })}
-            className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E04020]" />
         </div>
         <div>
           <label className="text-xs text-gray-500">Type</label>
           <select value={step.type} onChange={e => onChange({ ...step, type: e.target.value })}
-            className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+            className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E04020]">
             {STEP_TYPES.map(t => <option key={t}>{t}</option>)}
           </select>
         </div>
@@ -28,7 +28,7 @@ function StepRow({ step, onChange, onRemove }: { step: any; onChange: (s: any) =
           <label className="text-xs text-gray-500">Template</label>
           <input value={step.template ?? ''} onChange={e => onChange({ ...step, template: e.target.value })}
             placeholder="Hi {{name}}…"
-            className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            className="w-full mt-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E04020]" />
         </div>
       </div>
       <button onClick={onRemove} className="mt-6 text-gray-400 hover:text-red-500 transition">
@@ -71,19 +71,19 @@ function NewSequenceModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Name *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Post Site Visit Follow-Up"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Trigger Stage</label>
             <select value={triggerStage} onChange={e => setTriggerStage(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
               {STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
             </select>
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">Steps</label>
-              <button onClick={addStep} className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <button onClick={addStep} className="text-xs text-[#E04020] hover:text-[#C02F12] flex items-center gap-1">
                 <Plus className="w-3 h-3" /> Add step
               </button>
             </div>
@@ -95,7 +95,7 @@ function NewSequenceModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
         <div className="p-5 border-t border-gray-100 flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm">Cancel</button>
           <button onClick={save} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
+            className="flex-1 flex items-center justify-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save
           </button>
         </div>
@@ -122,14 +122,14 @@ export default function NurturePage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Megaphone className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Nurture Sequences</h1>
+          <Megaphone className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Nurture Sequences</h1>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+          className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
           <Plus className="w-4 h-4" /> New Sequence
         </button>
       </div>
@@ -149,13 +149,13 @@ export default function NurturePage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">{seq.name}</h3>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Triggers when stage → <span className="font-medium text-blue-600">{seq.triggerStage.replace(/_/g, ' ')}</span>
+                  Triggers when stage → <span className="font-medium text-[#E04020]">{seq.triggerStage.replace(/_/g, ' ')}</span>
                   {' · '}{(seq.steps as any[]).length} steps
                   {' · '}{seq._count?.enrollments ?? 0} enrolled
                 </p>
               </div>
               <button onClick={() => toggle(seq.id, seq.isActive)}
-                className={`w-11 h-6 rounded-full transition relative flex-shrink-0 ${seq.isActive ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                className={`w-11 h-6 rounded-full transition relative flex-shrink-0 ${seq.isActive ? 'bg-[#E04020]' : 'bg-gray-200'}`}>
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${seq.isActive ? 'translate-x-5' : ''}`} />
               </button>
             </div>

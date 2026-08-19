@@ -55,35 +55,39 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-lg font-bold text-gray-900">Reports & Analytics</h1><p className="text-sm text-gray-500">Business intelligence dashboard</p></div>
-        <button onClick={exportLeads} className="flex items-center gap-1.5 border border-gray-200 text-gray-700 text-sm px-3.5 py-2 rounded-lg hover:bg-gray-50 transition">
-          <Download size={14} />Export Leads CSV
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
+        <div>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Reports & Business Intelligence</h1>
+          <p className="text-xs text-[#6b7280] font-medium mt-0.5">Pipeline funnels, agent scorecards, and revenue forecasting</p>
+        </div>
+        <button onClick={exportLeads} className="btn-frappe-secondary">
+          <Download size={12} />
+          <span>Export Leads CSV</span>
         </button>
       </div>
 
       {/* Date Range Picker */}
-      <div className="flex items-center gap-2">
-        <Clock size={14} className="text-gray-400" />
-        <label className="text-xs text-gray-500 font-medium">From:</label>
+      <div className="flex items-center gap-2 text-xs">
+        <Clock size={13} className="text-[#9ca3af]" />
+        <label className="text-[#6b7280] font-medium">From:</label>
         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
-        <label className="text-xs text-gray-500 font-medium">To:</label>
+          className="border border-[#e5e7eb] rounded-lg px-2.5 py-1 text-xs bg-white text-[#111827] focus:outline-none" />
+        <label className="text-[#6b7280] font-medium">To:</label>
         <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+          className="border border-[#e5e7eb] rounded-lg px-2.5 py-1 text-xs bg-white text-[#111827] focus:outline-none" />
       </div>
 
-      {/* Tabs — Row 1 */}
+      {/* Tabs */}
       <div className="space-y-1">
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto flex-nowrap">
+        <div className="flex gap-1 bg-[#f3f4f6] rounded-lg p-0.5 border border-[#e5e7eb] overflow-x-auto flex-nowrap">
           {[
             { k: 'funnel', l: 'Sales Funnel' }, { k: 'sources', l: 'Lead Sources' },
             { k: 'agents', l: 'Agent Performance' }, { k: 'aging', l: 'Lead Aging' },
             { k: 'visits', l: 'Site Visits' }, { k: 'bookings', l: 'Bookings' },
           ].map(({ k, l }) => (
             <button key={k} onClick={() => setTab(k as any)}
-              className={cn('px-4 py-1.5 text-sm font-medium rounded-lg transition flex-shrink-0', tab === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700')}>
+              className={cn('px-3 py-1 text-xs font-medium rounded-md transition flex-shrink-0', tab === k ? 'bg-white shadow-sm text-[#111827] font-semibold' : 'text-[#6b7280]')}>
               {l}
             </button>
           ))}
@@ -103,7 +107,7 @@ export default function ReportsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-[#E04020] border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <>
           {/* ════ EXISTING TAB: Sales Funnel ════ */}
@@ -149,7 +153,7 @@ export default function ReportsPage() {
                         <td className="px-4 py-3 text-sm font-medium text-gray-800">{s.source.replace('_COM', '.com').replace('_', ' ')}</td>
                         <td className="px-4 py-3 text-sm text-gray-700">{s.total}</td>
                         <td className="px-4 py-3 text-sm text-green-600 font-medium">{s.closedWon}</td>
-                        <td className="px-4 py-3 text-sm text-blue-600">{s.conversionRate}%</td>
+                        <td className="px-4 py-3 text-sm text-[#E04020]">{s.conversionRate}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -169,7 +173,7 @@ export default function ReportsPage() {
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{a.name}</td>
                       <td className="px-4 py-3 text-xs text-gray-400 capitalize">{a.role.toLowerCase().replace('_', ' ')}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{a.leadsAssigned}</td>
-                      <td className="px-4 py-3 text-sm text-blue-600">{a.callsMade}</td>
+                      <td className="px-4 py-3 text-sm text-[#E04020]">{a.callsMade}</td>
                       <td className="px-4 py-3 text-sm text-red-600">{a.hotLeads}</td>
                       <td className="px-4 py-3 text-sm text-green-600 font-bold">{a.closedWon}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{a.conversionRate}%</td>
@@ -493,7 +497,7 @@ export default function ReportsPage() {
           {tab === 'conversion' && conversion && (
             <div className="space-y-4">
               {/* Overall Rate */}
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 shadow-card text-white">
+              <div className="bg-gradient-to-r from-[#E04020] to-[#C02F12] rounded-xl p-6 shadow-card text-white">
                 <p className="text-sm opacity-80 font-medium">Overall Lead-to-Booking Rate</p>
                 <p className="text-4xl font-bold mt-1">{conversion.overall?.conversionRate ?? 0}%</p>
               </div>

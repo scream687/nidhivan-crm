@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,8 +13,21 @@ interface Notification {
   title: string;
   body: string;
   type: string;
+  referenceId?: string | null;
+  referenceType?: string | null;
   isRead: boolean;
   createdAt: string;
+}
+
+// referenceType values written by the API: 'Lead' | 'SiteVisit' | 'Task'
+function linkFor(n: Notification): string | null {
+  if (!n.referenceId) return null;
+  switch (n.referenceType) {
+    case 'Lead': return `/leads/${n.referenceId}`;
+    case 'SiteVisit': return '/site-visits';
+    case 'Task': return '/tasks';
+    default: return null;
+  }
 }
 
 export function NotificationBell() {
@@ -21,6 +35,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const { socket } = useSocketStore();
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const unread = notifications.filter((n) => !n.isRead).length;
 
@@ -37,10 +52,7 @@ export function NotificationBell() {
       toast(n.title, {
         description: n.body,
         icon: <span>{TYPE_ICON[n.type] || '🔔'}</span>,
-        action: {
-          label: 'View',
-          onClick: () => console.log('View notification', n.id),
-        },
+        action: linkFor(n) ? { label: 'View', onClick: () => openNotification(n) } : undefined,
       });
     });
     return () => { socket.off('notification:new'); };
@@ -66,6 +78,14 @@ export function NotificationBell() {
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
   }
 
+  function openNotification(n: Notification) {
+    if (!n.isRead) markRead(n.id);
+    const href = linkFor(n);
+    if (!href) return;
+    setOpen(false);
+    router.push(href);
+  }
+
   async function markAllRead() {
     await api.patch('/notifications/read-all');
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -88,7 +108,7 @@ export function NotificationBell() {
       >
         <Bell size={15} />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -109,7 +129,7 @@ export function NotificationBell() {
               </p>
               <div className="flex items-center gap-2">
                 {unread > 0 && (
-                  <button onClick={markAllRead} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                  <button onClick={markAllRead} className="text-xs text-[#E04020] hover:underline flex items-center gap-1">
                     <CheckCheck size={12} /> Mark all read
                   </button>
                 )}
@@ -129,9 +149,9 @@ export function NotificationBell() {
                 notifications.map((n) => (
                   <div
                     key={n.id}
-                    onClick={() => !n.isRead && markRead(n.id)}
+                    onClick={() => openNotification(n)}
                     className={`flex items-start gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer transition ${
-                      n.isRead ? 'opacity-60' : 'bg-blue-50/40 hover:bg-blue-50'
+                      n.isRead ? 'opacity-60' : 'bg-[#FDECE6]/40 hover:bg-[#FDECE6]'
                     }`}
                   >
                     <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] || '🔔'}</span>
@@ -140,7 +160,7 @@ export function NotificationBell() {
                       <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.body}</p>
                       <p className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</p>
                     </div>
-                    {!n.isRead && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
+                    {!n.isRead && <div className="w-1.5 h-1.5 rounded-full bg-[#E04020] flex-shrink-0 mt-1.5" />}
                   </div>
                 ))
               )}

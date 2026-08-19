@@ -14,7 +14,7 @@ export default function CampaignROIPage() {
     const params = new URLSearchParams();
     if (dateFrom) params.set('from', dateFrom);
     if (dateTo) params.set('to', dateTo);
-    api.get(`/marketing/campaigns/roi?${params}`)
+    api.get(`/marketing/campaign-roi?${params}`)
       .then(r => setData(r.data))
       .catch(() => toast.error('Failed to load ROI data'))
       .finally(() => setLoading(false));
@@ -28,10 +28,10 @@ export default function CampaignROIPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <BarChart3 className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Campaign ROI</h1>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Campaign ROI</h1>
         </div>
         <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}</div>
       </div>
@@ -39,14 +39,14 @@ export default function CampaignROIPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <BarChart3 className="w-6 h-6 text-blue-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Campaign ROI</h1>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <BarChart3 className="w-6 h-6 text-[#E04020]" />
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Campaign ROI</h1>
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
             <DollarSign className="w-4 h-4" /> Total Spend
@@ -78,9 +78,9 @@ export default function CampaignROIPage() {
       {/* Date filter */}
       <div className="flex gap-3 mb-4">
         <input type="date" value={dateFrom} onChange={e => { setLoading(true); setDateFrom(e.target.value); }}
-          className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E04020]" />
         <input type="date" value={dateTo} onChange={e => { setLoading(true); setDateTo(e.target.value); }}
-          className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E04020]" />
         {(dateFrom || dateTo) && (
           <button onClick={() => { setDateFrom(''); setDateTo(''); }}
             className="text-sm text-gray-500 hover:text-gray-700 underline">

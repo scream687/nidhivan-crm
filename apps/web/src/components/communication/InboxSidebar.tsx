@@ -15,14 +15,13 @@ interface LeadConversation {
   lastMessageType?: string;
   unreadCount: number;
 }
-
 interface InboxSidebarProps {
   selectedLeadId: string | null;
   onSelectLead: (id: string) => void;
 }
 
 const SOURCE_AVATAR_COLORS: Record<string, string> = {
-  FACEBOOK: 'bg-blue-500',
+  FACEBOOK: 'bg-[#E04020]',
   INSTAGRAM: 'bg-pink-500',
   HOUSING_COM: 'bg-red-500',
   NINETYNINE_ACRES: 'bg-orange-500',
@@ -43,10 +42,20 @@ export default function InboxSidebar({ selectedLeadId, onSelectLead }: InboxSide
   const loadConversations = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/communication/leads', {
+      const { data } = await api.get('/communication/inbox', {
         params: { search: search || undefined },
       });
-      setConversations(Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : []);
+      const items: any[] = Array.isArray(data) ? data : (data?.items ?? []);
+      setConversations(items.map((c: any) => ({
+        id: c.leadId,
+        name: c.leadName,
+        phone: c.leadPhone,
+        source: c.leadSource ?? c.source ?? '',
+        lastMessage: c.lastCommunication,
+        lastMessageAt: c.lastCommunicationAt,
+        lastMessageType: c.lastCommunicationType,
+        unreadCount: c.unreadCount ?? 0,
+      })));
     } catch {
       setConversations([]);
     } finally {
@@ -76,7 +85,7 @@ export default function InboxSidebar({ selectedLeadId, onSelectLead }: InboxSide
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or phone…"
-            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 placeholder:text-gray-400"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#E04020] focus:border-[#E04020] placeholder:text-gray-400"
           />
         </div>
       </div>
@@ -112,9 +121,9 @@ export default function InboxSidebar({ selectedLeadId, onSelectLead }: InboxSide
                 className={cn(
                   'w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors border-l-2',
                   selectedLeadId === lead.id
-                    ? 'bg-blue-50 border-l-blue-500'
+                    ? 'bg-[#FDECE6] border-l-[#E04020]'
                     : 'border-l-transparent hover:bg-gray-50',
-                  lead.unreadCount > 0 && !selectedLeadId && 'bg-blue-50/40',
+                  lead.unreadCount > 0 && !selectedLeadId && 'bg-[#FDECE6]/40',
                 )}
               >
                 {/* Avatar */}
@@ -151,7 +160,7 @@ export default function InboxSidebar({ selectedLeadId, onSelectLead }: InboxSide
                 {/* Unread badge */}
                 {lead.unreadCount > 0 && (
                   <div className="flex-shrink-0 mt-1">
-                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-[#E04020] rounded-full">
                       {lead.unreadCount > 99 ? '99+' : lead.unreadCount}
                     </span>
                   </div>

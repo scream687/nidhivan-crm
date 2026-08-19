@@ -53,7 +53,7 @@ export class ActivitiesService {
 
   async createTask(leadId: string, data: any, userId: string) {
     const task = await this.prisma.task.create({
-      data: { title: data.title, dueDate: data.dueDate ? new Date(data.dueDate) : undefined, priority: data.priority || Priority.MEDIUM, assignedToId: data.assignedToId, leadId },
+      data: { title: data.title, dueDate: data.dueDate ? new Date(data.dueDate) : undefined, priority: data.priority || Priority.MEDIUM, assignedToId: data.assignedToId || userId, leadId },
       include: { assignedTo: { select: { id: true, name: true } } },
     });
 

@@ -390,7 +390,8 @@ export class BookingsService {
       stream.on('error', reject);
     });
 
-    const bookingLetterUrl = `/api/bookings/letters/${fileName}`;
+    // Must match the global prefix set in main.ts (`api/v1`), otherwise the stored URL 404s.
+    const bookingLetterUrl = `/api/v1/bookings/letters/${fileName}`;
     await this.prisma.booking.update({
       where: { id },
       data: { bookingLetterUrl },

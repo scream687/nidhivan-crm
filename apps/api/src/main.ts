@@ -46,11 +46,13 @@ async function bootstrap() {
   const allowed = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
+    'http://localhost:3005',
+    'http://127.0.0.1:3005',
     'http://localhost:4000',
   ];
   app.enableCors({
     origin: (origin, cb) => {
-      if (!origin || allowed.includes(origin) || origin.startsWith('http://192.168.')) cb(null, true);
+      if (!origin || allowed.includes(origin) || origin.startsWith('http://192.168.') || origin.endsWith('.trycloudflare.com')) cb(null, true);
       else cb(new Error(`CORS: ${origin} not allowed`));
     },
     credentials: true,

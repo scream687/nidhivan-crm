@@ -95,38 +95,42 @@ export default function InventoryPage() {
   );
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Package size={20} className="text-blue-600" />
-          <h1 className="text-lg font-bold text-gray-900">Property Inventory</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
+        <div>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Property Inventory</h1>
+          <p className="text-xs text-[#6b7280] font-medium mt-0.5">Townships, plots, and unit allocations</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 bg-blue-600 text-white text-sm px-3.5 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+          className="btn-frappe-primary"
         >
-          <Plus size={14} /> Add Project
+          <Plus size={13} />
+          <span>Add Project</span>
         </button>
       </div>
 
       {/* Summary strip */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         {[
-          { label: 'Available', value: totals.available, color: 'text-green-600 bg-green-50' },
-          { label: 'Blocked', value: totals.blocked, color: 'text-orange-600 bg-orange-50' },
-          { label: 'Booked', value: totals.booked, color: 'text-yellow-600 bg-yellow-50' },
-          { label: 'Sold', value: totals.sold, color: 'text-gray-600 bg-gray-100' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className={cn('rounded-xl p-4 text-center', color)}>
-            <p className="text-2xl font-bold">{value}</p>
-            <p className="text-xs mt-0.5 font-medium">{label}</p>
+          { label: 'Available', value: totals.available, badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { label: 'Blocked', value: totals.blocked, badgeBg: 'bg-amber-50 text-amber-700 border-amber-200' },
+          { label: 'Booked', value: totals.booked, badgeBg: 'bg-[#FDECE6] text-[#C02F12] border-[#FDECE6]' },
+          { label: 'Sold / Registered', value: totals.sold, badgeBg: 'bg-gray-100 text-gray-700 border-gray-200' },
+        ].map(({ label, value, badgeBg }) => (
+          <div key={label} className="frappe-card p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-mono text-[#6b7280] uppercase tracking-wider">{label}</span>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold font-mono text-[#111827]">{value}</span>
+              <span className={cn("text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded border", badgeBg)}>Units</span>
+            </div>
           </div>
         ))}
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 size={24} className="animate-spin text-blue-600" />
+          <Loader2 size={24} className="animate-spin text-[#E04020]" />
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
@@ -136,11 +140,8 @@ export default function InventoryPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {projects.map((project, i) => (
-            <motion.div
+            <div
               key={project.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
               className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow overflow-hidden group"
             >
               {/* Cover image with overlay */}
@@ -168,17 +169,17 @@ export default function InventoryPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-blue-500">{TYPE_ICONS[project.type] || <Package size={14} />}</span>
+                        <span className="text-[#E04020]">{TYPE_ICONS[project.type] || <Package size={14} />}</span>
                         <span className="text-[10px] text-gray-400 uppercase tracking-wide">{project.type}</span>
                         {project.isPublished ? (
-                          <span className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold">
+                          <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold">
                             <Globe size={8} /> Published
                           </span>
                         ) : (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium">Draft</span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium">Draft</span>
                         )}
                       </div>
-                      <h3 className="font-semibold text-gray-900 text-sm hover:text-blue-600 transition-colors">{project.name}</h3>
+                      <h3 className="font-semibold text-gray-900 text-sm hover:text-[#E04020] transition-colors">{project.name}</h3>
                       <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
                         <MapPin size={10} />
                         <span>{project.location}</span>
@@ -186,7 +187,7 @@ export default function InventoryPage() {
                     </div>
                     {project.priceMin && (
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-blue-600">
+                        <p className="text-sm font-bold text-[#E04020]">
                           ₹{Number(project.priceMin).toLocaleString('en-IN')}
                         </p>
                         {project.priceMax && (
@@ -207,7 +208,7 @@ export default function InventoryPage() {
                   ].map(({ label, value, color }) => (
                     <div key={label} className={cn('rounded-lg py-1.5 text-center', color)}>
                       <p className="text-sm font-bold">{value}</p>
-                      <p className="text-[9px] font-medium opacity-75">{label}</p>
+                      <p className="text-[10px] font-medium opacity-75">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -276,7 +277,7 @@ export default function InventoryPage() {
                   </button>
                   <button
                     onClick={() => setManaging(project)}
-                    className="text-[11px] text-blue-600 border border-blue-200 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition font-medium"
+                    className="text-[11px] text-[#E04020] border border-[#FDECE6] rounded-lg px-2.5 py-1.5 hover:bg-[#FDECE6] transition font-medium"
                   >
                     Manage
                   </button>
@@ -294,7 +295,7 @@ export default function InventoryPage() {
                   </button>
                 )}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -488,7 +489,7 @@ function AddProjectModal({ onClose, onCreated }: { onClose: () => void; onCreate
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-[#E04020] text-white rounded-lg hover:bg-[#C02F12] disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               Save & Add Media
             </button>
@@ -641,7 +642,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
           {(['media', 'details', 'publish'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={cn('px-4 py-3 text-sm font-medium capitalize border-b-2 transition',
-                tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700')}>
+                tab === t ? 'border-[#E04020] text-[#E04020]' : 'border-transparent text-gray-500 hover:text-gray-700')}>
               {t === 'media' ? 'Images & Brochure' : t === 'details' ? 'Details & Amenities' : 'Publish & Share'}
             </button>
           ))}
@@ -659,7 +660,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                   <button
                     onClick={() => imgRef.current?.click()}
                     disabled={uploading}
-                    className="flex items-center gap-1.5 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                    className="flex items-center gap-1.5 text-xs bg-[#E04020] text-white px-3 py-1.5 rounded-lg hover:bg-[#C02F12] disabled:opacity-50 transition"
                   >
                     {uploading ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
                     Upload Images
@@ -671,7 +672,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                 {project.images.length === 0 ? (
                   <div
                     onClick={() => imgRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-blue-300 transition"
+                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#FDECE6] transition"
                   >
                     <Upload size={24} className="mx-auto text-gray-300 mb-2" />
                     <p className="text-sm text-gray-400">Click or drag images here</p>
@@ -683,7 +684,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                       <div key={i} className="relative group rounded-lg overflow-hidden aspect-video bg-gray-100">
                         <img src={`${API_URL}${url}`} alt="" className="w-full h-full object-cover" />
                         {i === 0 && (
-                          <span className="absolute top-1.5 left-1.5 text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-semibold">
+                          <span className="absolute top-1.5 left-1.5 text-[10px] bg-[#E04020] text-white px-1.5 py-0.5 rounded font-semibold">
                             Cover
                           </span>
                         )}
@@ -697,7 +698,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                     ))}
                     <div
                       onClick={() => imgRef.current?.click()}
-                      className="border-2 border-dashed border-gray-200 rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-blue-300 transition"
+                      className="border-2 border-dashed border-gray-200 rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-[#FDECE6] transition"
                     >
                       <Plus size={16} className="text-gray-300" />
                       <p className="text-[10px] text-gray-300 mt-1">Add more</p>
@@ -722,7 +723,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                 </div>
                 {project.brochureUrl ? (
                   <a href={`${API_URL}${project.brochureUrl}`} target="_blank" rel="noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+                    className="flex items-center gap-2 text-sm text-[#E04020] hover:underline">
                     <FileText size={14} /> View brochure
                   </a>
                 ) : (
@@ -786,7 +787,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
               <button
                 onClick={saveDetails}
                 disabled={savingDetails}
-                className="flex items-center gap-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                className="flex items-center gap-2 bg-[#E04020] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#C02F12] disabled:opacity-50 transition"
               >
                 {savingDetails ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                 Save Details
@@ -828,7 +829,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-gray-700">Share with clients</p>
                   <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-                    <p className="text-sm text-blue-600 flex-1 truncate">{shareUrl}</p>
+                    <p className="text-sm text-[#E04020] flex-1 truncate">{shareUrl}</p>
                     <button
                       onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success('Link copied!'); }}
                       className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 transition flex-shrink-0"
@@ -840,7 +841,7 @@ function ProjectManageModal({ project, onClose, onUpdated }: {
                     href={`/p/${project.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                    className="flex items-center gap-2 text-sm text-[#E04020] hover:underline"
                   >
                     <Eye size={14} /> Preview public page
                   </a>
@@ -967,7 +968,7 @@ function UnitGridModal({ project, onClose, onUpdated }: {
                 onClick={() => toggleUnit(i)}
                 title={`Unit ${i + 1}: ${status} — click to change`}
                 className={cn(
-                  'w-full aspect-square rounded flex items-center justify-center text-[9px] font-medium transition hover:scale-110 hover:shadow-md active:scale-95 text-white cursor-pointer',
+                  'w-full aspect-square rounded flex items-center justify-center text-[10px] font-medium transition hover:scale-110 hover:shadow-md active:scale-95 text-white cursor-pointer',
                   STATUS_COLORS[status as keyof typeof STATUS_COLORS]
                 )}
               >
@@ -988,7 +989,7 @@ function UnitGridModal({ project, onClose, onUpdated }: {
             <button
               onClick={save}
               disabled={!dirty || saving}
-              className="flex items-center gap-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 transition"
+              className="flex items-center gap-2 px-4 py-1.5 text-sm bg-[#E04020] text-white rounded-lg hover:bg-[#C02F12] disabled:opacity-40 transition"
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
               Save Changes
@@ -1002,7 +1003,7 @@ function UnitGridModal({ project, onClose, onUpdated }: {
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
-const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -1028,7 +1029,7 @@ function TagInput({ label, placeholder, tags, input, onInputChange, onAdd, onRem
           placeholder={placeholder}
         />
         <button type="button" onClick={onAdd}
-          className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition flex-shrink-0 font-medium">
+          className="flex items-center gap-1 px-3 py-2 bg-[#E04020] text-white rounded-lg text-sm hover:bg-[#C02F12] transition flex-shrink-0 font-medium">
           <Plus size={13} /> Add
         </button>
       </div>
@@ -1036,9 +1037,9 @@ function TagInput({ label, placeholder, tags, input, onInputChange, onAdd, onRem
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {tags.map(tag => (
-            <span key={tag} className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200">
+            <span key={tag} className="flex items-center gap-1 text-xs bg-[#FDECE6] text-[#C02F12] px-2.5 py-1 rounded-full border border-[#FDECE6]">
               {tag}
-              <button type="button" onClick={() => onRemove(tag)} aria-label={`Remove tag ${tag}`} className="text-blue-400 hover:text-red-500 transition ml-0.5">
+              <button type="button" onClick={() => onRemove(tag)} aria-label={`Remove tag ${tag}`} className="text-[#E04020] hover:text-red-500 transition ml-0.5">
                 <X size={10} />
               </button>
             </span>

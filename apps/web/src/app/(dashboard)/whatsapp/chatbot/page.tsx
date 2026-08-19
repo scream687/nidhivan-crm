@@ -51,12 +51,12 @@ function AddRuleModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Keyword / Phrase *</label>
             <input value={keyword} onChange={e => setKeyword(e.target.value)}
               placeholder="e.g. brochure, price, visit"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Match Type</label>
             <select value={matchType} onChange={e => setMatchType(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
               {MATCH_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </div>
@@ -64,13 +64,13 @@ function AddRuleModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Auto-Reply Message *</label>
             <textarea value={response} onChange={e => setResponse(e.target.value)} rows={4}
               placeholder="Hi! Thanks for your message. Here is the brochure: [link]"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none" />
           </div>
         </div>
         <div className="p-5 border-t border-gray-100 flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm">Cancel</button>
           <button onClick={save} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
+            className="flex-1 flex items-center justify-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save Rule
           </button>
         </div>
@@ -111,19 +111,19 @@ function NewFlowModal({ onClose, onSaved }: { onClose: () => void; onSaved: (id:
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Flow Name *</label>
             <input value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g. Property Inquiry Flow"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FDECE6]0" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Trigger Keyword *</label>
             <input value={triggerKeyword} onChange={e => setTriggerKeyword(e.target.value)}
               placeholder="e.g. hello, interested, property"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FDECE6]0" />
             <p className="text-xs text-gray-400 mt-1">When a contact sends this keyword, this flow starts</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Match Type</label>
             <select value={matchType} onChange={e => setMatchType(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#FDECE6]0">
               {MATCH_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </div>
@@ -131,7 +131,7 @@ function NewFlowModal({ onClose, onSaved }: { onClose: () => void; onSaved: (id:
         <div className="p-5 border-t border-gray-100 flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm">Cancel</button>
           <button onClick={save} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
+            className="flex-1 flex items-center justify-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />} Create & Edit
           </button>
         </div>
@@ -163,7 +163,7 @@ function SortableRule({
       ref={setNodeRef}
       style={style}
       className={`flex items-start gap-3 p-4 bg-white rounded-xl border transition-shadow
-        ${isDragging ? 'shadow-xl border-blue-300 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'}
+        ${isDragging ? 'shadow-xl border-[#FDECE6] ring-2 ring-[#FDECE6]' : 'border-gray-200 hover:border-gray-300'}
         ${!rule.isActive ? 'opacity-50' : ''}`}
     >
       <button
@@ -195,12 +195,12 @@ function SortableRule({
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => onToggle(rule.id, rule.isActive)}
-          className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${rule.isActive ? 'bg-blue-600' : 'bg-gray-200'}`}
+          className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${rule.isActive ? 'bg-[#E04020]' : 'bg-gray-200'}`}
           title={rule.isActive ? 'Disable' : 'Enable'}
         >
           <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${rule.isActive ? 'translate-x-4' : ''}`} />
         </button>
-        <button onClick={() => onDelete(rule.id)} className="text-gray-300 hover:text-red-500 transition p-0.5">
+        <button onClick={() => onDelete(rule.id)} className="text-gray-500 hover:text-red-500 transition p-0.5">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -246,7 +246,7 @@ function FlowsTab() {
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-500">Visual multi-step conversation flows — flows take priority over Quick Rules</p>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+          className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
           <Plus className="w-4 h-4" /> New Flow
         </button>
       </div>
@@ -257,7 +257,7 @@ function FlowsTab() {
           <p className="text-lg font-medium">No flows yet</p>
           <p className="text-sm mt-1">Create a flow to design multi-step WhatsApp conversations visually</p>
           <button onClick={() => setShowModal(true)}
-            className="mt-4 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+            className="mt-4 inline-flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
             <Plus className="w-4 h-4" /> Create your first flow
           </button>
         </div>
@@ -266,13 +266,13 @@ function FlowsTab() {
           {flows.map(flow => (
             <div key={flow.id}
               className={`bg-white border rounded-xl p-4 flex items-start gap-4 transition ${flow.isActive ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
-              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <GitBranch className="w-4 h-4 text-indigo-600" />
+              <div className="w-9 h-9 rounded-lg bg-[#FDECE6] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <GitBranch className="w-4 h-4 text-[#E04020]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-gray-900 truncate">{flow.name}</h3>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${flow.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${flow.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
                     {flow.isActive ? 'ACTIVE' : 'PAUSED'}
                   </span>
                 </div>
@@ -289,16 +289,16 @@ function FlowsTab() {
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button onClick={() => router.push(`/whatsapp/chatbot/flows/${flow.id}`)}
-                  className="flex items-center gap-1.5 text-xs text-blue-600 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition">
+                  className="flex items-center gap-1.5 text-xs text-[#E04020] hover:bg-[#FDECE6] px-2.5 py-1.5 rounded-lg transition">
                   <Pencil className="w-3 h-3" /> Edit
                 </button>
                 <button onClick={() => toggle(flow.id)}
-                  className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  className="p-1.5 text-gray-400 hover:text-[#E04020] hover:bg-[#FDECE6] rounded-lg transition"
                   title={flow.isActive ? 'Pause' : 'Activate'}>
                   {flow.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                 </button>
                 <button onClick={() => remove(flow.id, flow.name)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                  className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -371,13 +371,13 @@ export default function ChatbotPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Bot className="w-6 h-6 text-blue-600" />
+          <Bot className="w-6 h-6 text-[#E04020]" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">WhatsApp Chatbot</h1>
+            <h1 className="text-xl font-bold text-[#111113] tracking-tight">WhatsApp Chatbot</h1>
             <p className="text-sm text-gray-500">Visual flows & keyword auto-replies</p>
           </div>
         </div>
@@ -385,7 +385,7 @@ export default function ChatbotPage() {
           <div className="flex items-center gap-2">
             {saving && <span className="text-xs text-gray-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Saving…</span>}
             <button onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+              className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
               <Plus className="w-4 h-4" /> New Rule
             </button>
           </div>
@@ -399,7 +399,7 @@ export default function ChatbotPage() {
           className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition ${tab === 'flows' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
           <GitBranch className="w-4 h-4" /> Flows
-          <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-semibold">NEW</span>
+          <span className="text-[10px] bg-[#FDECE6] text-[#E04020] px-1.5 py-0.5 rounded font-semibold">NEW</span>
         </button>
         <button
           onClick={() => setTab('rules')}
@@ -415,8 +415,8 @@ export default function ChatbotPage() {
       {/* Quick Rules tab */}
       {tab === 'rules' && (
         <>
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5 mb-5 text-sm text-blue-700 flex items-start gap-2">
-            <GripVertical className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-400" />
+          <div className="bg-[#FDECE6] border border-[#FDECE6] rounded-xl p-3.5 mb-5 text-sm text-[#C02F12] flex items-start gap-2">
+            <GripVertical className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#E04020]" />
             <span>
               Drag rules to reorder — rules at the <strong>top</strong> have higher priority and are checked first.
               Flows (above tab) take priority over all quick rules.

@@ -11,23 +11,23 @@ import {
 
 const STAGE_COLORS: Record<string, { color: string; bgColor: string }> = {
   NEW: { color: "#6b7280", bgColor: "#f3f4f6" },
-  ATTEMPTED: { color: "#ea580c", bgColor: "#fff7ed" },
+  ATTEMPTED: { color: "#6b7280", bgColor: "#f3f4f6" },
   NOT_REACHABLE: { color: "#6b7280", bgColor: "#f3f4f6" },
   WRONG_NUMBER: { color: "#b91c1c", bgColor: "#fef2f2" },
-  CONNECTED: { color: "#2563eb", bgColor: "#eff6ff" },
-  INTERESTED: { color: "#7c3aed", bgColor: "#f5f3ff" },
+  CONNECTED: { color: "#e04020", bgColor: "#fdece6" },
+  INTERESTED: { color: "#6b7280", bgColor: "#f3f4f6" },
   HOT: { color: "#dc2626", bgColor: "#fef2f2" },
-  SITE_VISIT_SCHEDULED: { color: "#7c3aed", bgColor: "#f5f3ff" },
-  SITE_VISIT_COMPLETED: { color: "#0d9488", bgColor: "#f0fdfa" },
+  SITE_VISIT_SCHEDULED: { color: "#6b7280", bgColor: "#f3f4f6" },
+  SITE_VISIT_COMPLETED: { color: "#047857", bgColor: "#e7f6ee" },
   NEGOTIATION: { color: "#d97706", bgColor: "#fffbeb" },
   BOOKING_PENDING: { color: "#ca8a04", bgColor: "#fefce8" },
-  LOAN_PROCESSING: { color: "#2563eb", bgColor: "#eff6ff" },
+  LOAN_PROCESSING: { color: "#e04020", bgColor: "#fdece6" },
   DOCUMENTATION_PENDING: { color: "#a855f7", bgColor: "#f5f3ff" },
   PAYMENT_PENDING: { color: "#d97706", bgColor: "#fffbeb" },
-  CLOSED_WON: { color: "#16a34a", bgColor: "#f0fdf4" },
-  CLOSED_LOST: { color: "#9f1239", bgColor: "#fff1f2" },
-  DUPLICATE: { color: "#ea580c", bgColor: "#fff7ed" },
-  FUTURE_PROSPECT: { color: "#0891b2", bgColor: "#ecfeff" },
+  CLOSED_WON: { color: "#047857", bgColor: "#e7f6ee" },
+  CLOSED_LOST: { color: "#6b7280", bgColor: "#f3f4f6" },
+  DUPLICATE: { color: "#6b7280", bgColor: "#f3f4f6" },
+  FUTURE_PROSPECT: { color: "#6b7280", bgColor: "#f3f4f6" },
 };
 
 interface Props {
@@ -83,7 +83,7 @@ export default function CustomerSummaryCard({ lead, healthScore, summary }: Prop
         <Section title="Tags">
           <div className="flex flex-wrap gap-1">
             {lead.tags.map((t: string) => (
-              <span key={t} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full">{t}</span>
+              <span key={t} className="text-[10px] bg-[#FDECE6] text-[#C02F12] px-1.5 py-0.5 rounded-full">{t}</span>
             ))}
           </div>
         </Section>
@@ -121,7 +121,7 @@ function InsightsSection({ summary }: { summary: NonNullable<Props["summary"]> }
         <div key={ins.label} className="bg-gray-50 rounded-lg p-2 space-y-0.5">
           <div className="flex items-center gap-1 text-gray-400">
             {ins.icon}
-            <span className="text-[9px] uppercase tracking-wide font-semibold">{ins.label}</span>
+            <span className="text-[10px] uppercase tracking-wide font-semibold">{ins.label}</span>
           </div>
           <p className="text-xs font-semibold text-gray-800">{ins.value}</p>
         </div>
@@ -133,7 +133,7 @@ function InsightsSection({ summary }: { summary: NonNullable<Props["summary"]> }
 function HealthBadge({ healthScore }: { healthScore?: { score: number; label: string; reasons: string[] } }) {
   if (!healthScore) return null;
   const colorMap: Record<string, string> = {
-    Healthy: "bg-green-50 border-green-200 text-green-700",
+    Healthy: "bg-[#E7F6EE] border-[#BDE6D3] text-[#047857]",
     "Needs Attention": "bg-yellow-50 border-yellow-200 text-yellow-700",
     "At Risk": "bg-red-50 border-red-200 text-red-700",
   };

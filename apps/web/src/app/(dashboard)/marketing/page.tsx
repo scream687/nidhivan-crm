@@ -29,21 +29,21 @@ export default function MarketingDashboardPage() {
   }, []);
 
   const cards = [
-    { label: 'Active Campaigns', value: stats?.activeCampaigns ?? '—', icon: Mail, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Active Campaigns', value: stats?.activeCampaigns ?? '—', icon: Mail, color: 'text-[#E04020] bg-[#FDECE6]' },
     { label: 'Landing Pages', value: stats?.totalLandingPages ?? '—', icon: Globe, color: 'text-emerald-600 bg-emerald-50' },
     { label: 'Segments', value: stats?.totalSegments ?? '—', icon: Target, color: 'text-purple-600 bg-purple-50' },
     { label: 'Referral Codes', value: stats?.activeReferralCodes ?? '—', icon: Gift, color: 'text-amber-600 bg-amber-50' },
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <TrendingUp className="w-6 h-6 text-blue-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Marketing</h1>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <TrendingUp className="w-6 h-6 text-[#E04020]" />
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Marketing</h1>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map(c => {
           const Icon = c.icon;
           return (
@@ -63,7 +63,7 @@ export default function MarketingDashboardPage() {
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
             <Users className="w-4 h-4" /> Total Leads
@@ -97,16 +97,16 @@ export default function MarketingDashboardPage() {
           const Icon = l.icon;
           return (
             <Link key={l.href} href={l.href}>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all group cursor-pointer">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 hover:border-[#FDECE6] hover:shadow-sm transition-all group cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-lg bg-[#FDECE6] text-[#E04020] flex items-center justify-center">
                     <Icon className="w-4.5 h-4.5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm">{l.label}</p>
                     <p className="text-xs text-gray-400 truncate">{l.desc}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#E04020] transition-colors flex-shrink-0" />
                 </div>
               </div>
             </Link>

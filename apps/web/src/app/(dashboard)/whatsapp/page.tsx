@@ -12,21 +12,28 @@ const STAGE_COLORS: Record<string, string> = {
   ATTEMPTED: 'bg-yellow-100 text-yellow-700',
   NOT_REACHABLE: 'bg-gray-100 text-gray-500',
   WRONG_NUMBER: 'bg-red-100 text-red-700',
-  CONNECTED: 'bg-blue-100 text-blue-600',
+  CONNECTED: 'bg-[#FDECE6] text-[#E04020]',
   INTERESTED: 'bg-purple-100 text-purple-600',
   HOT: 'bg-red-100 text-red-600',
-  SITE_VISIT_SCHEDULED: 'bg-indigo-100 text-indigo-600',
+  SITE_VISIT_SCHEDULED: 'bg-[#FDECE6] text-[#E04020]',
   SITE_VISIT_COMPLETED: 'bg-emerald-100 text-emerald-700',
   NEGOTIATION: 'bg-amber-100 text-amber-700',
   BOOKING_PENDING: 'bg-pink-100 text-pink-700',
-  LOAN_PROCESSING: 'bg-blue-100 text-blue-600',
+  LOAN_PROCESSING: 'bg-[#FDECE6] text-[#E04020]',
   DOCUMENTATION_PENDING: 'bg-purple-100 text-purple-500',
   PAYMENT_PENDING: 'bg-amber-100 text-amber-600',
   CLOSED_WON: 'bg-green-100 text-green-700',
   CLOSED_LOST: 'bg-gray-100 text-gray-700',
   DUPLICATE: 'bg-orange-100 text-orange-600',
-  FUTURE_PROSPECT: 'bg-indigo-100 text-indigo-700',
+  FUTURE_PROSPECT: 'bg-[#FDECE6] text-[#C02F12]',
 };
+
+// Numbers are stored with varying country-code/format prefixes; match on the last 10 digits.
+function samePhone(a?: string, b?: string) {
+  if (!a || !b) return false;
+  const digits = (s: string) => s.replace(/\D/g, '').slice(-10);
+  return digits(a) === digits(b);
+}
 
 export default function WhatsAppInboxPage() {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -59,9 +66,21 @@ export default function WhatsAppInboxPage() {
 
   async function loadConversations() {
     setLoading(true);
+    // Deep link from a lead: /whatsapp?phone=…&name=… opens (or drafts) that thread
+    const params = new URLSearchParams(window.location.search);
+    const targetPhone = params.get('phone');
     try {
       const { data } = await api.get('/whatsapp/conversations');
       setConversations(data || []);
+      if (targetPhone) {
+        const match = (data || []).find((c: any) => samePhone(c.phone, targetPhone));
+        if (match) selectConversation(match);
+        else {
+          setSelected({ id: null, phone: targetPhone, name: params.get('name') || targetPhone });
+          setMessages([]);
+        }
+        return;
+      }
       if (data?.length > 0 && !selected) {
         selectConversation(data[0]);
       }
@@ -75,6 +94,7 @@ export default function WhatsAppInboxPage() {
   async function selectConversation(conv: any) {
     setSelected(conv);
     setMessages([]);
+    if (!conv.id) return; // draft thread — nothing to fetch yet
     try {
       const { data } = await api.get(`/whatsapp/conversations/${conv.id}/messages`);
       setMessages(data || []);
@@ -93,6 +113,7 @@ export default function WhatsAppInboxPage() {
     try {
       const { data } = await api.post('/whatsapp/send', { to: selected.phone, body });
       setMessages(prev => [...prev, data]);
+      if (!selected.id) loadConversations(); // first message on a draft thread — pull the real conversation in
     } catch {
       toast.error('Failed to send message');
       setMessage(body);
@@ -125,39 +146,43 @@ export default function WhatsAppInboxPage() {
   }
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-[calc(100vh-100px)] frappe-card overflow-hidden">
       {/* Conversation list */}
-      <div className="w-80 border-r border-gray-200 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-3">
+      <div className="w-80 border-r border-[#e5e7eb] flex flex-col flex-shrink-0 bg-white">
+        <div className="p-3.5 border-b border-[#e5e7eb]">
+          <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <MessageSquare size={16} className="text-white" />
+              <div className="w-6 h-6 bg-emerald-500 text-white rounded-md flex items-center justify-center">
+                <MessageSquare size={13} />
               </div>
-              <h1 className="font-bold text-gray-900">WhatsApp Inbox</h1>
+              <h1 className="text-xl font-bold text-[#111113] tracking-tight">WhatsApp Inbox</h1>
               {totalUnread > 0 && (
-                <span className="bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{totalUnread}</span>
+                <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded font-mono">{totalUnread}</span>
               )}
             </div>
-            <button onClick={loadConversations} aria-label="Refresh conversations" className="text-gray-400 hover:text-gray-600">
-              <RefreshCw size={14} />
+            <button onClick={loadConversations} aria-label="Refresh conversations" className="text-[#9ca3af] hover:text-[#111827]">
+              <RefreshCw size={13} />
             </button>
           </div>
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-2.5 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search conversations…"
-              className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search conversations..."
+              className="w-full pl-7 pr-3 py-1.5 text-xs bg-[#f3f4f6] border border-transparent focus:border-[#d1d5db] focus:bg-white rounded-lg focus:outline-none text-[#111827] placeholder-[#9ca3af]"
+            />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="flex justify-center py-8">
-              <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
             </div>
           )}
           {!loading && filtered.length === 0 && (
-            <div className="text-center py-12 text-gray-400 text-sm">
+            <div className="text-center py-12 text-[#9ca3af] text-xs font-mono">
               <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
               No conversations yet.
             </div>
@@ -209,7 +234,7 @@ export default function WhatsAppInboxPage() {
               </div>
             </div>
             {selected.lead && (
-              <Link href={`/leads/${selected.lead.id}`} className="text-xs text-blue-600 hover:underline">
+              <Link href={`/leads/${selected.lead.id}`} className="text-xs text-[#E04020] hover:underline">
                 View Lead →
               </Link>
             )}
@@ -226,7 +251,7 @@ export default function WhatsAppInboxPage() {
                       {new Date(msg.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     {msg.direction === 'out' && (
-                      msg.status === 'read' ? <CheckCheck size={12} className="text-blue-500" /> :
+                      msg.status === 'read' ? <CheckCheck size={12} className="text-[#E04020]" /> :
                       msg.status === 'delivered' ? <CheckCheck size={12} className="text-gray-400" /> :
                       <Check size={12} className="text-gray-400" />
                     )}

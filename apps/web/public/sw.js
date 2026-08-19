@@ -1,5 +1,5 @@
 // Nidhivan CRM — Service Worker v1
-const CACHE_NAME = "nidhivan-crm-v1";
+const CACHE_NAME = "nidhivan-crm-v2";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",

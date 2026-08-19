@@ -77,7 +77,7 @@ function entryIcon(type: string, entry?: TimelineEntry) {
 function entryColor(type: string, entry?: TimelineEntry): string {
   switch (type) {
     case 'CALL':
-      return entry?.direction === 'INCOMING' ? 'text-green-500' : 'text-blue-500';
+      return entry?.direction === 'INCOMING' ? 'text-green-500' : 'text-[#E04020]';
     case 'WHATSAPP':
       return 'text-green-500';
     case 'NOTE':
@@ -85,12 +85,12 @@ function entryColor(type: string, entry?: TimelineEntry): string {
     case 'TASK':
       return 'text-purple-500';
     case 'SITE_VISIT':
-      return 'text-blue-500';
+      return 'text-[#E04020]';
     case 'BOOKING':
       return 'text-amber-500';
     case 'ACTIVITY':
       if (entry?.activityType === 'STAGE_CHANGE') return 'text-purple-500';
-      if (entry?.activityType === 'SITE_VISIT') return 'text-blue-500';
+      if (entry?.activityType === 'SITE_VISIT') return 'text-[#E04020]';
       return 'text-gray-400';
     default:
       return 'text-gray-400';
@@ -139,7 +139,7 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
                   'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
                   entry.direction === 'INCOMING'
                     ? 'bg-green-50 text-green-600'
-                    : 'bg-blue-50 text-blue-600',
+                    : 'bg-[#FDECE6] text-[#E04020]',
                 )}>
                   {entry.direction === 'INCOMING' ? 'Incoming' : 'Outgoing'}
                 </span>
@@ -184,7 +184,7 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
 
             {/* WhatsApp media indicator */}
             {entry.type === 'WHATSAPP' && entry.mediaUrl && (
-              <div className="flex items-center gap-1.5 text-xs text-blue-600">
+              <div className="flex items-center gap-1.5 text-xs text-[#E04020]">
                 {entry.mediaType?.startsWith('image') ? (
                   <><Image size={12} /> Image</>
                 ) : (
@@ -205,7 +205,7 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
                 {showExpand && (
                   <button
                     onClick={() => setExpanded(!expanded)}
-                    className="flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-700 mt-1 font-medium"
+                    className="flex items-center gap-0.5 text-xs text-[#E04020] hover:text-[#C02F12] mt-1 font-medium"
                   >
                     {expanded ? (
                       <>Show less <ChevronUp size={12} /></>
@@ -339,7 +339,7 @@ export default function LeadTimeline({ leadId, refreshKey }: LeadTimelineProps) 
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap',
               filter === f.key
-                ? 'bg-blue-500 text-white'
+                ? 'bg-[#E04020] text-white'
                 : 'bg-gray-50 text-gray-500 hover:bg-gray-100',
             )}
           >

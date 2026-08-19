@@ -92,7 +92,7 @@ export default function VoiceRecorder({ leadId, onSuccess, onClose }: VoiceRecor
     try {
       const formData = new FormData();
       formData.append("audio", audioBlob, `voice-note-${Date.now()}.webm`);
-      await api.post(`/leads/${leadId}/voice-note`, formData, {
+      await api.post(`/activities/${leadId}/voice-note`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success("Voice note sent");
@@ -124,7 +124,7 @@ export default function VoiceRecorder({ leadId, onSuccess, onClose }: VoiceRecor
       {state === "idle" && (
         <button
           onClick={startRecording}
-          className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium border border-blue-200 rounded-lg px-2.5 py-1.5 transition"
+          className="flex items-center gap-1.5 text-xs text-[#E04020] hover:text-[#C02F12] font-medium border border-[#FDECE6] rounded-lg px-2.5 py-1.5 transition"
           title="Record voice note"
         >
           <Mic size={13} />
@@ -155,7 +155,7 @@ export default function VoiceRecorder({ leadId, onSuccess, onClose }: VoiceRecor
               const audio = new Audio(audioUrl);
               audio.play();
             }}
-            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium border border-blue-200 rounded-lg px-2.5 py-1.5 transition"
+            className="flex items-center gap-1 text-xs text-[#E04020] hover:text-[#C02F12] font-medium border border-[#FDECE6] rounded-lg px-2.5 py-1.5 transition"
           >
             <Play size={12} />
             Listen
@@ -164,7 +164,7 @@ export default function VoiceRecorder({ leadId, onSuccess, onClose }: VoiceRecor
           <button
             onClick={upload}
             disabled={state === "uploading"}
-            className="flex items-center gap-1 text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
+            className="flex items-center gap-1 text-xs bg-[#E04020] text-white px-2.5 py-1.5 rounded-lg hover:bg-[#C02F12] transition font-medium disabled:opacity-50"
           >
             {state === "uploading" ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
             Send

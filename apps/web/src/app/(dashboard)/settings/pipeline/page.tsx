@@ -99,7 +99,7 @@ function StageRow({ stage, onUpdate, onDelete, onDragStart, onDragOver, onDrop }
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
           />
           <ColorPicker color={color} bgColor={bgColor} onChange={(c, bg) => { setColor(c); setBgColor(bg); }} />
         </div>
@@ -117,7 +117,7 @@ function StageRow({ stage, onUpdate, onDelete, onDragStart, onDragOver, onDrop }
 
         <button
           onClick={() => onUpdate(stage.id, { isActive: !stage.isActive })}
-          className={cn('w-8 h-4 rounded-full transition-colors', stage.isActive ? 'bg-blue-500' : 'bg-gray-200')}
+          className={cn('w-8 h-4 rounded-full transition-colors', stage.isActive ? 'bg-[#E04020]' : 'bg-gray-200')}
         >
           <div className={cn('w-3 h-3 bg-white rounded-full mx-0.5 transition-transform', stage.isActive ? 'translate-x-4' : 'translate-x-0')} />
         </button>
@@ -128,7 +128,7 @@ function StageRow({ stage, onUpdate, onDelete, onDragStart, onDragOver, onDrop }
             <button onClick={cancel} aria-label="Cancel" className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
           </>
         ) : (
-          <button onClick={() => setEditing(true)} aria-label="Edit stage" className="text-gray-400 hover:text-blue-500"><Edit2 size={13} /></button>
+          <button onClick={() => setEditing(true)} aria-label="Edit stage" className="text-gray-400 hover:text-[#E04020]"><Edit2 size={13} /></button>
         )}
 
         {!stage.isSystem && (
@@ -224,14 +224,14 @@ export default function PipelinePage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl space-y-5">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GitBranch size={20} className="text-blue-600" />
-          <h1 className="text-lg font-bold text-gray-900">Pipeline Stages</h1>
+          <GitBranch size={20} className="text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Pipeline Stages</h1>
         </div>
         <button onClick={() => setShowNew(true)}
-          className="flex items-center gap-1.5 bg-blue-600 text-white text-sm px-3.5 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+          className="flex items-center gap-1.5 bg-[#E04020] text-white text-sm px-3.5 py-2 rounded-lg hover:bg-[#C02F12] transition font-medium">
           <Plus size={14} /> Add Stage
         </button>
       </div>
@@ -239,7 +239,7 @@ export default function PipelinePage() {
       <p className="text-sm text-gray-500">Drag to reorder. Toggle the switch to show/hide a stage. System stages cannot be deleted.</p>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-blue-600" /></div>
+        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-[#E04020]" /></div>
       ) : (
         <div className="space-y-2">
           {stages.map((stage) => (
@@ -259,13 +259,13 @@ export default function PipelinePage() {
       <AnimatePresence>
         {showNew && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            className="bg-white border-2 border-blue-200 rounded-xl p-4 space-y-3">
+            className="bg-white border-2 border-[#FDECE6] rounded-xl p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-900">New Stage</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Label *</label>
                 <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder="e.g. Follow Up" className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="e.g. Follow Up" className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Color</label>
@@ -285,7 +285,7 @@ export default function PipelinePage() {
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowNew(false)} className="px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
               <button onClick={handleCreate} disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#E04020] text-white rounded-lg hover:bg-[#C02F12] disabled:opacity-50">
                 {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                 Create
               </button>

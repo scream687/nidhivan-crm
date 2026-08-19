@@ -15,6 +15,16 @@ export class MarketingService implements OnModuleInit {
     setInterval(() => this.processNurtureSteps(), 10 * 60 * 1000);
   }
 
+  async getMarketingSummary() {
+    const [activeCampaigns, totalLandingPages, totalSegments, activeReferralCodes] = await Promise.all([
+      this.prisma.campaign.count({ where: { status: { not: 'CANCELLED' } } }),
+      this.prisma.landingPage.count(),
+      this.prisma.segment.count(),
+      this.prisma.referralCode.count({ where: { isActive: true } }),
+    ]);
+    return { activeCampaigns, totalLandingPages, totalSegments, activeReferralCodes };
+  }
+
   // ── Segments ──────────────────────────────────────────────────────────────
 
   async listSegments(userId: string) {
@@ -313,6 +323,14 @@ export class MarketingService implements OnModuleInit {
     const ref = await this.prisma.referralCode.findUnique({ where: { code: code.toUpperCase() } });
     if (!ref) throw new NotFoundException('Referral code not found');
     return ref;
+  }
+
+  async updateReferralCode(id: string, body: { isActive?: boolean }) {
+    return this.prisma.referralCode.update({ where: { id }, data: { isActive: body.isActive } });
+  }
+
+  async deleteReferralCode(id: string) {
+    return this.prisma.referralCode.delete({ where: { id } });
   }
 
   async incrementReferralUse(code: string) {

@@ -107,7 +107,7 @@ export default function CreateLeadModal({ onClose }: Props) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Lead Title</label>
               <input value={form.leadTitle} onChange={e => set('leadTitle', e.target.value)}
                 placeholder="e.g. Interested, Hot Prospect…"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
             </div>
 
             {/* Next Follow-up */}
@@ -115,13 +115,13 @@ export default function CreateLeadModal({ onClose }: Props) {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Next Follow-up On</label>
                 <input type="datetime-local" value={form.nextFollowUpAt} onChange={e => set('nextFollowUpAt', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Next Follow-up Info</label>
                 <input value={form.nextFollowUpInfo} onChange={e => set('nextFollowUpInfo', e.target.value)}
                   placeholder="NA"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
             </div>
 
@@ -132,37 +132,37 @@ export default function CreateLeadModal({ onClose }: Props) {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Contact Name *</label>
                 <input required value={form.name} onChange={e => set('name', e.target.value)}
                   placeholder="Full name"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Mobile Number *</label>
                 <input required value={form.phone} onChange={e => set('phone', e.target.value)}
                   placeholder="9876543210"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Alternate Number</label>
                 <input value={form.altPhone} onChange={e => set('altPhone', e.target.value)}
                   placeholder="Alternate phone"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Email Address</label>
                 <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
                   placeholder="email@example.com"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Lead Stage</label>
                 <select value={form.stage} onChange={e => set('stage', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60">
                   {stages.map(s => <option key={s.name} value={s.name}>{s.label}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Lead Owner</label>
                 <select value={form.assignedToId} onChange={e => set('assignedToId', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60">
                   <option value="">Auto-assign (Round Robin)</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
@@ -171,52 +171,52 @@ export default function CreateLeadModal({ onClose }: Props) {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Description</label>
                 <input value={form.description} onChange={e => set('description', e.target.value)}
                   placeholder="Any notes or description…"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Requirements</label>
                 <input value={form.requirements} onChange={e => set('requirements', e.target.value)}
                   placeholder="e.g. 100 sq.yd plot"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Project Name</label>
                 <input value={form.projectInterest} onChange={e => set('projectInterest', e.target.value)}
                   placeholder="Govardhan Heights…"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Site Location</label>
                 <input value={form.siteLocation} onChange={e => set('siteLocation', e.target.value)}
                   placeholder="Vrindavan, UP"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">When can you come for site visit</label>
                 <input type="date" value={form.siteVisitDate} onChange={e => set('siteVisitDate', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Booking Date</label>
                 <input type="date" value={form.bookingDate} onChange={e => set('bookingDate', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Budget (₹)</label>
                 <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)}
                   placeholder="5000000"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">City</label>
                 <input value={form.city} onChange={e => set('city', e.target.value)}
                   placeholder="City"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Registry Done Date</label>
                 <input type="date" value={form.registryDoneDate} onChange={e => set('registryDoneDate', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
             </div>
 
@@ -226,7 +226,7 @@ export default function CreateLeadModal({ onClose }: Props) {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Lead Source</label>
                 <select value={form.source} onChange={e => set('source', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60">
                   {SOURCES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
@@ -234,19 +234,19 @@ export default function CreateLeadModal({ onClose }: Props) {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Campaign Name</label>
                 <input value={form.campaignName} onChange={e => set('campaignName', e.target.value)}
                   placeholder="Apr_Govardhan_Heights"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Campaign Team</label>
                 <input value={form.campaignTeam} onChange={e => set('campaignTeam', e.target.value)}
                   placeholder="Marketing Team"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Reference</label>
                 <input value={form.reference} onChange={e => set('reference', e.target.value)}
                   placeholder="Who referred this lead"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]/60" />
               </div>
             </div>
 
@@ -259,7 +259,7 @@ export default function CreateLeadModal({ onClose }: Props) {
               Cancel
             </button>
             <button type="submit" disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
+              className="flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-[#C02F12] text-white rounded-lg hover:bg-[#A82717] disabled:opacity-50 transition">
               {loading && <Loader2 size={14} className="animate-spin" />}
               Create & Sync Lead
             </button>

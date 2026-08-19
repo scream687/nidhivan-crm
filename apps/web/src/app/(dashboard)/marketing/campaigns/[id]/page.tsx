@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const STATUS_DOT: Record<string, string> = {
-  SENT: 'bg-blue-500', DELIVERED: 'bg-green-500', FAILED: 'bg-red-500', PENDING: 'bg-gray-300',
+  SENT: 'bg-[#E04020]', DELIVERED: 'bg-green-500', FAILED: 'bg-red-500', PENDING: 'bg-gray-300',
 };
 
 export default function CampaignDetailPage() {
@@ -28,19 +28,19 @@ export default function CampaignDetailPage() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{c.name}</h1>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">{c.name}</h1>
           <p className="text-sm text-gray-500 mt-1">{c.type} · {c.status} · {c.totalCount} total recipients</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-900 mb-4">Delivery Stats</h2>
           {pieData.length > 0 ? (
@@ -62,7 +62,7 @@ export default function CampaignDetailPage() {
           <h2 className="font-semibold text-gray-900 mb-4">Summary</h2>
           {[
             { label: 'Total', value: c.totalCount, icon: Clock, color: 'text-gray-600' },
-            { label: 'Sent', value: c.sentCount, icon: CheckCircle2, color: 'text-blue-600' },
+            { label: 'Sent', value: c.sentCount, icon: CheckCircle2, color: 'text-[#E04020]' },
             { label: 'Delivered', value: c.deliveredCount, icon: CheckCircle2, color: 'text-green-600' },
             { label: 'Failed', value: c.failedCount, icon: XCircle, color: 'text-red-600' },
           ].map(({ label, value, icon: Icon, color }) => (

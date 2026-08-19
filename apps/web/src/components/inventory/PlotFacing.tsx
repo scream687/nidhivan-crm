@@ -2,11 +2,11 @@
 import { cn } from '@/lib/utils';
 
 const FACING_CONFIG: Record<string, { label: string; color: string; arrow: string }> = {
-  NORTH: { label: 'North', color: 'bg-blue-100 text-blue-700 border-blue-200', arrow: '↑' },
+  NORTH: { label: 'North', color: 'bg-[#FDECE6] text-[#C02F12] border-[#FDECE6]', arrow: '↑' },
   SOUTH: { label: 'South', color: 'bg-red-100 text-red-700 border-red-200', arrow: '↓' },
   EAST: { label: 'East', color: 'bg-green-100 text-green-700 border-green-200', arrow: '→' },
   WEST: { label: 'West', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', arrow: '←' },
-  NORTHEAST: { label: 'N-E', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', arrow: '↗' },
+  NORTHEAST: { label: 'N-E', color: 'bg-[#FDECE6] text-[#C02F12] border-[#FDECE6]', arrow: '↗' },
   NORTHWEST: { label: 'N-W', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', arrow: '↖' },
   SOUTHEAST: { label: 'S-E', color: 'bg-teal-100 text-teal-700 border-teal-200', arrow: '↘' },
   SOUTHWEST: { label: 'S-W', color: 'bg-rose-100 text-rose-700 border-rose-200', arrow: '↙' },

@@ -21,7 +21,7 @@ type PageData = {
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: 'bg-purple-100 text-purple-600',
-  MANAGER: 'bg-blue-100 text-blue-600',
+  MANAGER: 'bg-[#FDECE6] text-[#E04020]',
   SALES_AGENT: 'bg-green-100 text-green-600',
   TELECALLER: 'bg-amber-100 text-amber-600',
   MARKETING: 'bg-pink-100 text-pink-600',
@@ -129,30 +129,41 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center gap-3">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">User Management</h1>
-          <p className="text-xs text-gray-500">{page?.total ?? 0} total</p>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">User Directory & Permissions</h1>
+          <p className="text-xs text-[#6b7280] font-medium mt-0.5">{page?.total ?? 0} total system users and sales agents</p>
         </div>
-        <div className="relative flex-1 max-w-xs mx-3">
-          <Search size={14} className="absolute left-3 top-2.5 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search name or email…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
+        {isAdmin && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="btn-frappe-primary"
+          >
+            <Plus size={13} />
+            <span>Add User</span>
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name or email..."
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-[#e5e7eb] rounded-lg focus:outline-none bg-white text-[#111827] placeholder-[#9ca3af]"
+          />
         </div>
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select
+          value={roleFilter}
+          onChange={e => setRoleFilter(e.target.value)}
+          className="text-xs border border-[#e5e7eb] rounded-lg px-2.5 py-1.5 bg-white text-[#111827] focus:outline-none"
+        >
           <option value="">All Roles</option>
           {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
         </select>
-        <div className="ml-auto" />
-        {isAdmin && (
-          <button onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition">
-            <Plus size={14} /> Add User
-          </button>
-        )}
       </div>
 
       <div className="flex-1 overflow-auto p-4">
@@ -177,7 +188,7 @@ export default function UsersPage() {
                   <tr key={u.id} className={cn('border-b border-gray-50 hover:bg-gray-50 transition', i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30')}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-[#FDECE6] flex items-center justify-center text-[#C02F12] font-bold text-xs">
                           {u.name.slice(0, 2).toUpperCase()}
                         </div>
                         <span className="text-sm font-medium text-gray-900">{u.name}</span>
@@ -204,7 +215,7 @@ export default function UsersPage() {
                       <div className="flex items-center gap-1">
                         <button onClick={() => { setEditing(u); setEditForm({ name: u.name, email: u.email, role: u.role, isActive: u.isActive }); }}
                           disabled={saving === u.id}
-                          className="px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition disabled:opacity-50">
+                          className="px-2.5 py-1 text-xs font-medium text-[#E04020] hover:bg-[#FDECE6] rounded-lg transition disabled:opacity-50">
                           Edit
                         </button>
                         {isAdmin && u.role !== 'ADMIN' && (
@@ -246,7 +257,7 @@ export default function UsersPage() {
                 if (n > page.totalPages) return null;
                 return (
                   <button key={n} onClick={() => setP(n)}
-                    className={cn('w-8 h-8 text-xs font-medium rounded-lg transition', p === n ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50 border border-gray-200')}>
+                    className={cn('w-8 h-8 text-xs font-medium rounded-lg transition', p === n ? 'bg-[#E04020] text-white' : 'text-gray-600 hover:bg-gray-50 border border-gray-200')}>
                     {n}
                   </button>
                 );
@@ -269,30 +280,30 @@ export default function UsersPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
                 <input value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} required
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
                 <input type="email" value={addForm.email} onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))} required
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
                 <select value={addForm.role} onChange={e => setAddForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
                   {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Password</label>
                 <input type="password" value={addForm.password} onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))} required minLength={6}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
               </div>
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={() => setShowAdd(false)} disabled={adding}
                   className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
                 <button type="submit" disabled={adding}
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+                  className="flex-1 py-2 bg-[#E04020] text-white rounded-lg text-sm font-medium hover:bg-[#C02F12] disabled:opacity-60">
                   {adding ? 'Creating…' : 'Create User'}
                 </button>
               </div>
@@ -310,17 +321,17 @@ export default function UsersPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
                 <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
                 <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
                 <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
                   {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
@@ -329,14 +340,14 @@ export default function UsersPage() {
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={editForm.isActive} onChange={e => setEditForm(f => ({ ...f, isActive: e.target.checked }))}
                     className="sr-only peer" />
-                  <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500" />
+                  <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#E04020]" />
                 </label>
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setEditing(null)} disabled={saving === editing.id}
                   className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
                 <button onClick={() => saveEdit(editing.id)} disabled={saving === editing.id}
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+                  className="flex-1 py-2 bg-[#E04020] text-white rounded-lg text-sm font-medium hover:bg-[#C02F12] disabled:opacity-60">
                   {saving === editing.id ? 'Saving…' : 'Save'}
                 </button>
               </div>

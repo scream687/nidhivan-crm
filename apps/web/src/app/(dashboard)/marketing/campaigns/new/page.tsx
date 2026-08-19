@@ -38,17 +38,17 @@ function CampaignBuilderInner() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">New Campaign</h1>
+      <h1 className="text-xl font-bold text-[#111113] tracking-tight mb-6">New Campaign</h1>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Campaign Name *</label>
           <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Diwali Offer 2026"
-            className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
         </div>
 
         <div>
@@ -56,7 +56,7 @@ function CampaignBuilderInner() {
           <div className="flex gap-3">
             {['EMAIL', 'WHATSAPP'].map(t => (
               <button key={t} onClick={() => set('type', t)}
-                className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition ${form.type === t ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-400'}`}>
+                className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition ${form.type === t ? 'bg-[#E04020] text-white border-[#E04020]' : 'border-gray-200 text-gray-600 hover:border-[#E04020]'}`}>
                 {t}
               </button>
             ))}
@@ -66,7 +66,7 @@ function CampaignBuilderInner() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Audience Segment *</label>
           <select value={form.segmentId} onChange={e => set('segmentId', e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
             <option value="">— Select segment —</option>
             {segments.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.leadCount} leads)</option>)}
           </select>
@@ -76,7 +76,7 @@ function CampaignBuilderInner() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Subject</label>
             <input value={form.subject} onChange={e => set('subject', e.target.value)} placeholder="Subject line"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
           </div>
         )}
 
@@ -85,11 +85,11 @@ function CampaignBuilderInner() {
           <p className="text-xs text-gray-400 mb-1.5">Variables: {'{{name}}'}, {'{{phone}}'}</p>
           <textarea value={form.messageTemplate} onChange={e => set('messageTemplate', e.target.value)}
             rows={5} placeholder={`Hi {{name}}, we have an exclusive offer for you...`}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none" />
         </div>
 
         <button onClick={save} disabled={saving}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition">
+          className="w-full flex items-center justify-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />} Create Campaign
         </button>
       </div>

@@ -42,7 +42,7 @@ export default function BookingTimeline({
                 className={cn(
                   'w-6 h-6 rounded-full flex items-center justify-center ring-2 ring-white z-10',
                   isCompleted && 'bg-green-500',
-                  isCurrent && 'bg-blue-500 animate-pulse',
+                  isCurrent && 'bg-[#E04020] animate-pulse',
                   isPending && 'bg-gray-200',
                 )}
               >
@@ -70,7 +70,7 @@ export default function BookingTimeline({
                 className={cn(
                   'text-sm font-medium',
                   isCompleted && 'text-green-700',
-                  isCurrent && 'text-blue-700',
+                  isCurrent && 'text-[#C02F12]',
                   isPending && 'text-gray-400',
                 )}
               >
@@ -94,7 +94,7 @@ export default function BookingTimeline({
                 </p>
               )}
               {!entry && isCurrent && (
-                <p className="text-xs text-blue-400 mt-0.5">In progress…</p>
+                <p className="text-xs text-[#E04020] mt-0.5">In progress…</p>
               )}
             </div>
           </div>

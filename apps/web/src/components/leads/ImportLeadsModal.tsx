@@ -55,7 +55,7 @@ export default function ImportLeadsModal({ onClose, onImported }: Props) {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div
                 onClick={() => inputRef.current?.click()}
-                className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#E04020] hover:bg-[#FDECE6]/30 transition"
               >
                 <Upload size={28} className="mx-auto text-gray-300 mb-2" />
                 {file ? (
@@ -81,7 +81,7 @@ export default function ImportLeadsModal({ onClose, onImported }: Props) {
                   Cancel
                 </button>
                 <button type="submit" disabled={!file || loading}
-                  className="flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
+                  className="flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-[#C02F12] text-white rounded-lg hover:bg-[#A82717] disabled:opacity-50 transition">
                   {loading && <Loader2 size={14} className="animate-spin" />}
                   Import Leads
                 </button>
@@ -90,10 +90,10 @@ export default function ImportLeadsModal({ onClose, onImported }: Props) {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="flex-1 bg-green-50 rounded-xl p-4 text-center">
-                  <CheckCircle size={20} className="mx-auto text-green-500 mb-1" />
-                  <p className="text-2xl font-bold text-green-700">{result.created}</p>
-                  <p className="text-xs text-green-600">Created</p>
+                <div className="flex-1 bg-[#E7F6EE] rounded-xl p-4 text-center">
+                  <CheckCircle size={20} className="mx-auto text-[#047857] mb-1" />
+                  <p className="text-2xl font-bold text-[#047857]">{result.created}</p>
+                  <p className="text-xs text-[#047857]">Created</p>
                 </div>
                 <div className="flex-1 bg-yellow-50 rounded-xl p-4 text-center">
                   <AlertCircle size={20} className="mx-auto text-yellow-500 mb-1" />
@@ -118,7 +118,7 @@ export default function ImportLeadsModal({ onClose, onImported }: Props) {
 
               <div className="flex justify-end">
                 <button onClick={onClose}
-                  className="px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                  className="px-6 py-2 text-sm font-semibold bg-[#C02F12] text-white rounded-lg hover:bg-[#A82717] transition">
                   Done
                 </button>
               </div>

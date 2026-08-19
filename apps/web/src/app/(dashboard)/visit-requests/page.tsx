@@ -25,7 +25,7 @@ const STATUS_TABS = ['ALL', 'PENDING', 'CONTACTED', 'SCHEDULED', 'REJECTED'] as 
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   PENDING:   { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
-  CONTACTED: { bg: 'bg-blue-100',   text: 'text-blue-800',   label: 'Contacted' },
+  CONTACTED: { bg: 'bg-[#FDECE6]',   text: 'text-[#C02F12]',   label: 'Contacted' },
   SCHEDULED: { bg: 'bg-green-100',  text: 'text-green-800',  label: 'Scheduled' },
   REJECTED:  { bg: 'bg-red-100',    text: 'text-red-800',    label: 'Rejected' },
 };
@@ -69,14 +69,14 @@ export default function VisitRequestsPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Visit Requests</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Visit Requests</h1>
         <p className="text-gray-500 text-sm mt-1">Inbound site visit requests from public project pages</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
         {STATUS_TABS.map(tab => (
           <button
             key={tab}
@@ -191,7 +191,7 @@ function ActionButton({
   label, color, loading, onClick,
 }: { label: string; color: 'blue' | 'green' | 'red'; loading: boolean; onClick: () => void }) {
   const colors = {
-    blue:  'border-blue-200 text-blue-700 hover:bg-blue-50',
+    blue:  'border-[#FDECE6] text-[#C02F12] hover:bg-[#FDECE6]',
     green: 'border-green-200 text-green-700 hover:bg-green-50',
     red:   'border-red-200 text-red-700 hover:bg-red-50',
   };

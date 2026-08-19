@@ -25,23 +25,26 @@ export default function TelephonyPage() {
   const statusColor = { COMPLETED: 'text-green-600 bg-green-50', FAILED: 'text-red-600 bg-red-50', NO_ANSWER: 'text-gray-500 bg-gray-50', BUSY: 'text-orange-500 bg-orange-50' };
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">Call Logs</h1>
-          <p className="text-xs text-gray-500">{total.toLocaleString()} calls</p>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Call Logs & Telephony</h1>
+          <p className="text-xs text-[#6b7280] font-medium mt-0.5">{total.toLocaleString()} logged inbound/outbound calls</p>
         </div>
-        <button onClick={() => setShowLogModal(true)} className="flex items-center gap-1.5 bg-blue-600 text-white text-sm px-3.5 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
-          <Phone size={14} />
-          Log Call
+        <button
+          onClick={() => setShowLogModal(true)}
+          className="btn-frappe-primary"
+        >
+          <Phone size={13} />
+          <span>Log Call</span>
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div>
         {isLoading ? (
-          <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" /></div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-card overflow-hidden">
+          <div className="frappe-card overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
@@ -56,7 +59,7 @@ export default function TelephonyPage() {
                     className="border-b border-gray-50 hover:bg-gray-50 transition">
                     <td className="px-4 py-3">
                       {call.callType === 'OUTGOING'
-                        ? <PhoneOutgoing size={16} className="text-blue-500" />
+                        ? <PhoneOutgoing size={16} className="text-[#E04020]" />
                         : <PhoneIncoming size={16} className="text-green-500" />}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{call.fromNumber} → {call.toNumber}</td>
@@ -112,17 +115,17 @@ function LogCallModal({ onClose, onLogged }: { onClose: () => void; onLogged: ()
             <div key={key}>
               <label className="text-xs font-medium text-gray-600 mb-1 block">{label}</label>
               <input type={type || 'text'} value={(form as any)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                placeholder={placeholder} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder={placeholder} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
           ))}
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Notes</label>
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none" />
           </div>
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose} className="flex-1 py-2 text-sm border border-gray-200 rounded-lg text-gray-600">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 py-2 text-sm bg-blue-600 text-white rounded-lg disabled:opacity-60 font-medium">
+            <button type="submit" disabled={loading} className="flex-1 py-2 text-sm bg-[#E04020] text-white rounded-lg disabled:opacity-60 font-medium">
               {loading ? 'Saving…' : 'Log Call'}
             </button>
           </div>

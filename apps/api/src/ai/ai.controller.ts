@@ -7,6 +7,11 @@ import { AiService } from "./ai.service";
 export class AiController {
   constructor(private readonly ai: AiService) {}
 
+  @Post("score/batch")
+  batchScoreLeads(@Query("limit") limit?: string) {
+    return this.ai.batchScoreLeads(limit ? parseInt(limit, 10) : undefined);
+  }
+
   @Post("score/:leadId")
   calculateLeadScore(@Param("leadId") leadId: string) {
     return this.ai.calculateLeadScore(leadId);
@@ -15,11 +20,6 @@ export class AiController {
   @Get("score/:leadId/breakdown")
   getLeadScoreBreakdown(@Param("leadId") leadId: string) {
     return this.ai.getLeadScoreBreakdown(leadId);
-  }
-
-  @Post("score/batch")
-  batchScoreLeads(@Query("limit") limit?: string) {
-    return this.ai.batchScoreLeads(limit ? parseInt(limit, 10) : undefined);
   }
 
   @Get("match/:leadId")

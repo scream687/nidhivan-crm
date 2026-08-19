@@ -33,10 +33,10 @@ interface Props {
 }
 
 const STATUS_DOT: Record<VisitStatus, string> = {
-  SCHEDULED: 'bg-blue-500',
-  COMPLETED: 'bg-green-500',
-  CANCELLED: 'bg-gray-300',
-  NO_SHOW: 'bg-orange-500',
+  SCHEDULED: 'bg-[#E04020]',
+  COMPLETED: 'bg-[#047857]',
+  CANCELLED: 'bg-[#626B76]',
+  NO_SHOW: 'bg-[#C02F12]',
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -95,24 +95,24 @@ export function VisitCalendar({ visits }: Props) {
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Calendar grid */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 lg:w-[400px] flex-shrink-0">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 lg:w-[400px] flex-shrink-0">
         {/* Month/Year header */}
         <div className="flex items-center justify-between mb-4">
-          <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition">
-            <ChevronLeft size={18} className="text-gray-500" />
+          <button onClick={prevMonth} className="p-1.5 hover:bg-[#F3F4F6] rounded-lg transition">
+            <ChevronLeft size={18} className="text-[#5A6470]" />
           </button>
-          <h3 className="font-semibold text-gray-900 text-sm">
+          <h3 className="font-semibold text-[#111113] text-sm">
             {MONTHS[currentMonth]} {currentYear}
           </h3>
-          <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition">
-            <ChevronRight size={18} className="text-gray-500" />
+          <button onClick={nextMonth} className="p-1.5 hover:bg-[#F3F4F6] rounded-lg transition">
+            <ChevronRight size={18} className="text-[#5A6470]" />
           </button>
         </div>
 
         {/* Day headers */}
         <div className="grid grid-cols-7 mb-1">
           {DAYS.map(d => (
-            <div key={d} className="text-center text-[10px] font-medium text-gray-400 py-1">
+            <div key={d} className="text-center text-[10px] font-medium text-[#626B76] py-1">
               {d}
             </div>
           ))}
@@ -136,16 +136,16 @@ export function VisitCalendar({ visits }: Props) {
                 onClick={() => setSelectedDate(isSelected ? null : dateStr)}
                 className={cn(
                   'relative flex flex-col items-center justify-center h-10 rounded-lg text-xs transition cursor-pointer',
-                  isSelected && 'bg-blue-50 ring-1 ring-blue-300',
-                  !isSelected && isToday && 'bg-blue-50',
-                  !isSelected && !isToday && 'hover:bg-gray-50',
-                  isPast && !isSelected && !isToday && 'text-gray-400',
-                  !isPast && !isSelected && 'text-gray-900',
+                  isSelected && 'bg-[#FDECE6] ring-1 ring-[#E7B8A6]',
+                  !isSelected && isToday && 'bg-[#FDECE6]',
+                  !isSelected && !isToday && 'hover:bg-[#F3F4F6]',
+                  isPast && !isSelected && !isToday && 'text-[#626B76]',
+                  !isPast && !isSelected && 'text-[#111113]',
                 )}
               >
                 <span className={cn(
                   'text-xs font-medium',
-                  isToday && !isSelected && 'text-blue-600 font-bold',
+                  isToday && !isSelected && 'text-[#E04020] font-bold',
                 )}>
                   {day}
                 </span>
@@ -156,7 +156,7 @@ export function VisitCalendar({ visits }: Props) {
                       <span key={v.id} className={cn('w-1.5 h-1.5 rounded-full', STATUS_DOT[v.status])} />
                     ))}
                     {dayVisits.length > 4 && (
-                      <span className="text-[8px] text-gray-400 font-medium">+{dayVisits.length - 4}</span>
+                      <span className="text-[10px] text-[#626B76] font-medium">+{dayVisits.length - 4}</span>
                     )}
                   </div>
                 )}
@@ -166,9 +166,9 @@ export function VisitCalendar({ visits }: Props) {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-[#F3F4F6]">
           {(Object.keys(STATUS_DOT) as VisitStatus[]).map(s => (
-            <div key={s} className="flex items-center gap-1.5 text-[10px] text-gray-500">
+            <div key={s} className="flex items-center gap-1.5 text-[10px] text-[#5A6470]">
               <span className={cn('w-2 h-2 rounded-full', STATUS_DOT[s])} />
               {s.charAt(0) + s.slice(1).toLowerCase()}
             </div>
@@ -176,7 +176,7 @@ export function VisitCalendar({ visits }: Props) {
         </div>
 
         {/* Day summary */}
-        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+        <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-xs text-[#5A6470]">
           {Object.keys(visitsByDate).length} days with visits
           <span className="mx-1">·</span>
           {visits.length} total
@@ -188,19 +188,19 @@ export function VisitCalendar({ visits }: Props) {
         {selectedDate ? (
           <>
             <div className="flex items-center gap-2 mb-4">
-              <CalendarDays size={16} className="text-blue-600" />
-              <h3 className="font-semibold text-gray-900 text-sm">
+              <CalendarDays size={16} className="text-[#E04020]" />
+              <h3 className="font-semibold text-[#111113] text-sm">
                 {new Date(selectedDate).toLocaleDateString('en-IN', {
                   weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
                 })}
               </h3>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[#626B76]">
                 {selectedVisits.length} visit{selectedVisits.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {selectedVisits.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-[#626B76]">
                 <MapPin size={36} className="mx-auto mb-2 opacity-20" />
                 <p className="font-medium text-sm">No visits on this day</p>
               </div>
@@ -222,7 +222,7 @@ export function VisitCalendar({ visits }: Props) {
             )}
           </>
         ) : (
-          <div className="text-center py-20 text-gray-400">
+          <div className="text-center py-20 text-[#626B76]">
             <CalendarDays size={48} className="mx-auto mb-3 opacity-20" />
             <p className="font-medium">Select a date to view visits</p>
             <p className="text-sm mt-1">Days with visits have colored dots</p>

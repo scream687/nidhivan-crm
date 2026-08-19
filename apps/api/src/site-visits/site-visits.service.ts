@@ -193,8 +193,11 @@ export class SiteVisitsService {
     return updated;
   }
 
-  async checkin(visitId: string, data: { gpsLatitude: number; gpsLongitude: number }) {
-    const visit = await this.prisma.siteVisit.findUnique({ where: { id: visitId } });
+  async updateStatus(visitId: string, status: string) {
+    return this.prisma.siteVisit.update({ where: { id: visitId }, data: { status } });
+  }
+
+  async checkin(visitId: string, data: { gpsLatitude: number; gpsLongitude: number }) {    const visit = await this.prisma.siteVisit.findUnique({ where: { id: visitId } });
     if (!visit) throw new NotFoundException('Site visit not found');
 
     return this.prisma.siteVisit.update({

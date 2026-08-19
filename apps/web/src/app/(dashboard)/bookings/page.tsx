@@ -24,12 +24,12 @@ import BookingDetail from '@/components/bookings/BookingDetail';
 const STATUS_STYLES: Record<string, string> = {
   CONFIRMED: 'bg-green-100 text-green-700',
   CANCELLED: 'bg-red-100 text-red-600',
-  COMPLETED: 'bg-blue-100 text-blue-700',
+  COMPLETED: 'bg-[#FDECE6] text-[#C02F12]',
 };
 
 const REGISTRY_STYLES: Record<string, string> = {
   TOKEN: 'bg-purple-100 text-purple-700',
-  AGREEMENT: 'bg-blue-100 text-blue-700',
+  AGREEMENT: 'bg-[#FDECE6] text-[#C02F12]',
   REGISTRATION_PENDING: 'bg-amber-100 text-amber-700',
   REGISTERED: 'bg-green-100 text-green-700',
 };
@@ -48,7 +48,6 @@ export default function BookingsPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState('');
@@ -59,6 +58,20 @@ export default function BookingsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const [showNew, setShowNew] = useState(false);
+  const [prefillLeadId, setPrefillLeadId] = useState<string | null>(null);
+
+  // Deep link from a lead: /bookings?leadId=xxx opens the modal with the lead preselected
+  useEffect(() => {
+    const leadId = new URLSearchParams(window.location.search).get('leadId');
+    if (!leadId) return;
+    setPrefillLeadId(leadId);
+    setShowNew(true);
+  }, []);
+
+  function closeNew() {
+    setShowNew(false);
+    setPrefillLeadId(null);
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,9 +83,10 @@ export default function BookingsPage() {
       if (filterDateFrom) params.dateFrom = filterDateFrom;
       if (filterDateTo) params.dateTo = filterDateTo;
 
+      // /dashboard over /stats: it also returns pending commission and account-wide registry counts
       const [bRes, sRes] = await Promise.all([
         api.get('/bookings', { params }),
-        api.get('/bookings/stats'),
+        api.get('/bookings/dashboard'),
       ]);
       setBookings(bRes.data?.data || []);
       setStats(sRes.data);
@@ -85,47 +99,60 @@ export default function BookingsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const registryCounts = bookings.reduce(
-    (acc: Record<string, number>, b: any) => {
-      const r = b.registryStatus || 'TOKEN';
-      acc[r] = (acc[r] || 0) + 1;
+  // Account-wide, not just the loaded page
+  const registryCounts: Record<string, number> = (stats?.registryPipeline || []).reduce(
+    (acc: Record<string, number>, r: { status: string; count: number }) => {
+      acc[r.status] = r.count;
       return acc;
     },
     {},
   );
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileCheck size={20} className="text-blue-600" />
-          <h1 className="text-lg font-bold text-gray-900">Bookings</h1>
+      <div className="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
+        <div>
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Bookings & Registry</h1>
+          <p className="text-xs text-[#6b7280] font-medium mt-0.5">Plot sales, token advance, and registry status</p>
         </div>
-        <button onClick={() => setShowNew(true)}
-          className="flex items-center gap-1.5 bg-blue-600 text-white text-sm px-3.5 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
-          <Plus size={14} /> New Booking
+        <button
+          onClick={() => setShowNew(true)}
+          className="btn-frappe-primary"
+        >
+          <Plus size={13} />
+          <span>New Booking</span>
         </button>
       </div>
 
       {/* Dashboard summary bar */}
       {stats && (
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
-            <p className="text-2xl font-bold text-blue-700">{stats.total || 0}</p>
-            <p className="text-xs text-blue-500 font-medium mt-0.5">Total Bookings</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <div className="frappe-card p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-mono text-[#6b7280] uppercase tracking-wider">Total Bookings</span>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold font-mono text-[#111827]">{stats.totalBookings || 0}</span>
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-[#FDECE6] text-[#C02F12] border border-[#FDECE6]">Deals</span>
+            </div>
           </div>
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
-            <p className="text-2xl font-bold text-green-700">{stats.thisMonth || 0}</p>
-            <p className="text-xs text-green-500 font-medium mt-0.5">This Month</p>
+          <div className="frappe-card p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-mono text-[#6b7280] uppercase tracking-wider">This Month</span>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold font-mono text-emerald-600">{stats.thisMonthBookings || 0}</span>
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Won</span>
+            </div>
           </div>
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4">
-            <p className="text-xl font-bold text-amber-700">{inr(stats.totalRevenue || 0)}</p>
-            <p className="text-xs text-amber-500 font-medium mt-0.5">Total Revenue</p>
+          <div className="frappe-card p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-mono text-[#6b7280] uppercase tracking-wider">Booked Revenue</span>
+            <div className="mt-2">
+              <span className="text-xl font-bold font-mono text-[#111827]">{inr(stats.totalRevenue || 0)}</span>
+            </div>
           </div>
-          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4">
-            <p className="text-xl font-bold text-yellow-700">{inr(stats.pendingCommission || 0)}</p>
-            <p className="text-xs text-yellow-500 font-medium mt-0.5">Commission Pending</p>
+          <div className="frappe-card p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-mono text-[#6b7280] uppercase tracking-wider">Pending Commission</span>
+            <div className="mt-2">
+              <span className="text-xl font-bold font-mono text-amber-600">{inr(stats.commissionPending?.amount || 0)}</span>
+            </div>
           </div>
         </div>
       )}
@@ -138,7 +165,7 @@ export default function BookingsPage() {
             <span key={r} className="flex items-center gap-1.5">
               <span className={cn('w-2 h-2 rounded-full', {
                 'bg-purple-500': r === 'TOKEN',
-                'bg-blue-500': r === 'AGREEMENT',
+                'bg-[#E04020]': r === 'AGREEMENT',
                 'bg-amber-500': r === 'REGISTRATION_PENDING',
                 'bg-green-500': r === 'REGISTERED',
               })} />
@@ -191,7 +218,7 @@ export default function BookingsPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-blue-600" /></div>
+        <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-[#E04020]" /></div>
       ) : bookings.length === 0 ? (
         <EmptyState icon={FileCheck} title="No bookings yet" description="Create your first booking to get started." action={{ label: 'New Booking', onClick: () => setShowNew(true) }} />
       ) : (
@@ -214,16 +241,16 @@ export default function BookingsPage() {
                     onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}
                     className={cn(
                       'border-b border-gray-50 transition cursor-pointer',
-                      expandedId === b.id ? 'bg-blue-50' : 'hover:bg-gray-50',
+                      expandedId === b.id ? 'bg-[#FDECE6]' : 'hover:bg-gray-50',
                     )}
                   >
                     <td className="px-2 py-3">
                       {expandedId === b.id
-                        ? <ChevronDown size={14} className="text-blue-500" />
+                        ? <ChevronDown size={14} className="text-[#E04020]" />
                         : <ChevronRight size={14} className="text-gray-300" />
                       }
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-blue-600 font-medium">{b.bookingNumber}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-[#E04020] font-medium">{b.bookingNumber}</td>
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-gray-900">{b.lead?.name}</p>
                       <p className="text-xs text-gray-400">{b.lead?.phone}</p>
@@ -269,7 +296,7 @@ export default function BookingsPage() {
                           <BookingDetail
                             booking={b}
                             onClose={() => setExpandedId(null)}
-                            onUpdated={() => setRefreshKey(k => k + 1)}
+                            onUpdated={load}
                           />
                         </motion.div>
                       </td>
@@ -282,12 +309,12 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {showNew && <NewBookingModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); }} />}
+      {showNew && <NewBookingModal prefillLeadId={prefillLeadId} onClose={closeNew} onCreated={() => { closeNew(); load(); }} />}
     </div>
   );
 }
 
-function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function NewBookingModal({ prefillLeadId, onClose, onCreated }: { prefillLeadId?: string | null; onClose: () => void; onCreated: () => void }) {
   const [saving, setSaving] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [leadSearch, setLeadSearch] = useState('');
@@ -301,6 +328,13 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
   useEffect(() => {
     api.get('/inventory').then(r => setProjects(r.data || [])).catch(() => toast.error('Failed to load projects'));
   }, []);
+
+  useEffect(() => {
+    if (!prefillLeadId) return;
+    api.get(`/leads/${prefillLeadId}`)
+      .then(r => setSelectedLead(r.data))
+      .catch(() => toast.error('Could not load the lead for this booking'));
+  }, [prefillLeadId]);
 
   useEffect(() => {
     if (!leadSearch.trim()) { setLeads([]); return; }
@@ -358,7 +392,7 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Lead *</label>
             {selectedLead ? (
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between bg-[#FDECE6] rounded-lg px-3 py-2">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{selectedLead.name}</p>
                   <p className="text-xs text-gray-500">{selectedLead.phone} · {selectedLead.leadNumber}</p>
@@ -371,7 +405,7 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
                 <Search size={14} className="absolute left-3 top-2.5 text-gray-400" />
                 <input value={leadSearch} onChange={e => setLeadSearch(e.target.value)}
                   placeholder="Search lead by name or phone…"
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
                 {leads.length > 0 && (
                   <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
                     {leads.slice(0, 6).map(l => (
@@ -390,7 +424,7 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Project *</label>
             <select value={form.projectId} onChange={e => set('projectId', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
               <option value="">Select project…</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name} — {p.location}</option>)}
             </select>
@@ -400,34 +434,34 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Unit Number *</label>
               <input value={form.unitNumber} onChange={e => set('unitNumber', e.target.value)}
-                placeholder="A-101" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder="A-101" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Unit Type</label>
               <select value={form.unitType} onChange={e => set('unitType', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
                 {['PLOT', 'APARTMENT', 'VILLA', 'TOWNSHIP'].map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Area (sq.yd)</label>
               <input type="number" value={form.unitArea} onChange={e => set('unitArea', e.target.value)}
-                placeholder="200" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder="200" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Base Price (₹) *</label>
               <input type="number" value={form.basePrice} onChange={e => set('basePrice', e.target.value)}
-                placeholder="2500000" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder="2500000" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Booking Amount (₹)</label>
               <input type="number" value={form.bookingAmount} onChange={e => set('bookingAmount', e.target.value)}
-                placeholder="250000" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder="250000" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Total Amount (₹) *</label>
               <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)}
-                placeholder="3200000" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder="3200000" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
           </div>
 
@@ -435,7 +469,7 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
             <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2}
               placeholder="Payment terms, special conditions…"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] resize-none" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -443,7 +477,7 @@ function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-[#E04020] text-white rounded-lg hover:bg-[#C02F12] disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               Create Booking
             </button>

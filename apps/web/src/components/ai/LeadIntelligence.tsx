@@ -63,23 +63,55 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
   const [recalculating, setRecalculating] = useState(false);
   const [showFollowUpForm, setShowFollowUpForm] = useState(false);
 
+  // Call-notes summarisation (POST /ai/copilot/call-summary/:leadId)
+  const [noteDraft, setNoteDraft] = useState("");
+  const [summarizing, setSummarizing] = useState(false);
+  const [summaryDetail, setSummaryDetail] = useState<{ keyPoints: string[]; nextSteps: string[] } | null>(null);
+
+  // Follow-up drafting (POST /ai/copilot/follow-up/:leadId)
+  const [channel, setChannel] = useState<"CALL" | "WHATSAPP" | "EMAIL">("WHATSAPP");
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState<{ message: string; timing: string; priority: string } | null>(null);
+
   const loadAI = useCallback(async () => {
     setLoading(true);
     try {
-      const [leadData, riskData] = await Promise.all([
-        api.get(`/leads/${leadId}/ai`).catch(() => ({ data: {} })),
+      const [scoreRes, riskData] = await Promise.all([
+        api.post(`/ai/score/${leadId}`).catch(() => ({ data: null })),
         api.get(`/ai/copilot/deal-risk/${leadId}`).catch(() => ({ data: null })),
       ]);
+      const score = scoreRes.data?.score ?? scoreRes.data?.aiScore ?? null;
+      const breakdown: any = scoreRes.data?.breakdown ?? {};
+      const bdArr: ScoreBreakdown[] = Object.entries(breakdown).map(([key, v]: any) => ({
+        label: v?.label ?? key,
+        score: v?.score ?? 0,
+        icon: null,
+      }));
 
-      const data = leadData.data;
-      setAiScore(data.aiScore ?? null);
-      setLastCalculated(data.lastCalculated ?? null);
-      setScoreBreakdown(Array.isArray(data.scoreBreakdown) ? data.scoreBreakdown : []);
-      setPropertyMatches(Array.isArray(data.propertyMatches) ? data.propertyMatches : []);
-      setFollowupSuggestion(data.followupSuggestion ?? null);
-      setTranscription(data.transcription ?? null);
-      setCallSummary(data.summary ?? null);
-      setCallSentiment(data.sentiment ?? null);
+      const [matchRes, followRes, callRes] = await Promise.all([
+        api.get(`/ai/match/${leadId}`).catch(() => ({ data: [] })),
+        api.get(`/ai/follow-up-suggestions/${leadId}`).catch(() => ({ data: null })),
+        api.get(`/ai/call-summary/${leadId}`).catch(() => ({ data: null })),
+      ]);
+
+      setAiScore(score);
+      setLastCalculated(null);
+      setScoreBreakdown(bdArr);
+      setPropertyMatches(
+        (Array.isArray(matchRes.data) ? matchRes.data : []).map((m: any) => ({
+          projectName: m.name ?? m.projectName,
+          matchPercent: m.matchPercentage ?? m.matchPercent ?? 0,
+          factors: [],
+        })),
+      );
+      const f = followRes.data;
+      if (f && typeof f === 'object') {
+        setFollowupSuggestion(f.type ? { type: f.type, message: f.message, priority: f.priority, timing: f.timing } : { type: f.suggestedType ?? 'CALL', message: f.suggestedMessage ?? f.message, priority: f.priority ?? 'LOW', timing: f.timing ?? 'Soon' });
+      } else {
+        setFollowupSuggestion(null);
+      }
+      setCallSummary(callRes.data?.summary ?? callRes.data?.message ?? null);
+      setCallSentiment(callRes.data?.sentiment ?? null);
       setDealRisk(riskData.data);
     } catch {
       setAiScore(null);
@@ -101,17 +133,64 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
   async function handleRecalculate() {
     setRecalculating(true);
     try {
-      const { data } = await api.post(`/leads/${leadId}/ai/score`);
-      setAiScore(data.aiScore);
+      const { data } = await api.post(`/ai/score/${leadId}`);
+      setAiScore(data.score ?? data.aiScore ?? null);
       setLastCalculated(data.lastCalculated ?? new Date().toISOString());
       setScoreBreakdown(
-        Array.isArray(data.scoreBreakdown) ? data.scoreBreakdown : [],
+        Object.entries(data.breakdown ?? {}).map(([key, v]: any) => ({
+          label: v?.label ?? key,
+          score: v?.score ?? 0,
+          icon: null,
+        })),
       );
       toast.success("Score recalculated");
     } catch {
       toast.error("Could not recalculate score");
     } finally {
       setRecalculating(false);
+    }
+  }
+
+  async function summarizeNotes() {
+    const notes = noteDraft.trim();
+    if (notes.length < 10) {
+      toast.error("Add a few more words before summarising");
+      return;
+    }
+    setSummarizing(true);
+    try {
+      const { data } = await api.post(`/ai/copilot/call-summary/${leadId}`, { notes });
+      setCallSummary(data.summary || null);
+      setCallSentiment(data.sentiment || null);
+      setSummaryDetail({ keyPoints: data.keyPoints || [], nextSteps: data.nextSteps || [] });
+      setNoteDraft("");
+      toast.success("Call summarised");
+    } catch {
+      toast.error("Could not summarise the call notes");
+    } finally {
+      setSummarizing(false);
+    }
+  }
+
+  async function draftFollowUp() {
+    setDrafting(true);
+    try {
+      const { data } = await api.post(`/ai/copilot/follow-up/${leadId}`, { channel });
+      setDraft({ message: data.message, timing: data.timing, priority: data.priority });
+    } catch {
+      toast.error("Could not draft the follow-up");
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  async function copyDraft() {
+    if (!draft?.message) return;
+    try {
+      await navigator.clipboard.writeText(draft.message);
+      toast.success("Message copied");
+    } catch {
+      toast.error("Clipboard unavailable — select and copy manually");
     }
   }
 
@@ -254,7 +333,7 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
       {/* Property Match */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <MapPin size={15} className="text-blue-500" />
+          <MapPin size={15} className="text-[#E04020]" />
           <h3 className="text-sm font-semibold text-gray-800">
             Property Match
           </h3>
@@ -272,7 +351,7 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
                   <span className="font-medium text-gray-800">
                     {match.projectName}
                   </span>
-                  <span className="text-xs font-semibold text-blue-600">
+                  <span className="text-xs font-semibold text-[#E04020]">
                     {match.matchPercent}% match
                   </span>
                 </div>
@@ -281,14 +360,14 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
                     initial={{ width: 0 }}
                     animate={{ width: `${match.matchPercent}%` }}
                     transition={{ duration: 0.6, delay: 0.1 * i }}
-                    className="h-full rounded-full bg-blue-400"
+                    className="h-full rounded-full bg-[#E04020]"
                   />
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {match.factors.map((f, j) => (
                     <span
                       key={j}
-                      className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded"
+                      className="text-[10px] bg-[#FDECE6] text-[#E04020] px-1.5 py-0.5 rounded"
                     >
                       {f}
                     </span>
@@ -339,7 +418,7 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
                 ) : followupSuggestion.type === "WHATSAPP" ? (
                   <MessageSquare size={14} className="text-green-600" />
                 ) : followupSuggestion.type === "EMAIL" ? (
-                  <Mail size={14} className="text-blue-600" />
+                  <Mail size={14} className="text-[#E04020]" />
                 ) : (
                   <MapPin size={14} className="text-purple-600" />
                 )}
@@ -356,7 +435,7 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
 
             <button
               onClick={() => setShowFollowUpForm(true)}
-              className="mt-3 w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition"
+              className="mt-3 w-full flex items-center justify-center gap-1.5 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium py-2 rounded-lg transition"
             >
               <Calendar size={13} />
               Schedule Follow-up
@@ -376,7 +455,7 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
       {/* Call Summary */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Zap size={15} className="text-indigo-500" />
+          <Zap size={15} className="text-[#E04020]" />
           <h3 className="text-sm font-semibold text-gray-800">Call Summary</h3>
           {callSentiment && (
             <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium',
@@ -387,28 +466,141 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
         </div>
 
         {callSummary ? (
-          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
-            {callSummary}
+          <div className="space-y-2">
+            <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
+              {callSummary}
+            </div>
+            {summaryDetail && summaryDetail.keyPoints.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Key points</p>
+                <ul className="space-y-0.5">
+                  {summaryDetail.keyPoints.map((p, i) => (
+                    <li key={i} className="text-xs text-gray-600 flex gap-1.5">
+                      <span className="text-gray-300">•</span> {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {summaryDetail && summaryDetail.nextSteps.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Next steps</p>
+                <ul className="space-y-0.5">
+                  {summaryDetail.nextSteps.map((p, i) => (
+                    <li key={i} className="text-xs text-gray-600 flex gap-1.5">
+                      <span className="text-gray-300">→</span> {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : transcription ? (
           <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
             {transcription}
           </div>
         ) : (
-          <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
+          <div className="bg-[#FDECE6]/60 border border-[#FDECE6] rounded-xl p-4">
             <div className="flex items-start gap-2">
-              <AlertCircle size={14} className="text-indigo-400 mt-0.5 flex-shrink-0" />
+              <AlertCircle size={14} className="text-[#E04020] mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-xs font-medium text-indigo-700 mb-1">
+                <p className="text-xs font-medium text-[#C02F12] mb-1">
                   {callSummary === null ? 'No call history to summarize' : 'AI summary requires NVIDIA NIM API key'}
                 </p>
-                <p className="text-xs text-indigo-500">
+                <p className="text-xs text-[#E04020]">
                   {callSummary === null
                     ? 'Log a call with notes to see an AI-generated summary.'
                     : 'Configure via Settings > Integrations to enable AI summaries.'}
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Summarise notes the agent types in — distinct from the stored-call summary above */}
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <label htmlFor="call-notes" className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+            Summarise call notes
+          </label>
+          <textarea
+            id="call-notes"
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            rows={3}
+            placeholder="Paste or type what happened on the call…"
+            className="mt-1 w-full text-sm text-gray-700 border border-gray-200 rounded-lg p-2 resize-none focus:outline-none focus:border-[#E04020]"
+          />
+          <button
+            onClick={summarizeNotes}
+            disabled={summarizing || noteDraft.trim().length < 10}
+            className="mt-2 w-full flex items-center justify-center gap-1.5 bg-[#111113] hover:bg-black disabled:opacity-40 text-white text-sm font-medium py-2 rounded-lg transition"
+          >
+            <Zap size={13} className={summarizing ? "animate-pulse" : ""} />
+            {summarizing ? "Summarising…" : "Summarise with AI"}
+          </button>
+        </div>
+      </div>
+
+      {/* Draft Follow-up */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles size={15} className="text-purple-500" />
+          <h3 className="text-sm font-semibold text-gray-800">Draft Follow-up</h3>
+        </div>
+
+        <div className="flex gap-1.5 mb-3">
+          {(["CALL", "WHATSAPP", "EMAIL"] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setChannel(c)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1 text-xs py-1.5 rounded-lg border transition font-medium",
+                channel === c
+                  ? "bg-purple-50 border-purple-300 text-purple-700"
+                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300",
+              )}
+            >
+              {c === "CALL" ? <Phone size={12} /> : c === "WHATSAPP" ? <MessageSquare size={12} /> : <Mail size={12} />}
+              {c === "WHATSAPP" ? "WhatsApp" : c === "CALL" ? "Call" : "Email"}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={draftFollowUp}
+          disabled={drafting}
+          className="w-full flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition"
+        >
+          <Sparkles size={13} className={drafting ? "animate-pulse" : ""} />
+          {drafting ? "Writing…" : draft ? "Rewrite" : "Write message"}
+        </button>
+
+        {draft && (
+          <div className="mt-3 border border-purple-200 bg-purple-50 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="flex items-center gap-1 text-xs text-purple-700">
+                <Clock size={11} /> {draft.timing}
+              </span>
+              <span
+                className={cn(
+                  "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                  draft.priority === "HIGH"
+                    ? "bg-red-100 text-red-700"
+                    : draft.priority === "MEDIUM"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-green-100 text-green-700",
+                )}
+              >
+                {draft.priority}
+              </span>
+            </div>
+            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{draft.message}</p>
+            <button
+              onClick={copyDraft}
+              className="mt-2 text-xs font-medium text-purple-700 hover:text-purple-900"
+            >
+              Copy message
+            </button>
           </div>
         )}
       </div>
@@ -439,7 +631,7 @@ export default function LeadIntelligence({ leadId }: LeadIntelligenceProps) {
           </div>
 
           {dealRisk.recommendation && (
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-700">
+            <div className="bg-[#FDECE6] border border-[#FDECE6] rounded-lg p-3 text-xs text-[#C02F12]">
               <span className="font-medium">Recommendation:</span> {dealRisk.recommendation}
             </div>
           )}
@@ -504,7 +696,7 @@ function UsersIcon() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="text-blue-500"
+      className="text-[#E04020]"
     >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />

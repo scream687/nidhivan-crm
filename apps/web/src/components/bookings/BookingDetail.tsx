@@ -22,12 +22,12 @@ import DocumentUpload from './DocumentUpload';
 const STATUS_STYLES: Record<string, string> = {
   CONFIRMED: 'bg-green-100 text-green-700',
   CANCELLED: 'bg-red-100 text-red-600',
-  COMPLETED: 'bg-blue-100 text-blue-700',
+  COMPLETED: 'bg-[#FDECE6] text-[#C02F12]',
 };
 
 const REGISTRY_STYLES: Record<string, string> = {
   TOKEN: 'bg-purple-100 text-purple-700',
-  AGREEMENT: 'bg-blue-100 text-blue-700',
+  AGREEMENT: 'bg-[#FDECE6] text-[#C02F12]',
   REGISTRATION_PENDING: 'bg-amber-100 text-amber-700',
   REGISTERED: 'bg-green-100 text-green-700',
 };
@@ -51,6 +51,7 @@ export default function BookingDetail({
   onUpdated: () => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [letterBusy, setLetterBusy] = useState(false);
   const docs = Array.isArray(booking.documents)
     ? booking.documents
     : typeof booking.documents === 'string'
@@ -62,12 +63,11 @@ export default function BookingDetail({
       ? JSON.parse(booking.bookingTimeline || '[]')
       : [];
 
+  // `/status` is used over the generic PATCH because it also appends a timeline entry.
   async function updateRegistryStatus(val: string) {
     setSaving(true);
     try {
-      await api.patch(`/bookings/${booking.id}`, {
-        registryStatus: val,
-      });
+      await api.patch(`/bookings/${booking.id}/status`, { registryStatus: val });
       toast.success('Registry status updated');
       onUpdated();
     } catch {
@@ -77,13 +77,42 @@ export default function BookingDetail({
     }
   }
 
+  async function updateStatus(val: string) {
+    if (val === booking.status) return;
+    if (val === 'CANCELLED') return cancelBooking();
+    setSaving(true);
+    try {
+      await api.patch(`/bookings/${booking.id}/status`, { status: val });
+      toast.success(`Booking marked ${val}`);
+      onUpdated();
+    } catch {
+      toast.error('Could not change booking status');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function cancelBooking() {
+    const reason = prompt('Reason for cancelling this booking?');
+    if (reason === null) return; // dismissed
+    setSaving(true);
+    try {
+      await api.post(`/bookings/${booking.id}/cancel`, { reason });
+      toast.success('Booking cancelled — the unit is back in inventory');
+      onUpdated();
+    } catch {
+      toast.error('Could not cancel the booking');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function payCommission() {
     if (!confirm('Mark commission as PAID?')) return;
     setSaving(true);
     try {
-      await api.patch(`/bookings/${booking.id}`, {
-        commissionStatus: 'PAID',
-        commissionPaidAt: new Date().toISOString(),
+      await api.post(`/bookings/${booking.id}/commission/paid`, {
+        amount: Number(booking.agentCommission),
       });
       toast.success('Commission marked as paid');
       onUpdated();
@@ -91,6 +120,30 @@ export default function BookingDetail({
       toast.error('Failed to update commission');
     } finally {
       setSaving(false);
+    }
+  }
+
+  // The letter route is JWT-guarded, so it has to go through the api client rather than a bare href.
+  async function openLetter(url: string) {
+    const fileName = url.split('/').pop();
+    if (!fileName) return;
+    const { data } = await api.get(`/bookings/letters/${fileName}`, { responseType: 'blob' });
+    const blobUrl = URL.createObjectURL(data);
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  }
+
+  async function generateLetter() {
+    setLetterBusy(true);
+    try {
+      const { data } = await api.post(`/bookings/${booking.id}/generate-letter`);
+      toast.success('Booking letter generated');
+      await openLetter(data.url);
+      onUpdated();
+    } catch {
+      toast.error('Could not generate the booking letter');
+    } finally {
+      setLetterBusy(false);
     }
   }
 
@@ -103,7 +156,7 @@ export default function BookingDetail({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <FileCheck size={18} className="text-blue-600" />
+          <FileCheck size={18} className="text-[#E04020]" />
           <div>
             <h2 className="font-semibold text-gray-900">
               {booking.bookingNumber}
@@ -171,7 +224,7 @@ export default function BookingDetail({
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
               Status
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-2">
               <span
                 className={cn(
                   'text-xs px-2 py-0.5 rounded-full font-medium',
@@ -190,6 +243,22 @@ export default function BookingDetail({
                 {booking.registryStatus || 'TOKEN'}
               </span>
             </div>
+            {booking.status !== 'CANCELLED' && (
+              <select
+                aria-label="Booking status"
+                value={booking.status}
+                onChange={(e) => updateStatus(e.target.value)}
+                disabled={saving}
+                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm"
+              >
+                {/* status is a free-form string server-side — keep the current value selectable */}
+                {Array.from(new Set([booking.status, 'CONFIRMED', 'COMPLETED', 'CANCELLED'])).map((s: string) => (
+                  <option key={s} value={s}>
+                    {s === 'CANCELLED' ? 'Cancel booking…' : s}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
@@ -326,19 +395,34 @@ export default function BookingDetail({
 
       {/* Actions footer */}
       <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50">
-        <div className="text-xs text-gray-400">
+        <div className="flex items-center gap-3 text-xs">
           {booking.bookingLetterUrl && (
-            <a
-              href={booking.bookingLetterUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+            <button
+              onClick={() => openLetter(booking.bookingLetterUrl)}
+              className="flex items-center gap-1 text-[#E04020] hover:text-[#C02F12]"
             >
-              <Download size={12} /> Booking Letter
-            </a>
+              <Download size={12} /> View Booking Letter
+            </button>
           )}
+          <button
+            onClick={generateLetter}
+            disabled={letterBusy}
+            className="flex items-center gap-1 text-gray-600 hover:text-gray-900 disabled:opacity-50"
+          >
+            {letterBusy ? <Loader2 size={12} className="animate-spin" /> : <FileCheck size={12} />}
+            {booking.bookingLetterUrl ? 'Regenerate' : 'Generate Booking Letter'}
+          </button>
         </div>
         <div className="flex gap-2">
+          {booking.status !== 'CANCELLED' && (
+            <button
+              onClick={cancelBooking}
+              disabled={saving}
+              className="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
+            >
+              Cancel Booking
+            </button>
+          )}
           <button
             onClick={onClose}
             className="px-3 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition"

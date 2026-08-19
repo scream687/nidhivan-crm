@@ -50,11 +50,11 @@ export default function LandingPagesPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Globe className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Landing Pages</h1>
+          <Globe className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Landing Pages</h1>
         </div>
         <Button onClick={() => openBuilder()} className="flex items-center gap-2">
           <Plus className="w-4 h-4" /> Create Landing Page

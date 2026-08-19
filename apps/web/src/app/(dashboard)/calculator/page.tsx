@@ -28,7 +28,7 @@ function Field({ label, value, onChange, placeholder, unit, min = 0, step }: any
           placeholder={placeholder}
           min={min}
           step={step}
-          className={cn('w-full border border-gray-200 rounded-lg py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', unit ? 'pl-7 pr-3' : 'px-3')}
+          className={cn('w-full border border-gray-200 rounded-lg py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]', unit ? 'pl-7 pr-3' : 'px-3')}
         />
       </div>
     </div>
@@ -37,10 +37,10 @@ function Field({ label, value, onChange, placeholder, unit, min = 0, step }: any
 
 function ResultCard({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
   return (
-    <div className={cn('rounded-xl p-4', highlight ? 'bg-blue-600 text-white' : 'bg-gray-50')}>
-      <p className={cn('text-xs font-medium mb-1', highlight ? 'text-blue-100' : 'text-gray-500')}>{label}</p>
+    <div className={cn('rounded-xl p-4', highlight ? 'bg-[#E04020] text-white' : 'bg-gray-50')}>
+      <p className={cn('text-xs font-medium mb-1', highlight ? 'text-[#FDECE6]' : 'text-gray-500')}>{label}</p>
       <p className={cn('text-xl font-bold', highlight ? 'text-white' : 'text-gray-900')}>{value}</p>
-      {sub && <p className={cn('text-xs mt-0.5', highlight ? 'text-blue-200' : 'text-gray-400')}>{sub}</p>}
+      {sub && <p className={cn('text-xs mt-0.5', highlight ? 'text-[#FDECE6]' : 'text-gray-400')}>{sub}</p>}
     </div>
   );
 }
@@ -153,7 +153,7 @@ function PlotTab() {
           <div className="flex gap-2">
             {[{ v: 'sqyd', l: 'Sq. Yards' }, { v: 'sqft', l: 'Sq. Feet' }, { v: 'acre', l: 'Acre' }].map(o => (
               <button key={o.v} onClick={() => handleUnitChange(o.v as 'sqyd' | 'sqft' | 'acre')}
-                className={cn('flex-1 py-2 text-sm rounded-lg border transition', unit === o.v ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50')}>
+                className={cn('flex-1 py-2 text-sm rounded-lg border transition', unit === o.v ? 'bg-[#E04020] text-white border-[#E04020]' : 'border-gray-200 text-gray-600 hover:bg-gray-50')}>
                 {o.l}
               </button>
             ))}
@@ -172,7 +172,7 @@ function PlotTab() {
           )}
         </div>
         <Field label="Price per sq.ft (₹)" value={pricePerSqft} onChange={setPricePerSqft} unit="₹" placeholder="3500" />
-        <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+        <div className="bg-[#FDECE6] rounded-lg p-3 text-xs text-[#C02F12]">
           <p className="font-semibold mb-1">Govt. Charges (UP / Rajasthan)</p>
           <p>Stamp Duty: 6% | Registration: 1%</p>
         </div>
@@ -234,7 +234,7 @@ function AffordTab() {
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Phone Number</label>
           <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Interest Rate (% p.a.)" value={interestRate} onChange={setInterestRate} placeholder="8.5" min={0} step="0.1" />
@@ -271,9 +271,9 @@ function AffordTab() {
                     <div>
                       <p className="text-sm font-medium text-gray-900">{p.name}</p>
                       <p className="text-xs text-gray-500">{p.location} · {p.available} available</p>
-                      <p className="text-xs text-blue-600 mt-0.5">{plotSize} sq.yd plot ≈ {inr(plotCost)}</p>
+                      <p className="text-xs text-[#E04020] mt-0.5">{plotSize} sq.yd plot ≈ {inr(plotCost)}</p>
                     </div>
-                    <p className="text-sm font-bold text-blue-600">₹{Number(p.pricePerSqft).toLocaleString('en-IN')}/sqft</p>
+                    <p className="text-sm font-bold text-[#E04020]">₹{Number(p.pricePerSqft).toLocaleString('en-IN')}/sqft</p>
                   </div>
                 );
               })}
@@ -296,10 +296,10 @@ export default function CalculatorPage() {
   const [tab, setTab] = useState('emi');
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Calculator size={20} className="text-blue-600" />
-        <h1 className="text-lg font-bold text-gray-900">Real Estate Calculator</h1>
+        <Calculator size={20} className="text-[#E04020]" />
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Real Estate Calculator</h1>
       </div>
 
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">

@@ -7,7 +7,7 @@ import { Mail, Plus, CheckCircle2, Clock, AlertCircle, Loader2, PauseCircle } fr
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: 'bg-gray-100 text-gray-600',
   SCHEDULED: 'bg-yellow-100 text-yellow-700',
-  RUNNING: 'bg-blue-100 text-blue-700',
+  RUNNING: 'bg-[#FDECE6] text-[#C02F12]',
   COMPLETED: 'bg-green-100 text-green-700',
   PAUSED: 'bg-orange-100 text-orange-700',
   FAILED: 'bg-red-100 text-red-700',
@@ -42,14 +42,14 @@ export default function CampaignsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Mail className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
+          <Mail className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Campaigns</h1>
         </div>
         <button onClick={() => router.push('/marketing/campaigns/new')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+          className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
           <Plus className="w-4 h-4" /> New Campaign
         </button>
       </div>
@@ -81,7 +81,7 @@ export default function CampaignsPage() {
                   <div className="flex gap-2">
                     {c.status === 'DRAFT' && (
                       <button onClick={() => launch(c.id)}
-                        className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition">
+                        className="text-xs bg-[#E04020] hover:bg-[#C02F12] text-white px-3 py-1.5 rounded-lg transition">
                         Launch
                       </button>
                     )}
@@ -92,7 +92,7 @@ export default function CampaignsPage() {
                       </button>
                     )}
                     <button onClick={() => router.push(`/marketing/campaigns/${c.id}`)}
-                      className="text-xs border border-gray-200 text-gray-600 hover:border-blue-400 px-3 py-1.5 rounded-lg transition">
+                      className="text-xs border border-gray-200 text-gray-600 hover:border-[#E04020] px-3 py-1.5 rounded-lg transition">
                       Details
                     </button>
                   </div>
@@ -108,7 +108,7 @@ export default function CampaignsPage() {
                       <span>{pct}%</span>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-[#E04020] rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )}

@@ -13,9 +13,9 @@ interface Props {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'bg-purple-100 text-purple-700',
-  MANAGER: 'bg-blue-100 text-blue-700',
-  SALES_AGENT: 'bg-green-100 text-green-700',
+  ADMIN: 'bg-[#F3F4F6] text-[#5A6470]',
+  MANAGER: 'bg-[#FDECE6] text-[#C02F12]',
+  SALES_AGENT: 'bg-[#E7F6EE] text-[#047857]',
   TELECALLER: 'bg-amber-100 text-amber-700',
   MARKETING: 'bg-pink-100 text-pink-700',
   ACCOUNTANT: 'bg-gray-100 text-gray-600',
@@ -71,7 +71,7 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
     <>
       <button
         onClick={() => setOpen(true)}
-        className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
+        className="p-1 text-[#E04020] hover:bg-[#FDECE6] rounded transition"
         title="Reassign lead"
       >
         <UserPlus size={14} />
@@ -97,7 +97,7 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search by name or role…"
-                  className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E04020]/60"
                 />
               </div>
             </div>
@@ -115,10 +115,10 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
                       key={user.id}
                       onClick={() => setSelected(user.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left mb-0.5
-                        ${isSelected ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-gray-50'}`}
+                        ${isSelected ? 'bg-[#FDECE6] ring-1 ring-[#FAD8CB]' : 'hover:bg-gray-50'}`}
                     >
                       {/* Avatar */}
-                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#C02F12] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {user.avatarUrl
                           ? <img src={user.avatarUrl} className="w-8 h-8 rounded-full object-cover" alt={user.name} />
                           : initials(user.name)
@@ -138,7 +138,7 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
                         </span>
                       </div>
 
-                      {isSelected && <Check size={14} className="text-blue-600 flex-shrink-0" />}
+                      {isSelected && <Check size={14} className="text-[#E04020] flex-shrink-0" />}
                     </button>
                   );
                 })
@@ -162,7 +162,7 @@ export function ReassignDialog({ leadId, currentAssigneeId, onSuccess }: Props) 
                 <button
                   onClick={confirm}
                   disabled={!selected || saving}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg text-sm transition"
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-50 text-white font-medium py-2 rounded-lg text-sm transition"
                 >
                   {saving ? <Loader2 size={13} className="animate-spin" /> : null}
                   {selected === currentAssigneeId ? 'Close' : 'Confirm'}

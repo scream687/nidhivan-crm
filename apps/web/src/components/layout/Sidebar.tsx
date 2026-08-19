@@ -1,17 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
-import { NotificationBell } from '@/components/layout/NotificationBell';
 import {
   LayoutDashboard, Package, Users2, CheckSquare,
-  Zap, BarChart3, Phone, PhoneCall, TrendingUp, Trophy,
-  MessageSquare, MessageCircle, Megaphone, Bot, BarChart2,
+  Zap, BarChart3, Phone, TrendingUp, Trophy,
+  MessageSquare, Megaphone, Bot,
   Settings, LogOut, Building2, MapPin, Calculator, FileCheck,
-  GitBranch, UserCog, StickyNote, Target, Mail, GitMerge, X,
-  ClipboardList, CalendarClock, Globe, Gift,
+  GitBranch, UserCog, StickyNote, ChevronDown, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -21,69 +18,47 @@ type NavItem = {
   label: string;
   exact?: boolean;
   adminOnly?: boolean;
+  badge?: string;
 };
 
 const navSections: { label: string; items: NavItem[] }[] = [
   {
-    label: 'CRM',
+    label: 'VIEWS',
     items: [
-      { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboards' },
-      { href: '/leads', icon: Users2, label: 'Leads' },
-      { href: '/notes', icon: StickyNote, label: 'Notes' },
-      { href: '/communication', icon: MessageCircle, label: 'Communication' },
-      { href: '/site-visits', icon: MapPin, label: 'Site Visits' },
-      { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
-      { href: '/follow-ups', icon: CalendarClock, label: 'Follow-ups' },
-      { href: '/workflows', icon: GitBranch, label: 'Workflows' },
-      { href: '/inventory', icon: Package, label: 'Inventory' },
-      { href: '/visit-requests', icon: ClipboardList, label: 'Visit Requests' },
-      { href: '/bookings', icon: FileCheck, label: 'Bookings' },
-      { href: '/calculator', icon: Calculator, label: 'Calculator' },
-      { href: '/reports', icon: BarChart3, label: 'Reports', adminOnly: true },
-      { href: '/settings/integrations', icon: Zap, label: 'Integrations', adminOnly: true },
+      { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+      { href: '/leads', icon: Users2, label: 'Leads & Deals', badge: 'Active' },
+      { href: '/inventory', icon: Package, label: 'Property Inventory' },
+      { href: '/bookings', icon: FileCheck, label: 'Bookings & Registry' },
     ],
   },
   {
-    label: 'Marketing',
+    label: 'ACTIVITIES',
     items: [
-      { href: '/marketing', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-      { href: '/marketing/campaigns', icon: Mail, label: 'Campaigns' },
-      { href: '/marketing/landing-pages', icon: Globe, label: 'Landing Pages' },
-      { href: '/marketing/segments', icon: Target, label: 'Segments' },
-      { href: '/marketing/nurture', icon: Megaphone, label: 'Nurture' },
-      { href: '/marketing/referral', icon: Gift, label: 'Referral' },
-      { href: '/marketing/attribution', icon: GitMerge, label: 'Attribution' },
+      { href: '/site-visits', icon: MapPin, label: 'Site Visits & Dispatch' },
+      { href: '/tasks', icon: CheckSquare, label: 'Tasks & Reminders' },
+      { href: '/notes', icon: StickyNote, label: 'Quick Notes' },
+      { href: '/calculator', icon: Calculator, label: 'EMI & Rate Calculator' },
     ],
   },
   {
-    label: 'Calls',
+    label: 'COMMUNICATIONS',
     items: [
-      { href: '/telephony', icon: Phone, label: 'Call History' },
-      { href: '/telephony/analytics', icon: TrendingUp, label: 'Call Analytics' },
-      { href: '/telephony/toppers', icon: Trophy, label: 'Call Toppers' },
+      { href: '/whatsapp', icon: MessageSquare, label: 'WhatsApp Inbox' },
+      { href: '/telephony', icon: Phone, label: 'Call Logs & Dialer' },
+      { href: '/workflows', icon: GitBranch, label: 'Automation Flows' },
     ],
   },
   {
-    label: 'WhatsApp',
+    label: 'INSIGHTS & SETTINGS',
     items: [
-      { href: '/whatsapp', icon: MessageSquare, label: 'Inbox', exact: true },
-      { href: '/whatsapp/campaigns', icon: Megaphone, label: 'Campaigns' },
-      { href: '/whatsapp/automation', icon: Zap, label: 'Automation' },
-      { href: '/whatsapp/chatbot', icon: Bot, label: 'Chatbot' },
-      { href: '/whatsapp/analytics', icon: BarChart2, label: 'Analytics' },
-    ],
-  },
-  {
-    label: 'Account',
-    items: [
+      { href: '/reports', icon: BarChart3, label: 'Reports & Analytics', adminOnly: true },
+      { href: '/users', icon: UserCog, label: 'User Directory', adminOnly: true },
       { href: '/settings', icon: Settings, label: 'Settings', exact: true },
-      { href: '/settings/pipeline', icon: PhoneCall, label: 'Pipeline', adminOnly: true },
-      { href: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
     ],
   },
 ];
 
-export function Sidebar({ onNavigate, onClose }: { onNavigate?: () => void; onClose?: () => void }) {
+export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
 
@@ -94,56 +69,56 @@ export function Sidebar({ onNavigate, onClose }: { onNavigate?: () => void; onCl
   };
 
   return (
-    <aside className="w-56 max-w-[80vw] bg-[#0f1e36] flex flex-col h-screen fixed left-0 top-0 z-30 overflow-y-auto">
-      {/* Logo + close button */}
-      <div className="px-4 py-4 border-b border-white/10 flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Building2 size={16} className="text-white" />
+    <aside className="w-60 bg-white border-r border-[#E5E7EB] flex flex-col h-screen fixed left-0 top-0 z-30 select-none">
+      {/* Workspace Switcher Header */}
+      <div className="px-3.5 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-[#C02F12] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+            N
           </div>
-          <div className="flex-1">
-            <p className="text-white font-bold text-sm leading-tight">NIDHIVAN</p>
-            <p className="text-blue-300 text-[10px]">Property CRM</p>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-[#111113] truncate leading-tight">Nidhivan CRM</p>
+            <p className="text-[11px] text-[#5A6470] font-medium truncate">Real Estate Growth</p>
           </div>
-          <button
-            onClick={onClose}
-            className="lg:hidden p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-            aria-label="Close navigation menu"
-            aria-controls="sidebar"
-          >
-            <X size={18} />
-          </button>
+        </div>
+        <div className="px-1.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#5A6470] text-[11px] font-medium">
+          v2.4
         </div>
       </div>
 
-      {/* Nav */}
-      <nav role="navigation" aria-label="Main navigation" className="flex-1 px-2 py-3 space-y-4">
+      {/* Nav Section Links */}
+      <nav className="flex-1 px-2.5 py-3 space-y-4 overflow-y-auto">
         {navSections.map((section) => (
           <div key={section.label}>
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 mb-1">
+            <p className="text-[11px] font-semibold text-[#626B76] tracking-wider px-2 mb-1 uppercase font-mono">
               {section.label}
             </p>
             <div className="space-y-0.5">
-              {section.items.map(({ href, icon: Icon, label, exact, adminOnly }) => {
+              {section.items.map(({ href, icon: Icon, label, exact, adminOnly, badge }) => {
                 const isAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
                 if (adminOnly && !isAdmin) return null;
                 
                 const active = isActive(href, exact);
                 return (
-                  <Link key={href} href={href} onClick={onNavigate} aria-current={active ? 'page' : undefined}>
-                    <motion.div
-                      whileHover={{ x: 2 }}
+                  <Link key={href} href={href} onClick={onClose}>
+                    <div
                       className={cn(
-                        'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors cursor-pointer',
+                        'flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer group font-medium',
                         active
-                          ? 'bg-blue-600 text-white font-medium'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5',
-                        'focus-visible:ring-2 focus-visible:ring-blue-400',
+                          ? 'bg-[#FDECE6] text-[#C02F12] font-semibold'
+                          : 'text-[#5A6470] hover:text-[#111113] hover:bg-[#F3F4F6]',
                       )}
                     >
-                      <Icon size={15} className="flex-shrink-0" />
-                      <span className="truncate">{label}</span>
-                    </motion.div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon size={14} className={cn('flex-shrink-0', active ? 'text-[#E04020]' : 'text-[#5A6470] group-hover:text-[#111113]')} />
+                        <span className="truncate">{label}</span>
+                      </div>
+                      {badge && !active && (
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-[#FDE7E1] text-[#C02F12] font-semibold uppercase tracking-wide">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
                   </Link>
                 );
               })}
@@ -152,19 +127,24 @@ export function Sidebar({ onNavigate, onClose }: { onNavigate?: () => void; onCl
         ))}
       </nav>
 
-      {/* User */}
-      <div className="px-2 py-3 border-t border-white/10 flex-shrink-0">
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg">
-          <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {user?.name?.slice(0, 2).toUpperCase()}
+      {/* User Footer Profile */}
+      <div className="p-2.5 border-t border-[#E5E7EB] bg-[#F3F4F6]">
+        <div className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white transition-colors">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 rounded-full bg-[#C02F12] text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+              {user?.name?.slice(0, 2).toUpperCase() || 'AD'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[#111113] truncate leading-tight">{user?.name}</p>
+              <p className="text-[11px] text-[#5A6470] capitalize font-medium truncate">{user?.role?.toLowerCase().replace('_', ' ')}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">{user?.name}</p>
-            <p className="text-gray-500 text-[10px] capitalize">{user?.role?.toLowerCase().replace('_', ' ')}</p>
-          </div>
-          <NotificationBell />
-          <button onClick={logout} className="text-gray-500 hover:text-red-400 transition flex-shrink-0">
-            <LogOut size={14} />
+          <button
+            onClick={logout}
+            title="Sign out"
+            className="p-1 rounded-lg text-[#626B76] hover:text-[#E04020] hover:bg-white transition-colors"
+          >
+            <LogOut size={13} />
           </button>
         </div>
       </div>

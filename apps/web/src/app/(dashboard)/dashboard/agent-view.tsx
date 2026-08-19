@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
@@ -48,25 +47,25 @@ export function AgentView() {
   return (
     <div className="p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">
           Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {user?.name?.split(' ')[0]}
         </h1>
         <p className="text-gray-500 text-sm mt-1">Here's your day ahead</p>
       </div>
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        
           <KpiCard title="Calls Today" value={kpis?.leadsToday ?? '—'} icon={<Phone size={18} />} color="blue" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        
+        
           <KpiCard title="Follow-ups Due" value={kpis?.pendingFollowUps ?? '—'} icon={<Clock size={18} />} color="orange" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        
+        
           <KpiCard title="Today's Visits" value={kpis?.siteVisitsToday ?? '—'} icon={<MapPin size={18} />} color="green" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        
+        
           <KpiCard title="Hot Leads" value={kpis?.hotLeads ?? '—'} icon={<Flame size={18} />} color="red" />
-        </motion.div>
+        
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -74,7 +73,7 @@ export function AgentView() {
           <Card className="shadow-sm border-gray-100">
             <CardHeader className="border-b border-gray-50 bg-gray-50/30 pb-3">
               <CardTitle className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                <CheckSquare size={14} className="text-blue-500" /> MY OPEN TASKS
+                <CheckSquare size={14} className="text-[#E04020]" /> MY OPEN TASKS
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-3">
@@ -129,7 +128,7 @@ export function AgentView() {
             </CardHeader>
             <CardContent className="pt-4 space-y-2">
               <Link href="/leads">
-                <Button variant="default" size="sm" className="w-full justify-start text-xs bg-blue-500 hover:bg-blue-600">
+                <Button variant="default" size="sm" className="w-full justify-start text-xs bg-[#E04020] hover:bg-[#E04020]">
                   <Phone className="size-3.5 mr-2" /> Call a Lead
                 </Button>
               </Link>

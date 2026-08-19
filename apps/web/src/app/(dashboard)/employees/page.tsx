@@ -30,9 +30,9 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold text-gray-900">Team Performance</h1>
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Team Performance</h1>
         <p className="text-sm text-gray-500">Real-time leaderboard and agent stats</p>
       </div>
 
@@ -64,7 +64,7 @@ export default function EmployeesPage() {
                 className={cn('bg-white rounded-xl p-5 shadow-card border text-center',
                   i === 0 ? 'border-yellow-200 ring-2 ring-yellow-400/30' : 'border-gray-100')}>
                 <div className="text-3xl mb-2">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</div>
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-lg font-bold mx-auto mb-2">
+                <div className="w-12 h-12 rounded-full bg-[#FDECE6] flex items-center justify-center text-[#C02F12] text-lg font-bold mx-auto mb-2">
                   {agent.name.slice(0, 2).toUpperCase()}
                 </div>
                 <p className="font-semibold text-gray-900">{agent.name}</p>
@@ -72,7 +72,7 @@ export default function EmployeesPage() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div><p className="text-lg font-bold text-gray-900">{agent.totalLeads}</p><p className="text-xs text-gray-400">Leads</p></div>
                   <div><p className="text-lg font-bold text-green-600">{agent.conversions}</p><p className="text-xs text-gray-400">Won</p></div>
-                  <div><p className="text-lg font-bold text-blue-600">{agent.callsToday}</p><p className="text-xs text-gray-400">Calls</p></div>
+                  <div><p className="text-lg font-bold text-[#E04020]">{agent.callsToday}</p><p className="text-xs text-gray-400">Calls</p></div>
                 </div>
               </motion.div>
             ))}
@@ -100,14 +100,14 @@ export default function EmployeesPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{agent.name.slice(0, 2).toUpperCase()}</div>
+                        <div className="w-7 h-7 rounded-full bg-[#FDECE6] text-[#C02F12] text-xs font-bold flex items-center justify-center">{agent.name.slice(0, 2).toUpperCase()}</div>
                         <span className="text-sm font-medium text-gray-900">{agent.name}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500 capitalize">{agent.role.toLowerCase().replace('_', ' ')}</td>
                     <td className="px-4 py-3 text-sm text-gray-700 font-medium">{agent.totalLeads}</td>
                     <td className="px-4 py-3 text-sm text-red-600 font-medium">{agent.hotLeads}</td>
-                    <td className="px-4 py-3 text-sm text-blue-600 font-medium">{agent.callsToday}</td>
+                    <td className="px-4 py-3 text-sm text-[#E04020] font-medium">{agent.callsToday}</td>
                     <td className="px-4 py-3 text-sm text-green-600 font-bold">{agent.conversions}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{agent.totalLeads ? ((agent.conversions / agent.totalLeads) * 100).toFixed(1) : 0}%</td>
                     <td className="px-4 py-3 text-sm font-bold text-gray-800">{agent.productivityScore}</td>
@@ -116,7 +116,7 @@ export default function EmployeesPage() {
               </tbody>
             </table>
             {leaderboard.length > 10 && (
-              <button onClick={() => setShowAll(!showAll)} className="w-full py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition">
+              <button onClick={() => setShowAll(!showAll)} className="w-full py-2.5 text-sm font-medium text-[#E04020] hover:text-[#C02F12] hover:bg-[#FDECE6] transition">
                 {showAll ? 'Show less' : `Show all (${leaderboard.length})`}
               </button>
             )}

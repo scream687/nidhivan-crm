@@ -32,14 +32,14 @@ export default function SegmentsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Target className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Segments</h1>
+          <Target className="w-6 h-6 text-[#E04020]" />
+          <h1 className="text-xl font-bold text-[#111113] tracking-tight">Segments</h1>
         </div>
         <button onClick={() => router.push('/marketing/segments/new')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+          className="flex items-center gap-2 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
           <Plus className="w-4 h-4" /> New Segment
         </button>
       </div>
@@ -64,18 +64,18 @@ export default function SegmentsPage() {
                   {seg.description && <p className="text-sm text-gray-500 mt-0.5">{seg.description}</p>}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-blue-600 font-medium text-sm">
+              <div className="flex items-center gap-1.5 text-[#E04020] font-medium text-sm">
                 <Users2 className="w-4 h-4" />
                 {seg.leadCount.toLocaleString()} leads
               </div>
               <p className="text-xs text-gray-400">By {seg.createdBy?.name} · {new Date(seg.createdAt).toLocaleDateString()}</p>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => preview(seg.id)}
-                  className="flex items-center gap-1 text-xs text-gray-600 hover:text-blue-600 border border-gray-200 rounded-lg px-3 py-1.5 transition">
+                  className="flex items-center gap-1 text-xs text-gray-600 hover:text-[#E04020] border border-gray-200 rounded-lg px-3 py-1.5 transition">
                   <Eye className="w-3 h-3" /> Preview
                 </button>
                 <button onClick={() => router.push(`/marketing/campaigns/new?segmentId=${seg.id}`)}
-                  className="flex-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg px-3 py-1.5 transition">
+                  className="flex-1 text-xs bg-[#FDECE6] hover:bg-[#FDECE6] text-[#C02F12] rounded-lg px-3 py-1.5 transition">
                   Use in Campaign
                 </button>
                 <button onClick={() => deleteSegment(seg.id, seg.name)}

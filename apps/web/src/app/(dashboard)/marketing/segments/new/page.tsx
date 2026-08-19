@@ -50,26 +50,26 @@ export default function SegmentBuilderPage() {
   }
 
   const chip = (active: boolean) =>
-    `px-3 py-1 rounded-full text-xs font-medium border cursor-pointer transition ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'}`;
+    `px-3 py-1 rounded-full text-xs font-medium border cursor-pointer transition ${active ? 'bg-[#E04020] text-white border-[#E04020]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#E04020]'}`;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+    <div className="max-w-3xl mx-auto space-y-6">
+      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">New Segment</h1>
+      <h1 className="text-xl font-bold text-[#111113] tracking-tight mb-6">New Segment</h1>
 
       <div className="space-y-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Segment Name *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Hot Facebook Leads"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
             <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
           </div>
         </div>
 
@@ -101,7 +101,7 @@ export default function SegmentBuilderPage() {
           <div className="flex items-center gap-3">
             <label className="text-sm text-gray-600">Hot leads only</label>
             <button onClick={() => { setFilters(f => ({ ...f, isHot: !f.isHot })); setPreview(null); }}
-              className={`w-10 h-6 rounded-full transition ${filters.isHot ? 'bg-blue-600' : 'bg-gray-200'} relative`}>
+              className={`w-10 h-6 rounded-full transition ${filters.isHot ? 'bg-[#E04020]' : 'bg-gray-200'} relative`}>
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${filters.isHot ? 'translate-x-4' : ''}`} />
             </button>
           </div>
@@ -111,26 +111,26 @@ export default function SegmentBuilderPage() {
               <label className="block text-xs text-gray-500 mb-1">Budget Min (₹)</label>
               <input type="number" placeholder="0" value={filters.budgetMin ?? ''}
                 onChange={e => { setFilters(f => ({ ...f, budgetMin: e.target.value ? Number(e.target.value) : undefined })); setPreview(null); }}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Budget Max (₹)</label>
               <input type="number" placeholder="∞" value={filters.budgetMax ?? ''}
                 onChange={e => { setFilters(f => ({ ...f, budgetMax: e.target.value ? Number(e.target.value) : undefined })); setPreview(null); }}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
             </div>
           </div>
         </div>
 
         {preview && (
-          <div className="bg-blue-50 rounded-xl border border-blue-200 p-4">
-            <div className="flex items-center gap-2 text-blue-700 font-semibold mb-2">
+          <div className="bg-[#FDECE6] rounded-xl border border-[#FDECE6] p-4">
+            <div className="flex items-center gap-2 text-[#C02F12] font-semibold mb-2">
               <Users2 className="w-4 h-4" /> {preview.count.toLocaleString()} leads match
             </div>
             {preview.sample.length > 0 && (
-              <ul className="text-sm text-blue-600 space-y-1">
+              <ul className="text-sm text-[#E04020] space-y-1">
                 {preview.sample.map((l: any) => <li key={l.id}>· {l.name} — {l.stage}</li>)}
-                {preview.count > 5 && <li className="text-blue-400">…and {preview.count - 5} more</li>}
+                {preview.count > 5 && <li className="text-[#E04020]">…and {preview.count - 5} more</li>}
               </ul>
             )}
           </div>
@@ -138,11 +138,11 @@ export default function SegmentBuilderPage() {
 
         <div className="flex gap-3">
           <button onClick={runPreview} disabled={previewing}
-            className="flex items-center gap-2 border border-gray-200 text-gray-700 hover:border-blue-400 px-4 py-2.5 rounded-lg text-sm transition">
+            className="flex items-center gap-2 border border-gray-200 text-gray-700 hover:border-[#E04020] px-4 py-2.5 rounded-lg text-sm transition">
             {previewing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users2 className="w-4 h-4" />} Preview
           </button>
           <button onClick={save} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition">
+            className="flex-1 flex items-center justify-center gap-2 bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Save Segment
           </button>
         </div>

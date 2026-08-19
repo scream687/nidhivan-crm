@@ -81,7 +81,7 @@ export default function DocumentUpload({
               className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
             >
               <div className="flex items-center gap-2">
-                <span className="text-blue-500">
+                <span className="text-[#E04020]">
                   {TYPE_ICONS[doc.type] || <File size={14} />}
                 </span>
                 <div>
@@ -98,7 +98,7 @@ export default function DocumentUpload({
                   href={doc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1 text-gray-400 hover:text-blue-600 transition"
+                  className="p-1 text-gray-400 hover:text-[#E04020] transition"
                 >
                   <Download size={14} />
                 </a>
@@ -131,7 +131,7 @@ export default function DocumentUpload({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-2 mx-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-2 mx-auto text-sm text-[#E04020] hover:text-[#C02F12] font-medium"
           >
             <Upload size={14} />
             {uploading ? 'Uploading…' : 'Choose file'}
@@ -153,7 +153,7 @@ export default function DocumentUpload({
       ) : (
         <button
           onClick={() => setShowPicker(true)}
-          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-2 text-sm text-[#E04020] hover:text-[#C02F12] font-medium"
         >
           <Upload size={14} /> Upload Document
         </button>

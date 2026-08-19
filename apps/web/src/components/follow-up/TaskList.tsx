@@ -27,7 +27,7 @@ interface Props {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  CALL: 'bg-blue-100 text-blue-700',
+  CALL: 'bg-[#FDECE6] text-[#C02F12]',
   VISIT: 'bg-purple-100 text-purple-700',
   WHATSAPP: 'bg-green-100 text-green-700',
   EMAIL: 'bg-amber-100 text-amber-700',
@@ -84,7 +84,7 @@ export function TaskList({ tasks, onRefresh, compact }: Props) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by title, lead, or agent..."
-              className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E04020]"
             />
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -95,7 +95,7 @@ export function TaskList({ tasks, onRefresh, compact }: Props) {
                 onClick={() => setTypeFilter(t)}
                 className={cn(
                   'px-2 py-1 rounded-lg transition',
-                  typeFilter === t ? 'bg-blue-50 text-blue-600 font-medium' : 'hover:text-gray-700'
+                  typeFilter === t ? 'bg-[#FDECE6] text-[#E04020] font-medium' : 'hover:text-gray-700'
                 )}
               >
                 {t === 'all' ? 'All' : t}
@@ -118,7 +118,7 @@ export function TaskList({ tasks, onRefresh, compact }: Props) {
               className={cn(
                 'bg-white border rounded-xl transition',
                 task.isCompleted ? 'border-gray-100 opacity-60' : 'border-gray-200',
-                isExpanded && 'ring-1 ring-blue-200'
+                isExpanded && 'ring-1 ring-[#FDECE6]'
               )}
             >
               <div className="flex items-start gap-3 p-3">
@@ -129,7 +129,7 @@ export function TaskList({ tasks, onRefresh, compact }: Props) {
                 >
                   {task.isCompleted
                     ? <CheckCircle2 size={16} className="text-green-500" />
-                    : <Circle size={16} className="text-gray-300 hover:text-blue-400 transition" />
+                    : <Circle size={16} className="text-gray-300 hover:text-[#E04020] transition" />
                   }
                 </button>
 
@@ -149,7 +149,7 @@ export function TaskList({ tasks, onRefresh, compact }: Props) {
                   </div>
                   <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5 flex-wrap">
                     {task.lead && (
-                      <a href={`/leads/${task.lead.id}`} className="text-blue-500 hover:underline">
+                      <a href={`/leads/${task.lead.id}`} className="text-[#E04020] hover:underline">
                         {task.lead.name}
                       </a>
                     )}

@@ -6,10 +6,10 @@ export default function AutomationPage() {
   const router = useRouter();
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center gap-3">
         <Zap className="w-6 h-6 text-amber-500" />
-        <h1 className="text-2xl font-bold text-gray-900">WhatsApp Automation</h1>
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">WhatsApp Automation</h1>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-4">
@@ -28,9 +28,9 @@ export default function AutomationPage() {
         </button>
       </div>
 
-      <div className="mt-6 bg-blue-50 rounded-xl border border-blue-100 p-5 space-y-3">
-        <h3 className="font-semibold text-blue-900 text-sm">Also useful:</h3>
-        <div className="space-y-2 text-sm text-blue-700">
+      <div className="mt-6 bg-[#FDECE6] rounded-xl border border-[#FDECE6] p-5 space-y-3">
+        <h3 className="font-semibold text-[#111113] text-sm">Also useful:</h3>
+        <div className="space-y-2 text-sm text-[#C02F12]">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 flex-shrink-0" />
             <span><strong>Workflows</strong> — trigger actions (tasks, notifications) when leads are created or stage changes</span>
@@ -42,11 +42,11 @@ export default function AutomationPage() {
         </div>
         <div className="flex gap-2 pt-1">
           <button onClick={() => router.push('/workflows')}
-            className="text-xs border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition">
+            className="text-xs border border-[#FDECE6] text-[#C02F12] hover:bg-[#FDECE6] px-3 py-1.5 rounded-lg transition">
             Open Workflows
           </button>
           <button onClick={() => router.push('/marketing/campaigns')}
-            className="text-xs border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition">
+            className="text-xs border border-[#FDECE6] text-[#C02F12] hover:bg-[#FDECE6] px-3 py-1.5 rounded-lg transition">
             Open Campaigns
           </button>
         </div>

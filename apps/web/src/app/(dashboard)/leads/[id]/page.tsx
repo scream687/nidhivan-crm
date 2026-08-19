@@ -26,23 +26,23 @@ import CustomerSummaryCard from "@/components/leads/CustomerSummaryCard";
 
 const STAGE_COLORS: Record<string, { color: string; bgColor: string }> = {
   NEW: { color: "#6b7280", bgColor: "#f3f4f6" },
-  ATTEMPTED: { color: "#ea580c", bgColor: "#fff7ed" },
+  ATTEMPTED: { color: "#6b7280", bgColor: "#f3f4f6" },
   NOT_REACHABLE: { color: "#6b7280", bgColor: "#f3f4f6" },
   WRONG_NUMBER: { color: "#b91c1c", bgColor: "#fef2f2" },
-  CONNECTED: { color: "#2563eb", bgColor: "#eff6ff" },
-  INTERESTED: { color: "#7c3aed", bgColor: "#f5f3ff" },
+  CONNECTED: { color: "#e04020", bgColor: "#fdece6" },
+  INTERESTED: { color: "#6b7280", bgColor: "#f3f4f6" },
   HOT: { color: "#dc2626", bgColor: "#fef2f2" },
-  SITE_VISIT_SCHEDULED: { color: "#7c3aed", bgColor: "#f5f3ff" },
-  SITE_VISIT_COMPLETED: { color: "#0d9488", bgColor: "#f0fdfa" },
+  SITE_VISIT_SCHEDULED: { color: "#6b7280", bgColor: "#f3f4f6" },
+  SITE_VISIT_COMPLETED: { color: "#047857", bgColor: "#e7f6ee" },
   NEGOTIATION: { color: "#d97706", bgColor: "#fffbeb" },
   BOOKING_PENDING: { color: "#ca8a04", bgColor: "#fefce8" },
-  LOAN_PROCESSING: { color: "#2563eb", bgColor: "#eff6ff" },
+  LOAN_PROCESSING: { color: "#e04020", bgColor: "#fdece6" },
   DOCUMENTATION_PENDING: { color: "#a855f7", bgColor: "#f5f3ff" },
   PAYMENT_PENDING: { color: "#d97706", bgColor: "#fffbeb" },
-  CLOSED_WON: { color: "#16a34a", bgColor: "#f0fdf4" },
-  CLOSED_LOST: { color: "#9f1239", bgColor: "#fff1f2" },
-  DUPLICATE: { color: "#ea580c", bgColor: "#fff7ed" },
-  FUTURE_PROSPECT: { color: "#0891b2", bgColor: "#ecfeff" },
+  CLOSED_WON: { color: "#047857", bgColor: "#e7f6ee" },
+  CLOSED_LOST: { color: "#6b7280", bgColor: "#f3f4f6" },
+  DUPLICATE: { color: "#6b7280", bgColor: "#f3f4f6" },
+  FUTURE_PROSPECT: { color: "#6b7280", bgColor: "#f3f4f6" },
 };
 
 const stages = Object.values(LeadStage).map((name) => ({
@@ -98,6 +98,12 @@ export default function LeadDetailPage() {
     toast.success("Initiating call…");
   }
 
+  function openWhatsApp() {
+    const lead = currentLead;
+    if (!lead?.phone) { toast.error("This lead has no phone number"); return; }
+    router.push(`/whatsapp?phone=${encodeURIComponent(lead.phone)}&name=${encodeURIComponent(lead.name || "")}`);
+  }
+
   // Keyboard shortcuts
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -105,7 +111,7 @@ export default function LeadDetailPage() {
       switch (e.key.toLowerCase()) {
         case "n": addNote(); break;
         case "c": handleCall(); break;
-        case "w": toast("WhatsApp coming soon"); break;
+        case "w": openWhatsApp(); break;
         case "t": setShowFollowUpForm(true); break;
         case "v": setShowScheduleModal(true); break;
       }
@@ -117,7 +123,7 @@ export default function LeadDetailPage() {
   if (isLoading || !currentLead) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#E04020] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -137,7 +143,7 @@ export default function LeadDetailPage() {
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base lg:text-lg font-bold text-gray-900">{lead.name}</h1>
+                <h1 className="text-base lg:text-xl font-bold text-[#111113] tracking-tight">{lead.name}</h1>
                 {(lead as any).aiScore !== undefined && (lead as any).aiScore !== null ? (
                   <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", (lead as any).aiScore >= 70 ? "bg-green-100 text-green-700" : (lead as any).aiScore >= 40 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700")}>
                     AI {(lead as any).aiScore}
@@ -181,7 +187,7 @@ export default function LeadDetailPage() {
             </button>
 
             {isManager && (
-              <button onClick={() => setShowScheduleModal(true)} className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm px-2.5 lg:px-3.5 py-1.5 rounded-lg transition font-medium">
+              <button onClick={() => setShowScheduleModal(true)} className="flex items-center gap-1.5 bg-[#E04020] hover:bg-[#C02F12] text-white text-sm px-2.5 lg:px-3.5 py-1.5 rounded-lg transition font-medium">
                 <Calendar size={14} /><span className="hidden sm:inline">Schedule Visit</span>
               </button>
             )}
@@ -193,10 +199,10 @@ export default function LeadDetailPage() {
       <div className="sticky top-[73px] z-10">
         <QuickActionsBar
           onCall={handleCall}
-          onWhatsApp={() => toast("WhatsApp coming soon")}
+          onWhatsApp={openWhatsApp}
           onTask={() => setShowFollowUpForm(true)}
           onVisit={() => setShowScheduleModal(true)}
-          onBooking={() => {}}
+          onBooking={() => router.push(`/bookings?leadId=${id}`)}
         />
       </div>
 
@@ -208,7 +214,7 @@ export default function LeadDetailPage() {
               <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Quick note…" rows={1} className="w-full text-sm text-gray-700 resize-none focus:outline-none" />
               <div className="flex items-center justify-between mt-2">
                 <VoiceRecorder leadId={id} onSuccess={refreshWorkspace} />
-                <button onClick={addNote} className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition font-medium">Save Note</button>
+                <button onClick={addNote} className="text-xs bg-[#E04020] text-white px-3 py-1 rounded-lg hover:bg-[#C02F12] transition font-medium">Save Note</button>
               </div>
             </div>
             <p className="text-[10px] text-gray-400 text-right -mt-2">N ↵ quick note · C call · T task · V visit</p>

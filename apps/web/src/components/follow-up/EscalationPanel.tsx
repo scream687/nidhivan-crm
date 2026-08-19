@@ -49,7 +49,7 @@ export function EscalationPanel() {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#E04020] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -90,7 +90,7 @@ export function EscalationPanel() {
                 <p className="text-sm font-medium text-gray-900">{item.title}</p>
                 <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5 flex-wrap">
                   {item.lead && (
-                    <a href={`/leads/${item.lead.id}`} className="text-blue-500 hover:underline" onClick={e => e.stopPropagation()}>
+                    <a href={`/leads/${item.lead.id}`} className="text-[#E04020] hover:underline" onClick={e => e.stopPropagation()}>
                       {item.lead.name}
                     </a>
                   )}

@@ -30,7 +30,7 @@ type TeamMember = {
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: 'bg-purple-100 text-purple-600',
-  MANAGER: 'bg-blue-100 text-blue-600',
+  MANAGER: 'bg-[#FDECE6] text-[#E04020]',
   SALES_AGENT: 'bg-green-100 text-green-600',
   TELECALLER: 'bg-amber-100 text-amber-600',
 };
@@ -71,7 +71,7 @@ function WhatsAppSettings() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-4">
       <h2 className="font-semibold text-gray-900">WhatsApp Business API</h2>
       <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700">
         Connect your Meta WhatsApp Cloud API. You need a Phone Number ID, WABA ID, and a permanent access token from the Meta Developer Console.
@@ -363,35 +363,35 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-[calc(100vh-100px)] frappe-card overflow-hidden">
       {/* Sidebar */}
-      <div className="w-56 border-r border-gray-200 bg-white flex flex-col">
-        <div className="p-4 border-b border-gray-100">
+      <div className="w-56 border-r border-[#e5e7eb] bg-white flex flex-col flex-shrink-0">
+        <div className="p-3.5 border-b border-[#e5e7eb]">
           <div className="flex items-center gap-2">
-            <Settings size={16} className="text-gray-500" />
-            <h1 className="font-bold text-gray-900 text-sm">Settings</h1>
+            <Settings size={14} className="text-[#6b7280]" />
+            <h1 className="text-xl font-bold text-[#111113] tracking-tight">Workspace Settings</h1>
           </div>
         </div>
-        <nav className="flex-1 p-2 flex lg:flex-col gap-1 lg:gap-0 lg:space-y-0.5 overflow-x-auto">
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setActive(id)}
-              className={cn('flex-shrink-0 w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition text-left',
-                active === id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50')}>
-              <Icon size={14} />
-              {label}
+              className={cn('w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition text-left font-medium',
+                active === id ? 'bg-[#f3f4f6] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f9fafb] hover:text-[#111827]')}>
+              <Icon size={13} className={active === id ? 'text-[#111827]' : 'text-[#6b7280]'} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#f9fafb]/40">
         {active === 'profile' && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-5">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-5">
             <h2 className="font-semibold text-gray-900">My Profile</h2>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
+                <div className="w-16 h-16 rounded-full bg-[#FDECE6] flex items-center justify-center text-[#C02F12] font-bold text-xl">
                   {(profileForm.name || user?.name || 'RS').slice(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
                   value={profileForm.name}
                   onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
                   disabled={profileLoading || profileSaving}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] disabled:bg-gray-50"
                 />
               </div>
               <div>
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                   onChange={(e) => setProfileForm((prev) => ({ ...prev, phone: e.target.value }))}
                   disabled={profileLoading || profileSaving}
                   placeholder="+91 9876543210"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020] disabled:bg-gray-50"
                 />
               </div>
               <button
@@ -439,7 +439,7 @@ export default function SettingsPage() {
                 disabled={profileLoading || profileSaving}
                 className={cn(
                   'w-full py-2 rounded-lg text-sm font-medium transition disabled:opacity-60',
-                  profileSaved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white',
+                  profileSaved ? 'bg-green-500 text-white' : 'bg-[#E04020] hover:bg-[#C02F12] text-white',
                 )}
               >
                 {profileLoading ? 'Loading…' : profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save Changes'}
@@ -449,10 +449,10 @@ export default function SettingsPage() {
         )}
 
         {active === 'team' && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Team Members</h2>
-              <button onClick={() => setShowInvite(true)} className="text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">+ Invite Member</button>
+              <button onClick={() => setShowInvite(true)} className="text-sm text-[#E04020] border border-[#FDECE6] px-3 py-1.5 rounded-lg hover:bg-[#FDECE6]">+ Invite Member</button>
             </div>
 
             {/* Invite Modal */}
@@ -464,17 +464,17 @@ export default function SettingsPage() {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
                       <input value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
                       <input type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
                       <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]">
                         <option value="SALES_AGENT">Sales Agent</option>
                         <option value="TELECALLER">Telecaller</option>
                         <option value="MANAGER">Manager</option>
@@ -487,7 +487,7 @@ export default function SettingsPage() {
                       <button type="button" onClick={() => setShowInvite(false)} disabled={inviting}
                         className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
                       <button type="submit" disabled={inviting}
-                        className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+                        className="flex-1 py-2 bg-[#E04020] text-white rounded-lg text-sm font-medium hover:bg-[#C02F12] disabled:opacity-60">
                         {inviting ? 'Inviting…' : 'Send Invite'}
                       </button>
                     </div>
@@ -508,7 +508,7 @@ export default function SettingsPage() {
               )}
               {!teamLoading && !teamError && team.map((member, i) => (
                 <div key={member.id} className={cn('flex items-center gap-4 px-5 py-3.5', i < team.length - 1 ? 'border-b border-gray-50' : '')}>
-                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-[#FDECE6] flex items-center justify-center text-[#C02F12] font-bold text-sm">
                     {member.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -526,7 +526,7 @@ export default function SettingsPage() {
         )}
 
         {active === 'telephony' && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Telephony — Exotel</h2>
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
               Exotel integration is scaffolded and ready. Enter your API credentials below to activate click-to-call, call recording, and auto-link.
@@ -547,12 +547,12 @@ export default function SettingsPage() {
                         value={(telForm as any)[key]}
                         onChange={e => setTelForm(f => ({ ...f, [key]: e.target.value }))}
                         placeholder={placeholder}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                       />
                     </div>
                   ))}
                   <button onClick={saveTelephony} disabled={telSaving}
-                    className={cn('w-full py-2 rounded-lg text-sm font-medium transition disabled:opacity-60', telSaved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}>
+                    className={cn('w-full py-2 rounded-lg text-sm font-medium transition disabled:opacity-60', telSaved ? 'bg-green-500 text-white' : 'bg-[#E04020] hover:bg-[#C02F12] text-white')}>
                     {telSaving ? 'Saving…' : telSaved ? '✓ Saved!' : 'Save & Activate'}
                   </button>
                 </>
@@ -564,7 +564,7 @@ export default function SettingsPage() {
         {active === 'whatsapp' && <WhatsAppSettings />}
 
         {active === 'company' && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Company Details</h2>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               {companyLoading ? (
@@ -585,12 +585,12 @@ export default function SettingsPage() {
                         value={(companyForm as any)[key]}
                         onChange={e => setCompanyForm(f => ({ ...f, [key]: e.target.value }))}
                         placeholder={placeholder}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                       />
                     </div>
                   ))}
                   <button onClick={saveCompany} disabled={companySaving}
-                    className="w-full py-2 rounded-lg text-sm font-medium transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white">
+                    className="w-full py-2 rounded-lg text-sm font-medium transition bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white">
                     {companySaving ? 'Saving…' : 'Save Changes'}
                   </button>
                 </>
@@ -600,7 +600,7 @@ export default function SettingsPage() {
         )}
 
         {active === 'notifications' && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Notification Preferences</h2>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
               {notifLoading ? (
@@ -610,7 +610,7 @@ export default function SettingsPage() {
                   <span className="text-sm text-gray-700">{NOTIFICATION_LABELS[key]}</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={notifPrefs[key] ?? NOTIFICATION_DEFAULTS[key]} onChange={() => toggleNotif(key)} disabled={notifSaving === key} className="sr-only peer" />
-                    <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500" />
+                    <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#E04020]" />
                   </label>
                 </div>
               ))}
@@ -619,7 +619,7 @@ export default function SettingsPage() {
         )}
 
         {active === 'security' && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Security</h2>
             <form onSubmit={changePassword} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               <h3 className="text-sm font-medium text-gray-700">Change Password</h3>
@@ -635,12 +635,12 @@ export default function SettingsPage() {
                     value={(pwForm as any)[key]}
                     onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                     required
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
                   />
                 </div>
               ))}
               <button type="submit" disabled={pwSaving}
-                className="w-full py-2 rounded-lg text-sm font-medium transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white">
+                className="w-full py-2 rounded-lg text-sm font-medium transition bg-[#E04020] hover:bg-[#C02F12] disabled:opacity-60 text-white">
                 {pwSaving ? 'Updating…' : 'Update Password'}
               </button>
             </form>

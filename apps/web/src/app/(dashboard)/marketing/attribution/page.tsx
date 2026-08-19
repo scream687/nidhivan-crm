@@ -23,13 +23,13 @@ export default function AttributionPage() {
   }));
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <GitMerge className="w-6 h-6 text-blue-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Marketing Attribution</h1>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <GitMerge className="w-6 h-6 text-[#E04020]" />
+        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Marketing Attribution</h1>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Leads by Source</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData} margin={{ top: 0, right: 20, bottom: 20, left: 0 }}>
@@ -82,7 +82,7 @@ export default function AttributionPage() {
               {data.byUtmCampaign.map((r: any) => (
                 <div key={r.utmCampaign} className="flex items-center justify-between px-4 py-3">
                   <span className="text-sm text-gray-700 truncate">{r.utmCampaign}</span>
-                  <span className="text-sm font-semibold text-blue-600 ml-2">{r._count.id}</span>
+                  <span className="text-sm font-semibold text-[#E04020] ml-2">{r._count.id}</span>
                 </div>
               ))}
             </div>
