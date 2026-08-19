@@ -1,10 +1,9 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
 import { ActivitiesService } from './activities.service';
+import { R2Service } from '../common/services/r2.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('leads/:leadId')
@@ -67,7 +66,10 @@ export class TasksController {
 @Controller('activities')
 @UseGuards(AuthGuard('jwt'))
 export class GlobalActivitiesController {
-  constructor(private activities: ActivitiesService) {}
+  constructor(
+    private activities: ActivitiesService,
+    private r2: R2Service,
+  ) {}
 
   @Get()
   getAllActivities(
@@ -85,17 +87,7 @@ export class GlobalActivitiesController {
 
   @Post(':leadId/voice-note')
   @UseInterceptors(FileInterceptor('audio', {
-    storage: diskStorage({
-      destination: (_req, _file, cb) => {
-        const dir = join(process.cwd(), 'public', 'uploads', 'voice');
-        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-      },
-      filename: (_req, file, cb) => {
-        const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-        cb(null, name);
-      },
-    }),
+    storage: memoryStorage(),
     limits: { fileSize: 25 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (!file.mimetype.startsWith('audio/')) return cb(new BadRequestException('Only audio files allowed'), false);
@@ -109,7 +101,9 @@ export class GlobalActivitiesController {
     @Body('duration') duration?: string,
   ) {
     if (!file) throw new BadRequestException('No audio file uploaded');
-    const url = `/uploads/voice/${file.filename}`;
+    const key = this.r2.buildKey(`voice/leads/${leadId}`, file.originalname, 'note');
+    await this.r2.upload(key, file.buffer, file.mimetype);
+    const url = await this.r2.urlFor(key);
     return this.activities.addVoiceNoteActivity(leadId, userId, url, duration ? parseFloat(duration) : undefined);
   }
 }

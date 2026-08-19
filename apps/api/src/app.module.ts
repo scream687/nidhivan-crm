@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { join } from 'path';
 import { envValidationSchema } from './config/env.validation';
 import { RedisModule } from './redis/redis.module';
+import { StorageModule } from './common/storage.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -41,14 +40,11 @@ import { AuditModule } from './audit/audit.module';
       isGlobal: true,
       validationSchema: envValidationSchema,
     }),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'public', 'uploads'),
-      serveRoot: '/uploads',
-    }),
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60_000, limit: 120 }, // 120 req/min globally
     ]),
     RedisModule,
+    StorageModule,
     HealthModule,
     PrismaModule,
     AuthModule,

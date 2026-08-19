@@ -5,14 +5,16 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Role } from '@prisma/client';
 import { BookingsService } from './bookings.service';
+import { R2Service } from '../common/services/r2.service';
 import { Response } from 'express';
-import { join } from 'path';
-import { existsSync } from 'fs';
 
 @Controller('bookings')
 @UseGuards(AuthGuard('jwt'))
 export class BookingsController {
-  constructor(private bookings: BookingsService) {}
+  constructor(
+    private bookings: BookingsService,
+    private r2: R2Service,
+  ) {}
 
   @Get('stats')
   getStats() {
@@ -101,15 +103,20 @@ export class BookingsController {
     return this.bookings.generateBookingLetter(id);
   }
 
+  // Stays behind auth: the letter contains customer PII, so it is never served
+  // from a public bucket. We hand back a short-lived signed R2 URL instead.
   @Get('letters/:fileName')
   @UseGuards(AuthGuard('jwt'))
-  serveLetter(@Param('fileName') fileName: string, @Res() res: Response) {
-    const filePath = join(process.cwd(), 'uploads', 'letters', fileName);
-    if (!existsSync(filePath)) {
+  async serveLetter(@Param('fileName') fileName: string, @Res() res: Response) {
+    const safeName = fileName.replace(/[^A-Za-z0-9._-]/g, '');
+    if (!safeName.endsWith('.pdf')) {
+      return res.status(400).json({ message: 'Invalid letter name' });
+    }
+    try {
+      const url = await this.r2.urlFor(`letters/${safeName}`, 300);
+      return res.redirect(url);
+    } catch {
       return res.status(404).json({ message: 'Letter not found' });
     }
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
-    res.sendFile(filePath);
   }
 }

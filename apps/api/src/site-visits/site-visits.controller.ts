@@ -1,10 +1,9 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { join, extname } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
 import { SiteVisitsService } from './site-visits.service';
+import { R2Service } from '../common/services/r2.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -56,7 +55,10 @@ export class LeadSiteVisitsController {
 @Controller('site-visits')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class SiteVisitsController {
-  constructor(private siteVisits: SiteVisitsService) {}
+  constructor(
+    private siteVisits: SiteVisitsService,
+    private r2: R2Service,
+  ) {}
 
   @Get()
   findAll(@CurrentUser() user: User) {
@@ -95,38 +97,23 @@ export class SiteVisitsController {
 
   @Post(':id/photos/upload')
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: join(process.cwd(), 'public', 'uploads', 'site-visits'),
-      filename: (_req, file, cb) => {
-        const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-        cb(null, name);
-      },
-    }),
+    storage: memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (!file.mimetype.startsWith('image/')) return cb(new BadRequestException('Only images allowed'), false);
       cb(null, true);
     },
   }))
-  uploadPhoto(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+  async uploadPhoto(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const url = `/uploads/site-visits/${file.filename}`;
-    return { url };
+    const key = this.r2.buildKey(`site-visits/${id}`, file.originalname, 'photo');
+    await this.r2.upload(key, file.buffer, file.mimetype);
+    return { url: await this.r2.urlFor(key) };
   }
 
   @Post(':id/voice-note')
   @UseInterceptors(FileInterceptor('audio', {
-    storage: diskStorage({
-      destination: (_req, _file, cb) => {
-        const dir = join(process.cwd(), 'public', 'uploads', 'voice');
-        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-      },
-      filename: (_req, file, cb) => {
-        const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-        cb(null, name);
-      },
-    }),
+    storage: memoryStorage(),
     limits: { fileSize: 25 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (!file.mimetype.startsWith('audio/')) return cb(new BadRequestException('Only audio files allowed'), false);
@@ -139,7 +126,9 @@ export class SiteVisitsController {
     @Body('duration') duration?: string,
   ) {
     if (!file) throw new BadRequestException('No audio file uploaded');
-    const url = `/uploads/voice/${file.filename}`;
+    const key = this.r2.buildKey(`voice/site-visits/${id}`, file.originalname, 'note');
+    await this.r2.upload(key, file.buffer, file.mimetype);
+    const url = await this.r2.urlFor(key);
     return this.siteVisits.addVoiceNote(id, url, duration ? parseFloat(duration) : undefined);
   }
 

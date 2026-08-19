@@ -18,4 +18,13 @@ export const envValidationSchema = Joi.object({
   FB_VERIFY_TOKEN: Joi.string().default('nidhivan_crm_fb_2024'),
   FB_APP_SECRET: Joi.string().allow('').optional(),
   FB_PAGE_ACCESS_TOKEN: Joi.string().allow('').optional(),
+  // Cloudflare R2 — optional so local dev boots without it, but upload and
+  // document routes return 503 until all four are set.
+  R2_ACCOUNT_ID: Joi.string().allow('').optional(),
+  R2_ACCESS_KEY_ID: Joi.string().allow('').optional(),
+  R2_SECRET_ACCESS_KEY: Joi.string().allow('').optional(),
+  R2_BUCKET: Joi.string().allow('').optional(),
+  // Public bucket domain (r2.dev or custom). Marketing assets are stored as
+  // absolute URLs built from this, so it must be stable.
+  R2_PUBLIC_BASE_URL: Joi.string().uri().allow('').optional(),
 });

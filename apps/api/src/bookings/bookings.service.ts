@@ -2,9 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ActivityType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BusinessMetricsService } from '../metrics/business-metrics.service';
+import { R2Service } from '../common/services/r2.service';
 import PDFDocument from 'pdfkit';
-import { join } from 'path';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
 
 const leadSelect = { select: { id: true, name: true, phone: true, email: true, leadNumber: true } };
 const projectSelect = { select: { id: true, name: true, location: true, city: true } };
@@ -15,6 +14,7 @@ export class BookingsService {
   constructor(
     private prisma: PrismaService,
     private metrics: BusinessMetricsService,
+    private r2: R2Service,
   ) {}
 
   private include = {
@@ -293,16 +293,17 @@ export class BookingsService {
 
   async generateBookingLetter(id: string) {
     const booking = await this.findOne(id);
-    const dir = join(process.cwd(), 'uploads', 'letters');
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-
     const fileName = `${booking.bookingNumber}.pdf`;
-    const filePath = join(dir, fileName);
 
-    await new Promise<void>((resolve, reject) => {
+    // Buffer the PDF rather than writing to disk: the letter carries customer
+    // PII, and on any host with ephemeral disk a written file disappears on the
+    // next restart.
+    const pdf = await new Promise<Buffer>((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
-      const stream = createWriteStream(filePath);
-      doc.pipe(stream);
+      const chunks: Buffer[] = [];
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
 
       // Header
       doc.fontSize(20).font('Helvetica-Bold').text('NIDHIVAN PROPERTY LINKERS', { align: 'center' });
@@ -386,9 +387,9 @@ export class BookingsService {
       doc.text('Authorized Signatory', 350, sigY + 15);
 
       doc.end();
-      stream.on('finish', resolve);
-      stream.on('error', reject);
     });
+
+    await this.r2.upload(`letters/${fileName}`, pdf, 'application/pdf');
 
     // Must match the global prefix set in main.ts (`api/v1`), otherwise the stored URL 404s.
     const bookingLetterUrl = `/api/v1/bookings/letters/${fileName}`;

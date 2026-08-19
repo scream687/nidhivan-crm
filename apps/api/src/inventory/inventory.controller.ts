@@ -3,35 +3,25 @@ import {
   UseInterceptors, UploadedFile, BadRequestException, Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
+import { R2Service } from '../common/services/r2.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { InventoryService } from './inventory.service';
 
-function projectStorage(fieldSuffix: string) {
-  return diskStorage({
-    destination: (req, _file, cb) => {
-      const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const id = raw.replace(/\.\.(\/|\\)/g, '').replace(/^\//, '');
-      const dir = join(process.cwd(), 'public', 'uploads', 'projects', id);
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-      cb(null, dir);
-    },
-    filename: (_req, file, cb) => {
-      const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      cb(null, `${fieldSuffix}-${unique}${extname(file.originalname).toLowerCase()}`);
-    },
-  });
-}
+// Files go to R2, so multer only needs to hand us the buffer. Key naming and
+// path sanitisation now live in R2Service.buildKey().
+const inMemory = { storage: memoryStorage() };
 
 @Controller('inventory')
 @UseGuards(AuthGuard('jwt'))
 export class InventoryController {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(
+    private readonly inventoryService: InventoryService,
+    private readonly r2: R2Service,
+  ) {}
 
   @Get()
   findAll() {
@@ -84,7 +74,7 @@ export class InventoryController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @UseInterceptors(FileInterceptor('file', {
-    storage: projectStorage('img'),
+    ...inMemory,
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (!file.mimetype.startsWith('image/')) return cb(new BadRequestException('Only images allowed'), false);
@@ -93,7 +83,7 @@ export class InventoryController {
   }))
   async uploadImage(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const url = `/uploads/projects/${id}/${file.filename}`;
+    const url = await this.store(id, file, 'img');
     const project = await this.inventoryService.addImage(id, url);
     return { url, project };
   }
@@ -110,7 +100,7 @@ export class InventoryController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @UseInterceptors(FileInterceptor('file', {
-    storage: projectStorage('brochure'),
+    ...inMemory,
     limits: { fileSize: 20 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (file.mimetype !== 'application/pdf') return cb(new BadRequestException('Only PDF allowed'), false);
@@ -119,7 +109,7 @@ export class InventoryController {
   }))
   async uploadBrochure(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const url = `/uploads/projects/${id}/${file.filename}`;
+    const url = await this.store(id, file, 'brochure');
     const project = await this.inventoryService.setBrochure(id, url);
     return { url, project };
   }
@@ -128,7 +118,7 @@ export class InventoryController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @UseInterceptors(FileInterceptor('file', {
-    storage: projectStorage('master-plan'),
+    ...inMemory,
     limits: { fileSize: 20 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.mimetype)) return cb(new BadRequestException('Only PNG, JPEG, or PDF allowed'), false);
@@ -137,7 +127,7 @@ export class InventoryController {
   }))
   async uploadMasterPlan(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const url = `/uploads/projects/${id}/${file.filename}`;
+    const url = await this.store(id, file, 'master-plan');
     const project = await this.inventoryService.setMasterPlan(id, url);
     return { url, project };
   }
@@ -240,5 +230,20 @@ export class InventoryController {
   @Roles(Role.ADMIN, Role.MANAGER)
   updatePlotStatus(@Param('plotId') plotId: string, @Body('status') status: string) {
     return this.inventoryService.updatePlotStatus(plotId, status);
+  }
+
+  /**
+   * Marketing assets are public by design, so we persist a durable absolute URL
+   * rather than a signed one — a signed URL stored in the database would 404
+   * once it expired.
+   */
+  private async store(
+    projectId: string,
+    file: Express.Multer.File,
+    label: string,
+  ): Promise<string> {
+    const key = this.r2.buildKey(`projects/${projectId}`, file.originalname, label);
+    await this.r2.upload(key, file.buffer, file.mimetype);
+    return this.r2.urlFor(key);
   }
 }
