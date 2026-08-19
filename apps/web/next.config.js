@@ -53,6 +53,11 @@ function buildConfig(isProdBuild) {
   }
 
   return {
+    // OpenNext consumes .next/standalone — it injects this itself when it runs
+    // the Next build. Setting it explicitly lets the root build run next build
+    // once via turbo and then bundle with --skipBuild, instead of compiling
+    // Next twice.
+    output: 'standalone',
     // Without this Next walks up past the repo looking for a lockfile and picks
     // the developer's home directory as the workspace root, which drags the
     // wrong files into output file tracing (and resolves eslint from $HOME).
