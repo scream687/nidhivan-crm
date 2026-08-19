@@ -9,7 +9,12 @@ import { CacheService } from '../common/services/cache.service';
     {
       provide: 'REDIS_CLIENT',
       useFactory: (config: ConfigService) => {
-        const url = config.get<string>('REDIS_URL', 'redis://localhost:6379');
+        const url = config.get<string>('REDIS_URL');
+        // CacheService injects this @Optional() and degrades to no caching on
+        // null. Without this guard the factory always built a client, so a
+        // deploy with no Redis retried localhost:6379 forever and filled the
+        // logs with ECONNREFUSED.
+        if (!url) return null;
         const client = new Redis(url, {
           maxRetriesPerRequest: 3,
           enableReadyCheck: true,

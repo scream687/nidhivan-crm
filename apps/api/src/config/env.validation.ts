@@ -4,7 +4,9 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   PORT: Joi.number().default(4000),
   DATABASE_URL: Joi.string().required(),
-  REDIS_URL: Joi.string().default('redis://localhost:6379'),
+  // No default: an unset REDIS_URL must mean "no Redis", not "localhost".
+  // Defaulting made RedisModule build a client that could never connect.
+  REDIS_URL: Joi.string().allow('').optional(),
   JWT_SECRET: Joi.string().min(32).required(),
   FRONTEND_URL: Joi.string().default('http://localhost:3000'),
   // Exotel — optional until credentials are provisioned

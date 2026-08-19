@@ -15,9 +15,12 @@ import { PrismaModule } from '../prisma/prisma.module';
     {
       provide: 'FOLLOWUP_QUEUE',
       useFactory: (config: ConfigService) => {
-        const redis = new Redis(config.get<string>('REDIS_URL', 'redis://localhost:6379'), {
-          maxRetriesPerRequest: null,
-        });
+        // BullMQ cannot run without Redis, so with no REDIS_URL we hand back
+        // null and FollowUpService skips scheduling. Defaulting to localhost
+        // instead meant a deploy without Redis retried forever.
+        const url = config.get<string>('REDIS_URL');
+        if (!url) return null;
+        const redis = new Redis(url, { maxRetriesPerRequest: null });
         return new Queue('followup-queue', { connection: redis });
       },
       inject: [ConfigService],
@@ -25,9 +28,9 @@ import { PrismaModule } from '../prisma/prisma.module';
     {
       provide: 'FOLLOWUP_WORKER',
       useFactory: (config: ConfigService, service: FollowUpService) => {
-        const redis = new Redis(config.get<string>('REDIS_URL', 'redis://localhost:6379'), {
-          maxRetriesPerRequest: null,
-        });
+        const url = config.get<string>('REDIS_URL');
+        if (!url) return null;
+        const redis = new Redis(url, { maxRetriesPerRequest: null });
         const worker = new Worker(
           'followup-queue',
           async (job) => {

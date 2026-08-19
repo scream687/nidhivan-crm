@@ -1,0 +1,68 @@
+# Render Blueprint for the Nidhivan CRM API.
+#
+# The web app is NOT here — it deploys to Cloudflare Workers separately.
+#
+# Free plan notes:
+#   - sleeps after 15 min idle, ~60s to wake. Fine for an internal team of 5-6.
+#   - 750 instance-hours/month per workspace; sleeping overnight keeps us at ~300.
+#   - preDeployCommand is paid-only, so migrations run from the container CMD.
+#
+# Singapore is the closest Render region to India and matches where the Neon
+# database lives, keeping the API<->DB hop short.
+
+services:
+  - type: web
+    name: nidhivan-crm-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/api/Dockerfile
+    # Build context is the repo root: the npm workspace lockfile and
+    # packages/shared both sit outside apps/api.
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Neon pooled/direct connection string.
+      - key: DATABASE_URL
+        sync: false
+
+      # Must be >= 32 chars — enforced by apps/api/src/config/env.validation.ts.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # The Cloudflare Workers origin. main.ts only allows dev origins when
+      # NODE_ENV !== 'production', so in production this value IS the CORS
+      # allowlist — get it wrong and every login fails preflight. The socket
+      # gateway in notifications.gateway.ts keys off it too.
+      - key: FRONTEND_URL
+        sync: false
+
+      # Cloudflare R2. Upload and booking-letter routes return 503 until set.
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: nidhivan-crm
+      - key: R2_PUBLIC_BASE_URL
+        sync: false
+
+      # REDIS_URL is deliberately unset. CacheService is @Optional() and no-ops
+      # with a warning when Redis is absent, so caching simply stays off.
+
+      # SMTP for password reset (/auth/forgot-password). Without these the
+      # request succeeds but no mail is sent.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false

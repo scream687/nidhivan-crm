@@ -1,12 +1,14 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, Optional, Logger, NotFoundException } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class FollowUpService {
+  private readonly logger = new Logger(FollowUpService.name);
+
   constructor(
-    @Inject('FOLLOWUP_QUEUE') private queue: Queue,
+    @Optional() @Inject('FOLLOWUP_QUEUE') private queue: Queue | null,
     private prisma: PrismaService,
     private notifications: NotificationsService,
   ) {}
@@ -14,6 +16,14 @@ export class FollowUpService {
   async scheduleReminder(taskId: string, reminderAt: Date, type?: string, note?: string) {
     const delay = reminderAt.getTime() - Date.now();
     if (delay <= 0) return;
+    if (!this.queue) {
+      // No Redis configured — BullMQ is unavailable, so the reminder is not
+      // scheduled. The task itself is still saved; only the timed nudge is lost.
+      this.logger.warn(
+        `Reminder for task ${taskId} not scheduled: no REDIS_URL configured`,
+      );
+      return;
+    }
     await this.queue.add(
       `reminder-${taskId}`,
       { taskId, type, note },
@@ -22,6 +32,7 @@ export class FollowUpService {
   }
 
   async cancelReminder(taskId: string) {
+    if (!this.queue) return;
     const job = await this.queue.getJob(`reminder-${taskId}`);
     if (job) await job.remove();
   }
