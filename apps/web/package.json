@@ -6,9 +6,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare deploy"
+    "cf:build": "opennextjs-cloudflare build -c ../../wrangler.jsonc",
+    "cf:preview": "opennextjs-cloudflare preview -c ../../wrangler.jsonc",
+    "cf:deploy": "opennextjs-cloudflare deploy -c ../../wrangler.jsonc",
+    "cf:bundle": "opennextjs-cloudflare build -c ../../wrangler.jsonc --skipBuild"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

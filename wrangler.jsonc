@@ -1,18 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
 
+  // Lives at the repo root, not in apps/web, so Cloudflare Workers Builds finds
+  // it with a bare `npx wrangler deploy` from the root directory — no --config
+  // flag and no dashboard change required.
+  //
   // Must match the existing Worker so deploys update it rather than creating a
   // second one alongside it.
   "name": "nidhivan-crm",
 
-  "main": ".open-next/worker.js",
+  "main": "apps/web/.open-next/worker.js",
   "compatibility_date": "2026-08-15",
 
   // Required by OpenNext: the generated worker pulls in Node built-ins.
   "compatibility_flags": ["nodejs_compat"],
 
   "assets": {
-    "directory": ".open-next/assets",
+    "directory": "apps/web/.open-next/assets",
     "binding": "ASSETS"
   },
 
