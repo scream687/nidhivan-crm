@@ -56,7 +56,8 @@ const STATUS_BADGE: Record<string, string> = {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function ProjectDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [plots, setPlots] = useState<Plot[]>([]);
@@ -173,10 +174,11 @@ export default function ProjectDetailPage() {
   // ── Upload helpers ───────────────────────────────────────────────────────────
 
   async function uploadImages(files: FileList) {
+    if (!project) return;
     for (const file of Array.from(files)) {
       const fd = new FormData();
       fd.append('file', file);
-      await api.post(`/inventory/${project.id}/upload-image`, fd, {
+      await api.post(`/inventory/${id}/upload-image`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
     }
@@ -185,14 +187,16 @@ export default function ProjectDetailPage() {
   }
 
   async function removeImage(url: string) {
-    await api.delete(`/inventory/${project.id}/images?url=${encodeURIComponent(url)}`);
+    if (!project) return;
+    await api.delete(`/inventory/${id}/images?url=${encodeURIComponent(url)}`);
     load();
   }
 
   async function uploadBrochure(file: File) {
+    if (!project) return;
     const fd = new FormData();
     fd.append('file', file);
-    await api.post(`/inventory/${project.id}/upload-brochure`, fd, {
+    await api.post(`/inventory/${id}/upload-brochure`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     toast.success('Brochure uploaded');
@@ -200,9 +204,10 @@ export default function ProjectDetailPage() {
   }
 
   async function uploadMasterPlan(file: File) {
+    if (!project) return;
     const fd = new FormData();
     fd.append('file', file);
-    await api.post(`/inventory/${project.id}/upload-master-plan`, fd, {
+    await api.post(`/inventory/${id}/upload-master-plan`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     toast.success('Master plan uploaded');
@@ -710,8 +715,8 @@ export default function ProjectDetailPage() {
           images={project.images}
           index={galleryIdx}
           onClose={() => setGalleryIdx(null)}
-          onPrev={() => setGalleryIdx(i => (i === 0 ? project.images.length - 1 : i - 1))}
-          onNext={() => setGalleryIdx(i => (i === project.images.length - 1 ? 0 : i + 1))}
+          onPrev={() => setGalleryIdx(i => (i === null || i === 0 ? project.images.length - 1 : i - 1))}
+          onNext={() => setGalleryIdx(i => (i === null || i === project.images.length - 1 ? 0 : i + 1))}
         />
       )}
 

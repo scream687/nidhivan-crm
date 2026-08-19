@@ -75,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!user) return null;
 
-  const pathParts = pathname.split('/').filter(Boolean);
+  const pathParts = (pathname || '').split('/').filter(Boolean);
   const currentTitle = pathParts.length > 0 
     ? pathParts[pathParts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
     : 'Overview';

@@ -62,18 +62,19 @@ function PropertyPanel({ node, onChange, onDelete }: {
     );
   }
 
-  const d = node.data as Record<string, any>;
+  const currentNode = node;
+  const d = currentNode.data as Record<string, any>;
 
   function set(key: string, value: any) {
-    onChange(node.id, { ...d, [key]: value });
+    onChange(currentNode.id, { ...d, [key]: value });
   }
 
   return (
     <div className="w-72 border-l border-gray-100 bg-white overflow-y-auto flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-800 capitalize">{node.type} Node</span>
-        {node.type !== 'trigger' && (
-          <button onClick={() => onDelete(node.id)} className="text-gray-300 hover:text-red-500 transition">
+        <span className="text-sm font-semibold text-gray-800 capitalize">{currentNode.type} Node</span>
+        {currentNode.type !== 'trigger' && (
+          <button onClick={() => onDelete(currentNode.id)} className="text-gray-300 hover:text-red-500 transition">
             <Trash2 className="w-4 h-4" />
           </button>
         )}
@@ -81,7 +82,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
 
       <div className="p-4 space-y-4 flex-1">
         {/* Trigger */}
-        {node.type === 'trigger' && (
+        {currentNode.type === 'trigger' && (
           <>
             <Field label="Trigger Keyword *">
               <input value={d.keyword ?? ''} onChange={e => set('keyword', e.target.value)}
@@ -98,7 +99,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
         )}
 
         {/* Message */}
-        {node.type === 'message' && (
+        {currentNode.type === 'message' && (
           <Field label="Message Text *">
             <textarea value={d.text ?? ''} onChange={e => set('text', e.target.value)} rows={4}
               placeholder="Hi {{name}}, thanks for reaching out!"
@@ -108,7 +109,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
         )}
 
         {/* Question */}
-        {node.type === 'question' && (
+        {currentNode.type === 'question' && (
           <>
             <Field label="Question Text *">
               <textarea value={d.text ?? ''} onChange={e => set('text', e.target.value)} rows={3}
@@ -144,7 +145,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
         )}
 
         {/* Condition */}
-        {node.type === 'condition' && (
+        {currentNode.type === 'condition' && (
           <Field label="Branches">
             <div className="space-y-2">
               {(d.branches ?? []).map((b: any, i: number) => (
@@ -184,7 +185,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
         )}
 
         {/* Action */}
-        {node.type === 'action' && (
+        {currentNode.type === 'action' && (
           <>
             <Field label="Action Type">
               <select value={d.actionType ?? ''} onChange={e => set('actionType', e.target.value)}
@@ -206,7 +207,7 @@ function PropertyPanel({ node, onChange, onDelete }: {
         )}
 
         {/* End */}
-        {node.type === 'end' && (
+        {currentNode.type === 'end' && (
           <Field label="Farewell Message (optional)">
             <textarea value={d.text ?? ''} onChange={e => set('text', e.target.value)} rows={3}
               placeholder="Thank you! Our team will reach out soon."
@@ -233,7 +234,8 @@ let nodeIdCounter = 100;
 function newId() { return `node-${++nodeIdCounter}`; }
 
 export default function FlowEditorPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
 
   const [flowName, setFlowName] = useState('');
@@ -243,8 +245,8 @@ export default function FlowEditorPage() {
   const [saving, setSaving] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

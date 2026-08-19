@@ -13,12 +13,22 @@ function generateCode() {
   return 'NIDHI-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+interface ReferralForm {
+  code: string;
+  name: string;
+  phone: string;
+  projectId: string;
+  discountType: string;
+  discountValue: string;
+  maxUses: string;
+}
+
 export default function ReferralPage() {
   const [codes, setCodes] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ code: generateCode(), name: '', phone: '', projectId: '', discountType: 'PERCENTAGE', discountValue: '', maxUses: '' });
+  const [form, setForm] = useState<ReferralForm>({ code: generateCode(), name: '', phone: '', projectId: '', discountType: 'PERCENTAGE', discountValue: '', maxUses: '' });
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -195,7 +205,7 @@ export default function ReferralPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-              <Select value={form.projectId} onValueChange={v => setForm(f => ({ ...f, projectId: v }))}>
+              <Select value={form.projectId} onValueChange={(v: string | null) => setForm(f => ({ ...f, projectId: v || '' }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Any / All projects" />
                 </SelectTrigger>
@@ -209,7 +219,7 @@ export default function ReferralPage() {
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                <Select value={form.discountType} onValueChange={v => setForm(f => ({ ...f, discountType: v }))}>
+                <Select value={form.discountType} onValueChange={(v: string | null) => setForm(f => ({ ...f, discountType: v || 'PERCENTAGE' }))}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>

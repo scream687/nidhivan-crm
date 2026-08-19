@@ -52,7 +52,8 @@ const stages = Object.values(LeadStage).map((name) => ({
 }));
 
 export default function LeadDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string;
   const { user } = useAuthStore();
   const { currentLead, isLoading, fetchLead, changeStage, toggleHot } = useLeadsStore();
   const router = useRouter();

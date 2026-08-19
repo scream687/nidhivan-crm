@@ -101,7 +101,8 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function PublicProjectPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams();
+  const slug = params?.slug as string;
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);

@@ -81,7 +81,7 @@ export default function WhatsAppInboxPage() {
         }
         return;
       }
-      if (data?.length > 0 && !selected) {
+      if (data && data.length > 0 && !selected) {
         selectConversation(data[0]);
       }
     } catch {

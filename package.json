@@ -2,8 +2,13 @@
   "name": "nidhivan-crm",
   "private": true,
   "packageManager": "npm@11.12.1",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
+    "postinstall": "npm run db:generate --if-present",
+    "db:generate": "npm --prefix apps/api run db:generate",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
@@ -11,10 +16,16 @@
     "db:seed": "turbo run db:seed"
   },
   "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0"
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "overrides": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4"
   }
 }

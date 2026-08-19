@@ -12,7 +12,7 @@ function CampaignBuilderInner() {
   const [form, setForm] = useState({
     name: '',
     type: 'EMAIL',
-    segmentId: searchParams.get('segmentId') ?? '',
+    segmentId: searchParams?.get('segmentId') ?? '',
     messageTemplate: '',
     subject: '',
   });

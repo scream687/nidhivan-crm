@@ -10,7 +10,8 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 export default function CampaignDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
   const [data, setData] = useState<any>(null);
 

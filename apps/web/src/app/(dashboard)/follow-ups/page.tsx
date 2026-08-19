@@ -67,7 +67,7 @@ export default function FollowUpsPage() {
         data = Array.isArray(d) ? d : [];
       } else if (tab === 'week') {
         // Get this week's pending — fetch 7 days
-        const promises = [];
+        const promises: Promise<any>[] = [];
         const today = new Date();
         for (let i = 0; i < 7; i++) {
           const date = new Date(today);

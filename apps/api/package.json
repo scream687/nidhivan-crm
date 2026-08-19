@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "npx @nestjs/cli start --watch",
-    "build": "npx @nestjs/cli build",
+    "db:generate": "npx prisma generate",
+    "postinstall": "npx prisma generate",
+    "build": "npx prisma generate && npx @nestjs/cli build",
     "start": "node dist/main",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx ts-node -r tsconfig-paths/register prisma/seed.ts",

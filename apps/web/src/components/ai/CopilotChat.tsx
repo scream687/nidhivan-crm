@@ -87,7 +87,7 @@ export default function CopilotChat() {
                       : 'bg-gray-100 text-gray-800 rounded-bl-sm'
                   )}>
                     {msg.content}
-                    {msg.actions?.length > 0 && (
+                    {msg.actions && msg.actions.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {msg.actions.map((a, j) => (
                           <a

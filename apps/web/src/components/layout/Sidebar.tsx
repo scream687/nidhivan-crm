@@ -63,9 +63,10 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   const { user, logout } = useAuthStore();
 
   const isActive = (href: string, exact?: boolean) => {
-    if (exact) return pathname === href;
-    if (href === '/') return pathname === '/';
-    return pathname === href || pathname.startsWith(href + '/');
+    const current = pathname || '';
+    if (exact) return current === href;
+    if (href === '/') return current === '/';
+    return current === href || current.startsWith(href + '/');
   };
 
   return (

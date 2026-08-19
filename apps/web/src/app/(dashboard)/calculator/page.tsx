@@ -58,7 +58,7 @@ function EmiTab() {
   const totalPayment = emi * n;
   const totalInterest = totalPayment - P;
 
-  const amortization = [];
+  const amortization: Array<{ year: number; principal: number; interest: number; balance: number }> = [];
   let balance = P;
   for (let year = 1; year <= Math.min(+tenure, 5); year++) {
     let yearPrincipal = 0;

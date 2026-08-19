@@ -79,7 +79,7 @@ export default function CustomerSummaryCard({ lead, healthScore, summary }: Prop
         </Section>
       )}
 
-      {lead.tags?.length > 0 && (
+      {lead.tags && lead.tags.length > 0 && (
         <Section title="Tags">
           <div className="flex flex-wrap gap-1">
             {lead.tags.map((t: string) => (
