@@ -24,10 +24,18 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     }
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const socketUrl = apiBase.startsWith('/') ? '/crm' : `${apiBase.replace('/api/v1', '')}/crm`;
-    const socket = io(socketUrl, {
+    // The socket must reach the API's own origin. NEXT_PUBLIC_API_URL is relative
+    // ('/api/v1') so REST can ride the Next rewrite, but rewrites do not proxy
+    // WebSocket upgrades — pointing the socket at the Next origin leaves it
+    // retrying forever. NEXT_PUBLIC_SOCKET_URL names the API origin directly.
+    const socketBase =
+      process.env.NEXT_PUBLIC_SOCKET_URL ||
+      (apiBase.startsWith('/') ? '' : apiBase.replace('/api/v1', ''));
+    const socket = io(`${socketBase}/crm`, {
       auth: { token },
-      transports: ['websocket'],
+      // Keep polling as a fallback: websocket-only fails hard behind any proxy
+      // that cannot upgrade.
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
