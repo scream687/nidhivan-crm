@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/lib/api';
+import api, { toList } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { CheckSquare, Clock, CheckCircle2, AlertCircle, User, Plus, X } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -32,7 +32,7 @@ export default function TasksPage() {
 
   useEffect(() => { loadTasks(); }, [filter]);
   useEffect(() => {
-    api.get('/users').then(r => setUsers(r.data)).catch(() => toast.error('Failed to load users'));
+    api.get('/users').then(r => setUsers(toList(r.data))).catch(() => toast.error('Failed to load users'));
   }, []);
 
   async function loadTasks() {

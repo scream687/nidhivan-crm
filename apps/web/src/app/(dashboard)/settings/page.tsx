@@ -5,7 +5,7 @@ import { Settings, User, Users, Bell, Phone, MessageSquare, Shield, Building } f
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
-import api from '@/lib/api';
+import api, { toList } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 const SECTIONS = [
@@ -335,7 +335,7 @@ export default function SettingsPage() {
     setTeamError('');
     try {
       const { data } = await api.get('/users');
-      setTeam(data);
+      setTeam(toList(data));
     } catch {
       setTeamError('Unable to load team members.');
     } finally {

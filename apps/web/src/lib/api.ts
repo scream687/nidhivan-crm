@@ -40,4 +40,19 @@ api.interceptors.response.use(
   },
 );
 
+/**
+ * Paginated endpoints answer with an envelope — { data, total, page, limit }
+ * for most, { items, nextCursor, total } for communication — while others
+ * return a bare array. Assigning a response body straight into array state is
+ * what produced "users.map is not a function" across the app, so list-shaped
+ * reads should route through here instead of trusting the shape.
+ */
+export function toList<T = any>(body: unknown): T[] {
+  if (Array.isArray(body)) return body as T[];
+  const envelope = body as { data?: unknown; items?: unknown } | null;
+  if (Array.isArray(envelope?.data)) return envelope!.data as T[];
+  if (Array.isArray(envelope?.items)) return envelope!.items as T[];
+  return [];
+}
+
 export default api;

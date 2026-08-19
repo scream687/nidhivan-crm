@@ -4,7 +4,7 @@ import { KpiCard } from '@/components/dashboard/KpiCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
 import { useSocketStore } from '@/stores/socketStore';
-import api from '@/lib/api';
+import api, { toList } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Phone, CalendarClock, CheckSquare, MapPin, Flame, TrendingUp, Clock } from 'lucide-react';
 import Link from 'next/link';
@@ -39,8 +39,10 @@ export function AgentView() {
         api.get('/site-visits?upcoming=true&limit=5'),
       ]);
       setKpis(kpisRes.data);
-      setMyTasks(Array.isArray(tasksRes.data) ? tasksRes.data : tasksRes.data?.tasks ?? []);
-      setMyVisits(Array.isArray(visitsRes.data) ? visitsRes.data : visitsRes.data?.visits ?? []);
+      // /tasks returns { data, total, ... } — the old guard looked for a
+      // `tasks` key that never existed, so My Tasks always rendered empty.
+      setMyTasks(toList(tasksRes.data));
+      setMyVisits(toList(visitsRes.data));
     } catch { toast.error('Failed to load dashboard data'); }
   }
 

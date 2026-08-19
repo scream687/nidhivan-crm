@@ -10,7 +10,7 @@ import { Plus, Search, Filter, Download, Upload, Kanban, List, X, Save, Bookmark
 import { EmptyState } from '@/components/ui/empty-state';
 import CreateLeadModal from '@/components/leads/CreateLeadModal';
 import ImportLeadsModal from '@/components/leads/ImportLeadsModal';
-import api from '@/lib/api';
+import api, { toList } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -83,7 +83,7 @@ export default function LeadsPage() {
     fetchKanban();
     fetchLeads();
     api.get('/saved-filters').then(r => setSavedFilters(r.data)).catch(() => toast.error('Failed to load saved filters'));
-    api.get('/users').then(r => setAgents(r.data)).catch(() => toast.error('Failed to load agents'));
+    api.get('/users').then(r => setAgents(toList(r.data))).catch(() => toast.error('Failed to load agents'));
   }, []);
 
   useEffect(() => {

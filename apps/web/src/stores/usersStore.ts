@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import api from '@/lib/api';
+import api, { toList } from '@/lib/api';
 
 interface UsersState {
   users: any[];
@@ -18,10 +18,7 @@ export const useUsersStore = create<UsersState>((set) => ({
       // ({ data, total, page, limit, totalPages }), not a bare array. Assigning
       // the envelope straight through made every users.map()/users.filter()
       // call site throw "users.map is not a function".
-      set({
-        users: Array.isArray(data) ? data : (data?.data ?? []),
-        isLoading: false,
-      });
+      set({ users: toList(data), isLoading: false });
     } catch (error) {
       set({ users: [], isLoading: false });
     }
