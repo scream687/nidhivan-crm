@@ -1,95 +1,28 @@
-// Nidhivan CRM — Service Worker v1
-const CACHE_NAME = "nidhivan-crm-v2";
-const STATIC_ASSETS = [
-  "/",
-  "/manifest.json",
-  "/icons/icon-192x192.svg",
-  "/icons/icon-512x512.svg",
-];
+// Nidhivan CRM — service worker kill switch.
+//
+// The previous worker cached scripts and /_next/static cache-first with no
+// revalidation and no expiry, so once a browser cached a chunk it kept serving
+// those exact bytes forever. After a deploy that produced a fresh app shell on
+// top of stale JS: hydration never completed, every button went inert, and
+// forms fell back to a native GET submit that just reloaded the page.
+//
+// Nothing in the app registers a worker any more, but browsers that registered
+// the old one still have it installed and controlling. This replacement takes
+// over, purges every cache it left behind, and unregisters itself.
+//
+// If offline support is wanted again, reintroduce it with a versioned cache and
+// network-first (or stale-while-revalidate) for scripts — never cache-first.
 
-// Install: precache app shell
-self.addEventListener("install", (event) => {
+self.addEventListener('install', () => self.skipWaiting());
+
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(STATIC_ASSETS)
-    )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      await self.registration.unregister();
+      const clients = await self.clients.matchAll({ type: 'window' });
+      for (const client of clients) client.navigate(client.url);
+    })(),
   );
-  self.skipWaiting();
 });
-
-// Activate: clean old caches
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
-});
-
-// Fetch: network-first for API, cache-first for static
-self.addEventListener("fetch", (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // API calls — network-first
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  // Static assets, fonts, images — cache-first
-  if (
-    request.destination === "style" ||
-    request.destination === "script" ||
-    request.destination === "font" ||
-    request.destination === "image" ||
-    url.pathname.startsWith("/_next/static") ||
-    url.pathname.startsWith("/icons/")
-  ) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-
-  // Navigation — network-first (so users always see fresh app shell)
-  if (request.mode === "navigate") {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  // Everything else: network
-  event.respondWith(fetch(request));
-});
-
-async function networkFirst(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    const cached = await caches.match(request);
-    return cached || new Response("Offline", { status: 503 });
-  }
-}
-
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    return new Response("Offline", { status: 503 });
-  }
-}
