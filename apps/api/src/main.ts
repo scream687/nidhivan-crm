@@ -52,8 +52,18 @@ async function bootstrap() {
   ];
   app.enableCors({
     origin: (origin, cb) => {
-      if (!origin || allowed.includes(origin) || origin.startsWith('http://192.168.') || origin.endsWith('.trycloudflare.com')) cb(null, true);
-      else cb(new Error(`CORS: ${origin} not allowed`));
+      if (!origin || allowed.includes(origin)) return cb(null, true);
+      // LAN and quick-tunnel origins are dev conveniences only. *.trycloudflare.com is a
+      // shared public suffix — trusting it with credentials:true lets anyone with a free
+      // tunnel make authenticated cross-origin calls. In prod, point FRONTEND_URL at the
+      // real host (tunnel URL included) instead.
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        (origin.startsWith('http://192.168.') || origin.endsWith('.trycloudflare.com'))
+      ) {
+        return cb(null, true);
+      }
+      cb(new Error(`CORS: ${origin} not allowed`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

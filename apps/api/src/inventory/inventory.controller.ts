@@ -143,7 +143,12 @@ export class InventoryController {
   }
 
   @Put(':id/nearby-places')
-  updateNearbyPlaces(@Param('id') id: string, @Body() body: { places: any }) {
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  updateNearbyPlaces(@Param('id') id: string, @Body() body: { places: unknown }) {
+    if (!Array.isArray(body?.places)) {
+      throw new BadRequestException('places must be an array');
+    }
     return this.inventoryService.setNearbyPlaces(id, body.places);
   }
 

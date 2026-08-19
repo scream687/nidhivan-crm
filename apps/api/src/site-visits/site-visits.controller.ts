@@ -10,6 +10,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role, User } from '@prisma/client';
 
+const SITE_VISIT_STATUSES = ['SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'];
+
 @Controller('leads/:leadId/site-visits')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class LeadSiteVisitsController {
@@ -66,6 +68,12 @@ export class SiteVisitsController {
     @Param('id') id: string,
     @Body() data: { status: string },
   ) {
+    // SiteVisit.status is a free-text column in the schema, so the allowlist is enforced here.
+    if (!SITE_VISIT_STATUSES.includes(data?.status)) {
+      throw new BadRequestException(
+        `status must be one of: ${SITE_VISIT_STATUSES.join(', ')}`,
+      );
+    }
     return this.siteVisits.updateStatus(id, data.status);
   }
 

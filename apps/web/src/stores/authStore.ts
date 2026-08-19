@@ -24,7 +24,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     if (typeof document !== 'undefined') {
-      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+      const secure = location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=604800; SameSite=Lax${secure}`;
     }
     set({ user: data.user });
   },
