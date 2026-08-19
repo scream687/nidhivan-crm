@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
+import { Toaster as HotToaster } from 'react-hot-toast';
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -37,6 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster position="top-right" closeButton richColors />
+        {/* 44 files call react-hot-toast's toast(); only sonner's Toaster was mounted,
+            so every one of those messages rendered nowhere. Both are mounted until the
+            call sites are consolidated onto one library. */}
+        <HotToaster position="top-right" />
       </body>
     </html>
   );

@@ -17,7 +17,11 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    // A 401 from the auth endpoints means bad credentials, not an expired session.
+    // Running the refresh-and-redirect path here reloads /login mid-submit, which
+    // wipes the form and destroys the error toast — the sign-in button looks dead.
+    const isAuthEndpoint = /\/auth\/(login|refresh|google)\b/.test(original?.url || '');
+    if (error.response?.status === 401 && !original._retry && !isAuthEndpoint) {
       original._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/auth/refresh`, { refreshToken }, { withCredentials: true }).catch(() => ({ data: null }));

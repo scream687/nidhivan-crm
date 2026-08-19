@@ -1,13 +1,13 @@
-import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
   email!: string;
 
+  // Strength rules belong on register/reset-password, not sign-in. Enforcing them
+  // here rejects any account whose password predates the policy before credentials
+  // are ever checked, and leaks the policy to unauthenticated callers.
   @IsString()
-  @MinLength(8)
-  @Matches(/(?=.*[0-9])(?=.*[!@#$%^&*])/, {
-    message: 'Password must contain at least one number and one special character',
-  })
+  @IsNotEmpty()
   password!: string;
 }
