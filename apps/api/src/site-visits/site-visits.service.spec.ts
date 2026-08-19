@@ -3,6 +3,7 @@ import { SiteVisitsService } from './site-visits.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
+import { BusinessMetricsService } from '../metrics/business-metrics.service';
 import { NotFoundException } from '@nestjs/common';
 import { VisitOutcome } from '@prisma/client';
 
@@ -14,6 +15,8 @@ const mockPrisma = {
 };
 const mockGateway = { emitToAdmin: jest.fn(), emitToUser: jest.fn() };
 const mockNotifications = { create: jest.fn() };
+// SiteVisitsService fires metrics.onVisitChanged() fire-and-forget after writes.
+const mockMetrics = { onVisitChanged: jest.fn().mockResolvedValue(undefined) };
 
 describe('SiteVisitsService', () => {
   let service: SiteVisitsService;
@@ -26,6 +29,7 @@ describe('SiteVisitsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsGateway, useValue: mockGateway },
         { provide: NotificationsService, useValue: mockNotifications },
+        { provide: BusinessMetricsService, useValue: mockMetrics },
       ],
     }).compile();
     service = module.get<SiteVisitsService>(SiteVisitsService);
