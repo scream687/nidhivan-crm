@@ -7,7 +7,6 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/authStore';
-import { Role } from '@prisma/client';
 
 type UserData = {
   id: string; name: string; email: string; phone?: string | null;

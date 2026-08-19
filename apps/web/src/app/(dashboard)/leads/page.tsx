@@ -13,7 +13,6 @@ import ImportLeadsModal from '@/components/leads/ImportLeadsModal';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/authStore';
-import { Role } from '@prisma/client';
 
 type ViewMode = 'kanban' | 'list';
 
@@ -26,7 +25,7 @@ const SOURCES = Object.values(LeadSource);
 export default function LeadsPage() {
   const { kanban, leads, total, isLoading, fetchKanban, fetchLeads } = useLeadsStore();
   const { user } = useAuthStore();
-  const isManager = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
+  const isManager = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const [view, setView] = useState<ViewMode>('kanban');
   const [search, setSearch] = useState('');
   const filteredLeads = search
