@@ -4,6 +4,10 @@ dist
 out
 build
 
+# OpenNext build output for Cloudflare Workers
+.open-next
+.wrangler
+
 # All env files — never commit
 .env
 .env.*

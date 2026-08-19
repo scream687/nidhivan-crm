@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Must match the existing Worker so deploys update it rather than creating a
+  // second one alongside it.
+  "name": "nidhivan-crm",
+
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-15",
+
+  // Required by OpenNext: the generated worker pulls in Node built-ins.
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}
