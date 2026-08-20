@@ -39,7 +39,7 @@ export class MailService {
     const client = await this.gmailClient();
     const { token } = await client.getAccessToken();
     const res = await fetch(
-      'https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send',
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
       {
         method: 'POST',
         headers: {
