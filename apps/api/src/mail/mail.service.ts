@@ -55,30 +55,37 @@ export class MailService {
     }
   }
 
-  async sendInvite(to: string, name: string, password: string) {
-    try {
-      await this.sendEmail(
-        to,
-        `Welcome to Nidhivan CRM`,
-        `
+  /**
+   * Invites carry no password. The account is created with an unguessable
+   * random secret nobody is ever told, and the invitee sets their own via the
+   * existing "Forgot password?" flow on the sign-in page — which already does
+   * email OTP verification. That keeps a plaintext password out of the mail
+   * entirely, and reuses a flow that is already built and tested.
+   *
+   * Throws on failure rather than swallowing: without the password in the
+   * email, an invite that does not arrive leaves an account nobody can reach,
+   * so the admin has to be told.
+   */
+  async sendInvite(to: string, name: string, loginUrl: string) {
+    await this.sendEmail(
+      to,
+      `Welcome to Nidhivan CRM`,
+      `
           <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px">
             <h2 style="color:#1e40af;margin-bottom:8px">Welcome to Nidhivan CRM</h2>
             <p style="color:#374151">Hi ${name},</p>
-            <p style="color:#374151">Your account has been created. Use the credentials below to sign in.</p>
-            <div style="background:#eff6ff;border-radius:8px;padding:20px;margin:24px 0">
-              <p style="margin:0 0 8px;font-size:13px;color:#374151"><strong>Email:</strong> ${to}</p>
-              <p style="margin:0;font-size:13px;color:#374151"><strong>Password:</strong> ${password}</p>
-            </div>
-            <p style="color:#6b7280;font-size:13px">Please change your password after first login.</p>
+            <p style="color:#374151">An account has been created for you. Set your own password to get started:</p>
+            <ol style="color:#374151;font-size:14px;line-height:1.7">
+              <li>Open <a href="${loginUrl}" style="color:#C02F12">the sign-in page</a></li>
+              <li>Click <strong>Forgot password?</strong></li>
+              <li>Enter <strong>${to}</strong> and follow the emailed code</li>
+            </ol>
+            <p style="color:#6b7280;font-size:13px">Nobody else knows your password — you choose it in that step.</p>
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
             <p style="color:#9ca3af;font-size:12px">Nidhivan Property CRM &copy; ${new Date().getFullYear()}</p>
           </div>
         `,
-      );
-    } catch (err) {
-      this.logger.error(`Failed to send invite email to ${to}`, err);
-      // don't throw — invite still succeeds without email
-    }
+    );
   }
 
   async sendOtp(to: string, name: string, otp: string) {

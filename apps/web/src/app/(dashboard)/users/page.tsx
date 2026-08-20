@@ -40,7 +40,7 @@ export default function UsersPage() {
 
   const [showAdd, setShowAdd] = useState(false);
   const addTrapRef = useFocusTrap(showAdd);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'SALES_AGENT', password: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'TELECALLER' });
   const [adding, setAdding] = useState(false);
 
   const [editing, setEditing] = useState<UserData | null>(null);
@@ -74,13 +74,23 @@ export default function UsersPage() {
     e.preventDefault();
     setAdding(true);
     try {
-      await api.post('/users', addForm);
-      toast.success('User created');
+      const { data } = await api.post('/users/invite', addForm);
+      // The invite carries no password — the account is only reachable through
+      // the emailed "Forgot password?" flow. So a failed email is not a minor
+      // detail, it means the account is stranded until it is resent.
+      if (data?.emailSent === false) {
+        toast.error(
+          `${addForm.name} was created, but the invite email failed to send. They cannot sign in until it does — check mail settings and resend.`,
+          { duration: 10000 },
+        );
+      } else {
+        toast.success(`Invite sent to ${addForm.email}`);
+      }
       setShowAdd(false);
-      setAddForm({ name: '', email: '', role: 'SALES_AGENT', password: '' });
+      setAddForm({ name: '', email: '', role: 'TELECALLER' });
       load(1); setP(1);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to create user');
+      toast.error(err?.response?.data?.message || 'Failed to invite user');
     } finally {
       setAdding(false);
     }
@@ -140,7 +150,7 @@ export default function UsersPage() {
             className="btn-frappe-primary"
           >
             <Plus size={13} />
-            <span>Add User</span>
+            <span>Invite User</span>
           </button>
         )}
       </div>
@@ -270,11 +280,11 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Add User Modal */}
+      {/* Invite User Modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => !adding && setShowAdd(false)}>
           <div ref={addTrapRef} tabIndex={-1} className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-4">Add User</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Invite User</h3>
             <form onSubmit={addUser} className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
@@ -293,17 +303,16 @@ export default function UsersPage() {
                   {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Password</label>
-                <input type="password" value={addForm.password} onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))} required minLength={6}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]" />
-              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                They will get an email inviting them to set their own password. No
+                password is sent by email, and nobody else ever knows it.
+              </p>
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={() => setShowAdd(false)} disabled={adding}
                   className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
                 <button type="submit" disabled={adding}
                   className="flex-1 py-2 bg-[#E04020] text-white rounded-lg text-sm font-medium hover:bg-[#C02F12] disabled:opacity-60">
-                  {adding ? 'Creating…' : 'Create User'}
+                  {adding ? 'Sending…' : 'Send Invite'}
                 </button>
               </div>
             </form>

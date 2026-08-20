@@ -37,26 +37,41 @@ export class UsersService {
     const existing = await this.prisma.user.findUnique({ where: { email: data.email.toLowerCase() } });
     if (existing) throw new ConflictException('Email already in use');
 
-    const tempPassword = crypto.randomBytes(4).toString('hex') + '!Ab1';
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    // 32 random bytes that are never shown to anyone, including the invitee.
+    // The account must have *a* password hash, but the only way in is the
+    // "Forgot password?" flow, which proves control of the mailbox first.
+    const unreachableSecret = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await bcrypt.hash(unreachableSecret, 10);
     const user = await this.prisma.user.create({
       data: {
         id: crypto.randomUUID(),
         name: data.name,
         email: data.email.toLowerCase(),
         passwordHash,
-        role: data.role ?? Role.SALES_AGENT,
+        // Least privilege by default: a telecaller cannot reach /reports or the
+        // user directory. Promote deliberately rather than by omission.
+        role: data.role ?? Role.TELECALLER,
         phone: data.phone,
         isActive: true,
       },
     });
 
-    // attempt to send invite email; ok if it fails
-    this.mail.sendInvite(user.email, user.name, tempPassword).catch((e) => console.error("async", e));
+    // Awaited, not fire-and-forget. The invite carries no password, so an email
+    // that never arrives leaves an account nobody can sign into — the admin has
+    // to learn that now, not from a confused colleague next week.
+    let emailSent = true;
+    let emailError: string | undefined;
+    try {
+      await this.mail.sendInvite(user.email, user.name, `${process.env.FRONTEND_URL ?? ''}/login`);
+    } catch (e: any) {
+      emailSent = false;
+      emailError = e?.message ?? 'Unknown mail error';
+      console.error(`Invite email to ${user.email} failed:`, e);
+    }
 
     await this.cache.del('leaderboard');
     const { passwordHash: _, ...safe } = user;
-    return safe;
+    return { ...safe, emailSent, emailError };
   }
 
   async findAll(query: { page?: string; limit?: string; search?: string; role?: string }) {
