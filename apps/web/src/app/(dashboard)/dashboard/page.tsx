@@ -188,7 +188,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Funnel + Townships */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Deal flow */}
+          {/* Deal flow — admin/manager only, matching the @Roles guard on
+              /reports/sales-funnel. An agent never fetches the funnel, so
+              rendering the card for them would permanently claim "no leads"
+              even once the pipeline fills up. */}
+          {isAdmin && (
           <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm">
             <div className="flex items-center justify-between px-5 py-3 border-b border-[#E5E7EB]">
               <div>
@@ -223,6 +227,7 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+          )}
 
           {/* Township inventory */}
           <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm">
