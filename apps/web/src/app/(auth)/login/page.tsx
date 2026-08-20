@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [waking, setWaking] = useState(false);
 
   // Forgot password state
   const [fpEmail, setFpEmail] = useState('');
@@ -30,11 +31,20 @@ export default function LoginPage() {
   const { login } = useAuthStore();
   const router = useRouter();
 
+  // Render's free plan sleeps the API after 15 min idle; the first request then
+  // blocks ~90s while the container boots. The axios client has no timeout so it
+  // does succeed — it just looks frozen. Say so, rather than adding a timeout
+  // that would turn a slow login into a failed one.
+  function withWakeNotice<T>(p: Promise<T>): Promise<T> {
+    const t = setTimeout(() => setWaking(true), 4000);
+    return p.finally(() => { clearTimeout(t); setWaking(false); });
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      await withWakeNotice(login(email, password));
       window.location.href = '/dashboard';
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Invalid credentials');
@@ -46,7 +56,7 @@ export default function LoginPage() {
   async function handleGoogleSuccess(credentialResponse: any) {
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/google', { idToken: credentialResponse.credential });
+      const { data } = await withWakeNotice(api.post('/auth/google', { idToken: credentialResponse.credential }));
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       useAuthStore.setState({ user: data.user });
@@ -62,7 +72,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email: fpEmail });
+      await withWakeNotice(api.post('/auth/forgot-password', { email: fpEmail }));
       toast.success('OTP sent! Check your email.');
       setScreen('otp');
     } catch {
@@ -76,7 +86,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/verify-otp', { email: fpEmail, otp });
+      const { data } = await withWakeNotice(api.post('/auth/verify-otp', { email: fpEmail, otp }));
       setResetToken(data.resetToken);
       setScreen('newpass');
     } catch (err: any) {
@@ -92,7 +102,7 @@ export default function LoginPage() {
     if (newPass.length < 6) { toast.error('Password must be at least 6 characters'); return; }
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', { resetToken, newPassword: newPass });
+      await withWakeNotice(api.post('/auth/reset-password', { resetToken, newPassword: newPass }));
       toast.success('Password updated! Please sign in.');
       setScreen('login');
       setFpEmail(''); setOtp(''); setResetToken(''); setNewPass(''); setConfirmPass('');
@@ -154,7 +164,7 @@ export default function LoginPage() {
                 </div>
                 <button type="submit" disabled={loading}
                   className="w-full bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition text-sm">
-                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> Signing in…</span> : 'Sign in'}
+                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> {waking ? 'Waking the server…' : 'Signing in…'}</span> : 'Sign in'}
                 </button>
               </form>
 
@@ -202,7 +212,7 @@ export default function LoginPage() {
                 </div>
                 <button type="submit" disabled={loading}
                   className="w-full bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition text-sm">
-                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> Sending OTP…</span> : 'Send OTP'}
+                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> {waking ? 'Waking the server…' : 'Sending OTP…'}</span> : 'Send OTP'}
                 </button>
               </form>
             </>
@@ -226,7 +236,7 @@ export default function LoginPage() {
                 </div>
                 <button type="submit" disabled={loading || otp.length !== 6}
                   className="w-full bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition text-sm">
-                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> Verifying…</span> : 'Verify OTP'}
+                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> {waking ? 'Waking the server…' : 'Verifying…'}</span> : 'Verify OTP'}
                 </button>
                 <button type="button" onClick={handleForgotSubmit} disabled={loading}
                   className="w-full text-sm text-gray-500 hover:text-[#E04020] transition">
@@ -264,12 +274,21 @@ export default function LoginPage() {
                 </div>
                 <button type="submit" disabled={loading || newPass !== confirmPass}
                   className="w-full bg-[#C02F12] hover:bg-[#A82717] disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition text-sm">
-                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> Updating…</span> : 'Update Password'}
+                  {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> {waking ? 'Waking the server…' : 'Updating…'}</span> : 'Update Password'}
                 </button>
               </form>
             </>
           )}
         </motion.div>
+
+        {waking && (
+          // text-gray-400 rather than the #626B76 used for the subtitle above:
+          // that token is 3.48:1 on this background, and this is a message the
+          // user actually has to read while waiting.
+          <p role="status" className="mt-4 text-xs text-gray-400 text-center px-4">
+            The server was asleep and is starting up. This can take up to a minute.
+          </p>
+        )}
       </div>
     </div>
   );
