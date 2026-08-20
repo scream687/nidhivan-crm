@@ -6,6 +6,10 @@ import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import * as cookieParser from 'cookie-parser';
+import { setDefaultResultOrder } from 'node:dns';
+
+// Render containers have no IPv6 route — resolve IPv4 first or SMTP (Gmail) hangs on ENETUNREACH
+setDefaultResultOrder('ipv4first');
 
 // Sentry must initialise before any other imports touch instrumented modules
 if (process.env.SENTRY_DSN) {
