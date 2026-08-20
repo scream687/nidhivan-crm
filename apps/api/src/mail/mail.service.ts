@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class MailService {
@@ -7,26 +8,50 @@ export class MailService {
 
   constructor(private config: ConfigService) {}
 
-  private async sendEmail(to: string, subject: string, html: string) {
-    const apiKey = this.config.get('RESEND_API_KEY');
-    if (!apiKey) {
-      throw new Error('RESEND_API_KEY not set');
-    }
-    const from = this.config.get(
-      'RESEND_FROM',
-      'Nidhivan CRM <onboarding@resend.dev>',
+  private async gmailClient() {
+    const client = new OAuth2Client(
+      this.config.get('GOOGLE_CLIENT_ID'),
+      this.config.get('GOOGLE_CLIENT_SECRET'),
     );
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to, subject, html }),
+    client.setCredentials({
+      refresh_token: this.config.get('GOOGLE_REFRESH_TOKEN'),
     });
+    return client;
+  }
+
+  private async sendEmail(to: string, subject: string, html: string) {
+    if (!this.config.get('GOOGLE_REFRESH_TOKEN')) {
+      throw new Error('GOOGLE_REFRESH_TOKEN not set');
+    }
+    const from = this.config.get('GMAIL_FROM', 'Nidhivan CRM');
+    const raw = Buffer.from(
+      `From: ${from} <${this.config.get('GMAIL_USER')}>\n` +
+        `To: ${to}\n` +
+        `Subject: ${subject}\n` +
+        `Content-Type: text/html; charset=utf-8\n\n` +
+        html,
+    )
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const client = await this.gmailClient();
+    const { token } = await client.getAccessToken();
+    const res = await fetch(
+      'https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ raw }),
+      },
+    );
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(`Resend API ${res.status}: ${body}`);
+      throw new Error(`Gmail API ${res.status}: ${body}`);
     }
   }
 

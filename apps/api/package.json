@@ -9,6 +9,7 @@
     "start": "node dist/main",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx ts-node -r tsconfig-paths/register prisma/seed.ts",
+    "gmail:token": "node scripts/get-gmail-refresh-token.mjs",
     "test": "jest --passWithNoTests --no-coverage",
     "typecheck": "tsc --noEmit",
     "db:studio": "npx prisma studio"
