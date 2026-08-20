@@ -7,8 +7,21 @@
 #   - 750 instance-hours/month per workspace; sleeping overnight keeps us at ~300.
 #   - preDeployCommand is paid-only, so migrations run from the container CMD.
 #
-# Singapore is the closest Render region to India and matches where the Neon
-# database lives, keeping the API<->DB hop short.
+# Singapore is the closest Render region to India, and the database below sits
+# in the same region so the API<->DB hop stays local. Browsers never talk to the
+# database directly — only this API does — so co-locating the two beats putting
+# the database closer to users.
+
+databases:
+  - name: nidhivan-crm-db
+    region: singapore
+    postgresMajorVersion: "17"
+    # ⚠️ FREE POSTGRES EXPIRES 30 DAYS AFTER CREATION. After a 14-day grace
+    # period Render DELETES the database and everything in it. That is fine for
+    # a trial and fatal for a CRM holding real leads. Change this to
+    # `basic-256mb` (~$6/mo + $0.30/GB storage) before entering real data.
+    # https://render.com/changelog/free-postgresql-instances-now-expire-after-30-days-previously-90
+    plan: free
 
 services:
   - type: web
@@ -26,43 +39,65 @@ services:
       - key: NODE_ENV
         value: production
 
-      # Neon pooled/direct connection string.
+      # Injected by Render from the database declared above — nothing to paste,
+      # and it resolves to the internal connection string, so DB traffic never
+      # leaves Render's network. The container CMD runs `prisma migrate deploy`
+      # on every boot, so a freshly provisioned database gets all 17 migrations
+      # applied automatically the first time the service starts.
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: nidhivan-crm-db
+          property: connectionString
 
       # Must be >= 32 chars — enforced by apps/api/src/config/env.validation.ts.
       - key: JWT_SECRET
         generateValue: true
 
-      # The Cloudflare Workers origin. main.ts only allows dev origins when
+      # The live Cloudflare Workers origin. main.ts only allows dev origins when
       # NODE_ENV !== 'production', so in production this value IS the CORS
       # allowlist — get it wrong and every login fails preflight. The socket
       # gateway in notifications.gateway.ts keys off it too.
+      #
+      # Checked in rather than left to manual entry because main.ts:46 matches it
+      # with `allowed.includes(origin)` — an exact string compare. A trailing
+      # slash, or http instead of https, silently fails every preflight with no
+      # useful error. Update this if a custom domain replaces the workers.dev one.
       - key: FRONTEND_URL
-        sync: false
+        value: https://nidhivan-crm.rishabh-sharma-global.workers.dev
 
-      # Cloudflare R2. Upload and booking-letter routes return 503 until set.
-      - key: R2_ACCOUNT_ID
-        sync: false
-      - key: R2_ACCESS_KEY_ID
-        sync: false
-      - key: R2_SECRET_ACCESS_KEY
-        sync: false
       - key: R2_BUCKET
         value: nidhivan-crm
-      - key: R2_PUBLIC_BASE_URL
-        sync: false
 
       # REDIS_URL is deliberately unset. CacheService is @Optional() and no-ops
       # with a warning when Redis is absent, so caching simply stays off.
-
+      #
+      # Everything below is commented out on purpose. All of it is optional in
+      # apps/api/src/config/env.validation.ts, but a `sync: false` entry makes
+      # Render prompt for a value at blueprint-apply time — nine prompts for
+      # credentials that do not exist yet, which is a good way to get a blank
+      # typed in and forgotten. Uncomment a block when its credentials exist and
+      # redeploy, or just add the variables in the Render dashboard.
+      #
+      # Cloudflare R2 — upload and booking-letter routes return 503 until all of
+      # these are set alongside R2_BUCKET above.
+      #   - key: R2_ACCOUNT_ID
+      #     sync: false
+      #   - key: R2_ACCESS_KEY_ID
+      #     sync: false
+      #   - key: R2_SECRET_ACCESS_KEY
+      #     sync: false
+      #   - key: R2_PUBLIC_BASE_URL
+      #     sync: false
+      #
       # SMTP for password reset (/auth/forgot-password). Without these the
-      # request succeeds but no mail is sent.
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
+      # request succeeds but no mail is sent, so the OTP never arrives. Note
+      # that users can still rotate their own password while logged in via
+      # PATCH /users/:id/password (users.controller.ts:65), which needs no mail.
+      #   - key: SMTP_HOST
+      #     sync: false
+      #   - key: SMTP_PORT
+      #     sync: false
+      #   - key: SMTP_USER
+      #     sync: false
+      #   - key: SMTP_PASS
+      #     sync: false

@@ -6,7 +6,18 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  const defaultPassword = await bcrypt.hash('Nidhivan@2024', 10);
+  // SEED_PASSWORD must be supplied when seeding anything reachable from the
+  // internet. The literal below is published in this repo, so seeding a public
+  // deployment without an override hands an ADMIN account to anyone who reads
+  // it. Kept only so local development still seeds with no setup.
+  const seedPassword = process.env.SEED_PASSWORD || 'Nidhivan@2024';
+  if (!process.env.SEED_PASSWORD) {
+    console.warn(
+      '⚠️  SEED_PASSWORD not set — using the password committed to this repo. ' +
+        'Never do this against a deployed database.',
+    );
+  }
+  const defaultPassword = await bcrypt.hash(seedPassword, 10);
 
   const users = [
     { name: 'Rishabh Sharma', email: 'nidhivanproperty@gmail.com', role: Role.ADMIN, phone: null },
