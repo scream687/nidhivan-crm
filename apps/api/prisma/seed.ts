@@ -65,8 +65,8 @@ async function main() {
   console.log(`  ✓ Round-robin configured for ${assignableUsers.length} agents`);
 
   console.log('\nSeed complete. Login credentials:');
-  console.log('  Admin: nidhivanproperty@gmail.com / Nidhivan@2024');
-  console.log('  Agents: [name]@nidhivanproperty.com / Nidhivan@2024');
+  console.log(`  Admin: nidhivanproperty@gmail.com / ${seedPassword}`);
+  console.log(`  Agents: [name]@nidhivanproperty.com / ${seedPassword}`);
 }
 
 main()

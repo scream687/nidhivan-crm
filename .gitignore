@@ -41,3 +41,4 @@ agentdb.rvf
 agentdb.rvf.lock
 .swarm/
 .vercel
+.gstack/

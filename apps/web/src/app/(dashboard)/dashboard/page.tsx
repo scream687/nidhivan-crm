@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useSocketStore } from '@/stores/socketStore';
-import api from '@/lib/api';
+import api, { toList } from '@/lib/api';
+import { timeAgo } from '@/lib/utils';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import {
   Users2, TrendingUp, Flame, Clock, Trophy,
@@ -27,7 +28,11 @@ export default function DashboardPage() {
   const [funnel, setFunnel] = useState<any[]>([]);
   const [sources, setSources] = useState<any[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [pipeline, setPipeline] = useState<number | null>(null);
+  const [pulse, setPulse] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
 
@@ -51,39 +56,55 @@ export default function DashboardPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [kpisRes, funnelRes] = await Promise.all([
+      setLoadError(false);
+
+      // /leads/kpis, /inventory and /activities are auth-only, so every role can
+      // read them. Everything under /reports plus /users/leaderboard is
+      // @Roles(ADMIN, MANAGER) and 403s for agents and telecallers — keeping
+      // those in a separate request set stops one 403 from blanking the whole
+      // cockpit, which is what used to push this page onto placeholder numbers.
+      const [kpisRes, projectsRes, pulseRes] = await Promise.all([
         api.get('/leads/kpis'),
-        api.get('/reports/sales-funnel'),
+        api.get('/inventory'),
+        api.get('/activities', { params: { limit: 5 } }),
       ]);
       setKpis(kpisRes.data);
-      setFunnel(funnelRes.data.slice(0, 8));
+      setProjects(toList(projectsRes.data));
+      setPulse(toList(pulseRes.data));
+
       if (isAdmin) {
-        const [lbRes, srcRes] = await Promise.all([
+        const [funnelRes, lbRes, srcRes, pipeRes] = await Promise.all([
+          api.get('/reports/sales-funnel'),
           api.get('/users/leaderboard'),
           api.get('/reports/source-breakdown'),
+          api.get('/reports/pipeline-value'),
         ]);
-        setLeaderboard(lbRes.data);
-        setSources(srcRes.data.filter((s: any) => s.total > 0));
+        setFunnel(toList(funnelRes.data).slice(0, 8));
+        setLeaderboard(toList(lbRes.data));
+        setSources(toList(srcRes.data).filter((s: any) => s.total > 0));
+        setPipeline(pipeRes.data?.totalExpectedRevenue ?? 0);
       }
     } catch (e) {
       console.error(e);
+      // Surfaced rather than swallowed: a dashboard that silently renders zeros
+      // after a failed fetch is indistinguishable from a genuinely empty CRM.
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
   }
 
-  const townshipProjects = [
-    { name: 'Govardhan Greens Township', location: 'NH-19, Mathura Expressway', avail: 34, blocked: 8, booked: 46, sold: 32, price: '₹22.50L', rera: 'UPRERAPRJ984712' },
-    { name: 'Vrindavan Heritage Heights', location: 'Near Prem Mandir, Raman Reti', avail: 17, blocked: 4, booked: 35, sold: 24, price: '₹48.00L', rera: 'UPRERAPRJ554109' },
-    { name: 'Radha Rani Enclave Phase 2', location: 'Barsana Road, Chhatikara Ring Road', avail: 62, blocked: 12, booked: 54, sold: 32, price: '₹16.80L', rera: 'UPRERAPRJ231908' },
-  ];
+  // Unit totals come from the same four status counts the allocation bar draws,
+  // rather than Project.totalUnits, so the headline figure can never disagree
+  // with the bar directly beneath it.
+  const unitsOf = (p: any) =>
+    (p.available ?? 0) + (p.blocked ?? 0) + (p.booked ?? 0) + (p.sold ?? 0);
+  const totalUnits = projects.reduce((sum, p) => sum + unitsOf(p), 0);
 
-  const funnelData = funnel.length > 0 ? funnel : [
-    { stage: 'New Inquiries', count: 4 },
-    { stage: 'Connected', count: 2 },
-    { stage: 'Site Visit', count: 1 },
-    { stage: 'Negotiation', count: 0 },
-  ];
+  const lakhs = (v: number) =>
+    `₹${(v / 100000).toLocaleString('en-IN', { maximumFractionDigits: 1 })}L`;
+
+  const funnelData = funnel;
   const maxStageIndex = funnelData.reduce(
     (max, d, i) => (d.count > (funnelData[max]?.count ?? -1) ? i : max),
     funnelData.length > 0 ? 0 : -1,
@@ -92,9 +113,22 @@ export default function DashboardPage() {
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
   const kpiCards = [
-    { title: 'Total Leads', value: kpis?.totalLeads ?? 7, icon: <Users2 size={16} />, sub: <>+{kpis?.leadsToday ?? 0} new today</>, color: 'blue' as const },
-    { title: 'Hot Leads', value: kpis?.hotLeads ?? 4, icon: <Flame size={16} />, sub: <>Immediate callback required</>, color: 'red' as const },
-    { title: 'Gross Pipeline', value: '₹332L', icon: <TrendingUp size={16} />, sub: <>126 units across 3 projects</>, color: 'green' as const },
+    { title: 'Total Leads', value: kpis?.totalLeads ?? 0, icon: <Users2 size={16} />, sub: <>+{kpis?.leadsToday ?? 0} new today</>, color: 'blue' as const },
+    { title: 'Hot Leads', value: kpis?.hotLeads ?? 0, icon: <Flame size={16} />, sub: kpis?.hotLeads ? <>Immediate callback required</> : <>None flagged hot</>, color: 'red' as const },
+    // Admin/manager only: /reports/pipeline-value is role-guarded, so for an
+    // agent there is no honest number to show here and the card is omitted
+    // rather than filled with a placeholder.
+    ...(isAdmin
+      ? [{
+          title: 'Gross Pipeline',
+          value: pipeline == null ? '—' : lakhs(pipeline),
+          icon: <TrendingUp size={16} />,
+          sub: projects.length
+            ? <>{totalUnits} units across {projects.length} project{projects.length === 1 ? '' : 's'}</>
+            : <>No projects in inventory</>,
+          color: 'green' as const,
+        }]
+      : []),
     { title: 'Pending Follow-ups', value: kpis?.pendingFollowUps ?? 0, icon: <Clock size={16} />, sub: kpis?.pendingFollowUps ? <>Due now in {kpis?.pendingFollowUps} dispatches</> : <>All dispatches on schedule</>, color: 'blue' as const },
   ];
 
@@ -132,6 +166,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {loadError && (
+        <div role="alert" className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-[#F0C2B4] bg-[#FDECE6]">
+          <p className="text-xs text-[#C02F12]">
+            Could not load live figures. The numbers below may be incomplete or out of date.
+          </p>
+          <button onClick={() => loadData()} className="text-xs font-semibold text-[#C02F12] hover:underline flex-shrink-0">
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((k) => (
@@ -159,6 +204,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="p-5 h-56">
+              {funnelData.length === 0 ? (
+                <EmptyState>
+                  {loading ? 'Loading pipeline…' : 'No leads yet — the funnel fills in as leads are added.'}
+                </EmptyState>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnelData} layout="vertical" margin={{ left: 80, right: 20 }}>
                   <XAxis type="number" tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} />
@@ -170,6 +220,7 @@ export default function DashboardPage() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -189,19 +240,35 @@ export default function DashboardPage() {
             </div>
 
             <div className="p-5 space-y-4">
-              {townshipProjects.map((project) => {
-                const total = project.avail + project.blocked + project.booked + project.sold;
-                const bookedPct = Math.round(((project.booked + project.sold) / total) * 100);
+              {projects.length === 0 && (
+                <EmptyState>
+                  {loading
+                    ? 'Loading inventory…'
+                    : <>No projects yet. <Link href="/inventory" className="text-[#E04020] hover:underline font-medium">Add one in Inventory</Link>.</>}
+                </EmptyState>
+              )}
+              {projects.map((project) => {
+                const avail = project.available ?? 0;
+                const blocked = project.blocked ?? 0;
+                const booked = project.booked ?? 0;
+                const sold = project.sold ?? 0;
+                const total = unitsOf(project);
+                // A project can legitimately exist with no units loaded yet;
+                // without this guard every percentage below becomes NaN.
+                const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+                const bookedPct = pct(booked + sold);
 
                 return (
-                  <div key={project.name} className="border-b border-[#F3F4F6] last:border-0">
+                  <div key={project.id} className="border-b border-[#F3F4F6] last:border-0">
                     <div className="flex items-start justify-between gap-2 pb-3">
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-xs font-semibold text-[#111113]">{project.name}</h4>
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-[#F3F4F6] text-[#5A6470] font-medium">
-                            {project.rera}
-                          </span>
+                          {project.reraNumber && (
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-[#F3F4F6] text-[#5A6470] font-medium">
+                              {project.reraNumber}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-[#5A6470] mt-0.5">
                           <MapPin size={11} className="text-[#626B76]" />
@@ -209,22 +276,28 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs font-bold font-mono tabular-nums text-[#111113]">From {project.price}</span>
-                        <p className="text-[11px] text-[#5A6470]">{bookedPct}% Booked</p>
+                        {project.priceMin != null && (
+                          <span className="text-xs font-bold font-mono tabular-nums text-[#111113]">
+                            From {lakhs(Number(project.priceMin))}
+                          </span>
+                        )}
+                        <p className="text-[11px] text-[#5A6470]">
+                          {total > 0 ? `${bookedPct}% Booked` : 'No units loaded'}
+                        </p>
                       </div>
                     </div>
 
                     {/* Allocation bar */}
                     <div className="pb-3">
-                      <div className="w-full h-1.5 flex rounded-full overflow-hidden">
-                        <div style={{ width: `${Math.round((project.avail / total) * 100)}%` }} className="bg-[#E5E7EB]" title={`Available: ${project.avail}`} />
-                        <div style={{ width: `${Math.round(((project.booked + project.sold) / total) * 100)}%` }} className="bg-[#E04020]" title={`Booked + Registered: ${project.booked + project.sold}`} />
-                        <div style={{ width: `${Math.round((project.blocked / total) * 100)}%` }} className="bg-[#626B76]" title={`Blocked: ${project.blocked}`} />
+                      <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-[#F3F4F6]">
+                        <div style={{ width: `${pct(avail)}%` }} className="bg-[#E5E7EB]" title={`Available: ${avail}`} />
+                        <div style={{ width: `${pct(booked + sold)}%` }} className="bg-[#E04020]" title={`Booked + Registered: ${booked + sold}`} />
+                        <div style={{ width: `${pct(blocked)}%` }} className="bg-[#626B76]" title={`Blocked: ${blocked}`} />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-[#5A6470] mt-1.5">
-                        <span className="text-[#111113] font-semibold">{project.avail} Available</span>
-                        <span>{project.blocked} Blocked</span>
-                        <span className="text-[#E04020] font-semibold">{project.booked + project.sold} Booked / Registered</span>
+                        <span className="text-[#111113] font-semibold">{avail} Available</span>
+                        <span>{blocked} Blocked</span>
+                        <span className="text-[#E04020] font-semibold">{booked + sold} Booked / Registered</span>
                       </div>
                     </div>
                   </div>
@@ -306,34 +379,37 @@ export default function DashboardPage() {
             </div>
 
             <div className="p-5 space-y-0 text-xs">
-              <div className="flex items-start gap-2.5 py-2 border-b border-[#F3F4F6] last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#111113] mt-1.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-[#111113]">Site Visit Scheduled</p>
-                  <p className="text-[11px] text-[#5A6470]">Govardhan Greens · Plot #42 (Rajesh Agrawal)</p>
-                  <span className="text-[11px] text-[#626B76]">4 mins ago</span>
+              {pulse.length === 0 ? (
+                <EmptyState>
+                  {loading ? 'Loading activity…' : 'No activity recorded yet.'}
+                </EmptyState>
+              ) : pulse.map((a, i) => (
+                <div key={a.id} className="flex items-start gap-2.5 py-2 border-b border-[#F3F4F6] last:border-0">
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${i === 0 ? 'bg-[#E04020]' : 'bg-[#111113]'}`} />
+                  <div className="min-w-0">
+                    <p className="font-medium text-[#111113]">{a.title}</p>
+                    {(a.description || a.lead?.name) && (
+                      <p className="text-[11px] text-[#5A6470] truncate">
+                        {a.description || `${a.lead.name}${a.lead.leadNumber ? ` · ${a.lead.leadNumber}` : ''}`}
+                      </p>
+                    )}
+                    <span className="text-[11px] text-[#626B76]">
+                      {timeAgo(a.createdAt)}{a.user?.name ? ` · ${a.user.name}` : ''}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-2.5 py-2 border-b border-[#F3F4F6] last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#E04020] mt-1.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-[#111113]">Token Advance Received</p>
-                  <p className="text-[11px] text-[#5A6470]">₹2,50,000 via RTGS for Vrindavan Heights</p>
-                  <span className="text-[11px] text-[#626B76]">18 mins ago</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5 py-2 border-b border-[#F3F4F6] last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#111113] mt-1.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-[#111113]">WhatsApp Inflow Processed</p>
-                  <p className="text-[11px] text-[#5A6470]">200 sq.yd corner plot inquiry auto-assigned</p>
-                  <span className="text-[11px] text-[#626B76]">35 mins ago</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+function EmptyState({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="h-full flex items-center justify-center py-6">
+      <p className="text-[11px] text-[#5A6470] text-center">{children}</p>
     </div>
   );
 }
