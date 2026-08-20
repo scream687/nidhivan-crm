@@ -22,6 +22,7 @@ export default function ReportsPage() {
   const [conversion, setConversion] = useState<any>(null);
   const [overview, setOverview] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -32,6 +33,7 @@ export default function ReportsPage() {
 
   async function loadData(t: string) {
     setIsLoading(true);
+    setLoadError(null);
     const params = { from: dateFrom, to: dateTo };
     try {
       if (t === 'funnel') { const { data } = await api.get('/reports/sales-funnel', { params }); setFunnel(data); }
@@ -44,7 +46,17 @@ export default function ReportsPage() {
       if (t === 'activity') { const { data } = await api.get('/reports/activities', { params }); setActivity(data); }
       if (t === 'conversion') { const { data } = await api.get('/reports/conversion', { params }); setConversion(data); }
       if (t === 'dashboard') { const { data } = await api.get('/reports/dashboard-overview', { params }); setOverview(data); }
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch (e: any) {
+      // Every /reports route is @Roles(ADMIN, MANAGER), so the common failure
+      // here is a 403 from someone reaching this page by URL. Swallowing it
+      // rendered an empty tab that was indistinguishable from "no data".
+      console.error(e);
+      setLoadError(
+        e?.response?.status === 403
+          ? 'Reports are limited to admins and managers.'
+          : e?.response?.data?.message || 'Could not load this report.',
+      );
+    } finally { setIsLoading(false); }
   }
 
   async function exportLeads() {
@@ -108,6 +120,13 @@ export default function ReportsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-[#E04020] border-t-transparent rounded-full animate-spin" /></div>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-col items-center gap-3 py-12">
+          <p className="text-sm text-[#C02F12]">{loadError}</p>
+          <button onClick={() => loadData(tab)} className="text-xs font-semibold text-[#C02F12] hover:underline">
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           {/* ════ EXISTING TAB: Sales Funnel ════ */}
