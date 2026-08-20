@@ -10,7 +10,7 @@ export class NimClientService implements OnModuleInit {
   onModuleInit() {
     const apiKey = process.env.NVIDIA_NIM_API_KEY;
     const baseURL = process.env.NVIDIA_NIM_BASE_URL || 'https://integrate.api.nvidia.com/v1';
-    this.model = process.env.NVIDIA_NIM_MODEL || 'nvidia/nemotron-3-ultra-550b-instruct';
+    this.model = process.env.NVIDIA_NIM_MODEL || 'meta/llama-3.1-8b-instruct';
 
     if (!apiKey) {
       this.logger.warn('NVIDIA_NIM_API_KEY not set — AI copilot will use rule-based fallback');
