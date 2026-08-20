@@ -1,28 +1,43 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { lookup } from 'node:dns/promises';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter: Promise<nodemailer.Transporter>;
 
   constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: config.get('SMTP_HOST', 'smtp.gmail.com'),
-      port: config.get<number>('SMTP_PORT', 587),
+    this.transporter = this.buildTransporter();
+  }
+
+  private async buildTransporter(): Promise<nodemailer.Transporter> {
+    const host = this.config.get('SMTP_HOST', 'smtp.gmail.com');
+    const port = this.config.get<number>('SMTP_PORT', 587);
+    const base = {
+      port,
       secure: false,
       auth: {
-        user: config.get('SMTP_USER'),
-        pass: config.get('SMTP_PASS'),
+        user: this.config.get('SMTP_USER'),
+        pass: this.config.get('SMTP_PASS'),
       },
-    });
+    };
+    try {
+      // Render containers have no IPv6 route — nodemailer picks a random
+      // A/AAAA record and the IPv6 one hangs. Pin the socket to IPv4 while
+      // keeping the hostname for TLS SNI and cert validation.
+      const { address } = await lookup(host, { family: 4 });
+      return nodemailer.createTransport({ ...base, host: address, servername: host } as any);
+    } catch {
+      return nodemailer.createTransport({ ...base, host });
+    }
   }
 
   async sendInvite(to: string, name: string, password: string) {
     const from = this.config.get('SMTP_FROM', `Nidhivan CRM <${this.config.get('SMTP_USER')}>`);
     try {
-      await this.transporter.sendMail({
+      await (await this.transporter).sendMail({
         from,
         to,
         subject: `Welcome to Nidhivan CRM`,
@@ -50,7 +65,7 @@ export class MailService {
   async sendOtp(to: string, name: string, otp: string) {
     const from = this.config.get('SMTP_FROM', `Nidhivan CRM <${this.config.get('SMTP_USER')}>`);
     try {
-      await this.transporter.sendMail({
+      await (await this.transporter).sendMail({
         from,
         to,
         subject: `${otp} — Your Nidhivan CRM password reset OTP`,
