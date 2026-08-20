@@ -1,47 +1,41 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import { lookup } from 'node:dns/promises';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: Promise<nodemailer.Transporter>;
 
-  constructor(private config: ConfigService) {
-    this.transporter = this.buildTransporter();
-  }
+  constructor(private config: ConfigService) {}
 
-  private async buildTransporter(): Promise<nodemailer.Transporter> {
-    const host = this.config.get('SMTP_HOST', 'smtp.gmail.com');
-    const port = this.config.get<number>('SMTP_PORT', 587);
-    const base = {
-      port,
-      secure: false,
-      auth: {
-        user: this.config.get('SMTP_USER'),
-        pass: this.config.get('SMTP_PASS'),
+  private async sendEmail(to: string, subject: string, html: string) {
+    const apiKey = this.config.get('RESEND_API_KEY');
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY not set');
+    }
+    const from = this.config.get(
+      'RESEND_FROM',
+      'Nidhivan CRM <onboarding@resend.dev>',
+    );
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-    };
-    try {
-      // Render containers have no IPv6 route — nodemailer picks a random
-      // A/AAAA record and the IPv6 one hangs. Pin the socket to IPv4 while
-      // keeping the hostname for TLS SNI and cert validation.
-      const { address } = await lookup(host, { family: 4 });
-      return nodemailer.createTransport({ ...base, host: address, servername: host } as any);
-    } catch {
-      return nodemailer.createTransport({ ...base, host });
+      body: JSON.stringify({ from, to, subject, html }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Resend API ${res.status}: ${body}`);
     }
   }
 
   async sendInvite(to: string, name: string, password: string) {
-    const from = this.config.get('SMTP_FROM', `Nidhivan CRM <${this.config.get('SMTP_USER')}>`);
     try {
-      await (await this.transporter).sendMail({
-        from,
+      await this.sendEmail(
         to,
-        subject: `Welcome to Nidhivan CRM`,
-        html: `
+        `Welcome to Nidhivan CRM`,
+        `
           <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px">
             <h2 style="color:#1e40af;margin-bottom:8px">Welcome to Nidhivan CRM</h2>
             <p style="color:#374151">Hi ${name},</p>
@@ -55,7 +49,7 @@ export class MailService {
             <p style="color:#9ca3af;font-size:12px">Nidhivan Property CRM &copy; ${new Date().getFullYear()}</p>
           </div>
         `,
-      });
+      );
     } catch (err) {
       this.logger.error(`Failed to send invite email to ${to}`, err);
       // don't throw — invite still succeeds without email
@@ -63,13 +57,11 @@ export class MailService {
   }
 
   async sendOtp(to: string, name: string, otp: string) {
-    const from = this.config.get('SMTP_FROM', `Nidhivan CRM <${this.config.get('SMTP_USER')}>`);
     try {
-      await (await this.transporter).sendMail({
-        from,
+      await this.sendEmail(
         to,
-        subject: `${otp} — Your Nidhivan CRM password reset OTP`,
-        html: `
+        `${otp} — Your Nidhivan CRM password reset OTP`,
+        `
           <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px">
             <h2 style="color:#1e40af;margin-bottom:8px">Password Reset OTP</h2>
             <p style="color:#374151">Hi ${name},</p>
@@ -82,7 +74,7 @@ export class MailService {
             <p style="color:#9ca3af;font-size:12px">Nidhivan Property CRM &copy; ${new Date().getFullYear()}</p>
           </div>
         `,
-      });
+      );
     } catch (err) {
       this.logger.error(`Failed to send OTP email to ${to}`, err);
       throw err;

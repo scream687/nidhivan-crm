@@ -88,15 +88,10 @@ services:
       #   - key: R2_PUBLIC_BASE_URL
       #     sync: false
       #
-      # SMTP for password reset (/auth/forgot-password). Without these the
-      # request succeeds but no mail is sent, so the OTP never arrives. Note
-      # that users can still rotate their own password while logged in via
-      # PATCH /users/:id/password (users.controller.ts:65), which needs no mail.
-      #   - key: SMTP_HOST
+      # Email via Resend for password reset (/auth/forgot-password) and user
+      # invites. Note that users can still rotate their own password while
+      # logged in via PATCH /users/:id/password (users.controller.ts:65).
+      #   - key: RESEND_API_KEY
       #     sync: false
-      #   - key: SMTP_PORT
-      #     sync: false
-      #   - key: SMTP_USER
-      #     sync: false
-      #   - key: SMTP_PASS
+      #   - key: RESEND_FROM
       #     sync: false
