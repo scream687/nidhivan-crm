@@ -16,12 +16,11 @@ databases:
   - name: nidhivan-crm-db
     region: singapore
     postgresMajorVersion: "17"
-    # ⚠️ FREE POSTGRES EXPIRES 30 DAYS AFTER CREATION. After a 14-day grace
-    # period Render DELETES the database and everything in it. That is fine for
-    # a trial and fatal for a CRM holding real leads. Change this to
-    # `basic-256mb` (~$6/mo + $0.30/GB storage) before entering real data.
+    # Paid, because a free database EXPIRES 30 days after creation and Render
+    # deletes it 14 days later — fine for a trial, fatal for a CRM holding real
+    # leads. basic-256mb is ~$6/mo plus $0.30/GB of storage.
     # https://render.com/changelog/free-postgresql-instances-now-expire-after-30-days-previously-90
-    plan: free
+    plan: basic-256mb
 
 services:
   - type: web
