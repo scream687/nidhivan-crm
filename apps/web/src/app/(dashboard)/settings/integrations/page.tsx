@@ -1,354 +1,391 @@
 'use client';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Facebook, Globe, Copy, Check, Settings2, Save, KeyRound, Loader2 } from 'lucide-react';
-import { useState, useEffect, Fragment } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Megaphone, Globe, KeyRound, Building2, Home, Upload, Phone, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
+import { IntegrationCard } from '@/components/integrations/IntegrationCard';
+import { FieldMappingDialog } from '@/components/integrations/FieldMappingDialog';
+import { DeliveryLogDialog } from '@/components/integrations/DeliveryLogDialog';
+import { SetupEmailDialog } from '@/components/integrations/SetupEmailDialog';
+import type { IntegrationDef, IntegrationStatus, FieldMap } from '@/components/integrations/types';
 
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'nidhivanproperty@gmail.com';
 
-type FieldMapEntry = { externalField: string; crmField: string };
-type LogEntry = { timestamp: string; status: string; payload: string };
+const PORTAL_FIELDS = [
+  { field: 'name', label: 'Name', builtIn: 'name / Name / full_name' },
+  { field: 'phone', label: 'Phone', builtIn: 'phone / mobile / contact_number' },
+  { field: 'email', label: 'Email', builtIn: 'email / email_address' },
+  { field: 'city', label: 'City', builtIn: 'city / location' },
+  { field: 'projectInterest', label: 'Project interest', builtIn: 'project_name / ProjectName' },
+  { field: 'requirements', label: 'Requirements', builtIn: 'message / comments' },
+];
 
-const DEFAULT_MAPPINGS: Record<string, FieldMapEntry[]> = {
-  facebook: [
-    { externalField: 'full_name', crmField: 'name' },
-    { externalField: 'phone_number', crmField: 'phone' },
-    { externalField: 'email_address', crmField: 'email' },
-    { externalField: '', crmField: 'city' },
-  ],
-  webflow: [
-    { externalField: 'full_name', crmField: 'name' },
-    { externalField: 'phone_number', crmField: 'phone' },
-    { externalField: 'email_address', crmField: 'email' },
-    { externalField: '', crmField: 'city' },
-  ],
+const INTEGRATIONS: IntegrationDef[] = [
+  {
+    slug: null,
+    configType: 'FACEBOOK',
+    name: 'Facebook Lead Ads',
+    description: 'Capture leads from Facebook and Instagram ad forms the moment they are submitted.',
+    docsUrl: 'https://developers.facebook.com/docs/marketing-api/guides/lead-ads/webhooks',
+    crmFields: PORTAL_FIELDS,
+    setupNote:
+      'Add this as the callback URL in your Meta app’s Webhooks settings, subscribed to the "leadgen" field. Signature verification requires the app secret below.',
+  },
+  {
+    slug: 'housing',
+    configType: 'HOUSING_COM',
+    name: 'Housing.com',
+    description: 'Receive Housing.com enquiries directly into the CRM instead of re-typing them from the portal.',
+    docsUrl: 'https://housing.com',
+    crmFields: PORTAL_FIELDS,
+    setupNote:
+      'Use “Email account manager” to send this endpoint and the setup instructions to your Housing.com contact. The token in the URL is what authenticates them.',
+  },
+  {
+    slug: '99acres',
+    configType: 'NINETYNINE_ACRES',
+    name: '99acres',
+    description: 'Receive 99acres enquiries directly into the CRM as they come in.',
+    docsUrl: 'https://www.99acres.com',
+    crmFields: PORTAL_FIELDS,
+    setupNote:
+      'Use “Email account manager” to send this endpoint to your 99acres relationship manager and request lead push / API integration.',
+  },
+  {
+    slug: 'magicbricks',
+    configType: 'MAGICBRICKS',
+    name: 'MagicBricks',
+    description: 'Receive MagicBricks enquiries directly into the CRM.',
+    docsUrl: 'https://www.magicbricks.com',
+    crmFields: PORTAL_FIELDS,
+    setupNote: 'Use “Email account manager” to send this endpoint to your MagicBricks contact and request lead push.',
+  },
+  {
+    slug: 'webflow',
+    configType: 'WEBFLOW',
+    name: 'Webflow',
+    description: 'Connect your Webflow site forms to the CRM.',
+    docsUrl: 'https://developers.webflow.com/reference/webhooks',
+    crmFields: PORTAL_FIELDS,
+    setupNote: 'Add this as a "Form submission" webhook in your Webflow site settings.',
+  },
+];
+
+const ICONS: Record<string, React.ReactNode> = {
+  FACEBOOK: <Megaphone className="text-[#E04020]" />,
+  HOUSING_COM: <Home className="text-[#E04020]" />,
+  NINETYNINE_ACRES: <Building2 className="text-[#E04020]" />,
+  MAGICBRICKS: <Building2 className="text-[#E04020]" />,
+  WEBFLOW: <Globe className="text-[#E04020]" />,
 };
 
 export default function IntegrationsPage() {
-  const [copied, setCopied] = useState<string | null>(null);
+  const [statuses, setStatuses] = useState<Record<string, IntegrationStatus>>({});
+  const [fieldMaps, setFieldMaps] = useState<Record<string, FieldMap>>({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [mappingFor, setMappingFor] = useState<IntegrationDef | null>(null);
+  const [logsFor, setLogsFor] = useState<IntegrationDef | null>(null);
+  const [emailFor, setEmailFor] = useState<IntegrationDef | null>(null);
+
   const [fbToken, setFbToken] = useState('');
+  const [fbAppSecret, setFbAppSecret] = useState('');
+  const [fbVerifyToken, setFbVerifyToken] = useState('');
+  const [fbHasToken, setFbHasToken] = useState(false);
   const [fbSaving, setFbSaving] = useState(false);
-  const [fbSaved, setFbSaved] = useState(false);
-  // CRM-025: field mapping state
-  const [fieldMaps, setFieldMaps] = useState<Record<string, FieldMapEntry[]>>(DEFAULT_MAPPINGS);
-  const [savingMapping, setSavingMapping] = useState<Record<string, boolean>>({});
-  // CRM-026: webhook test + log state
-  const [testStatus, setTestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
-  const [logDialog, setLogDialog] = useState<string | null>(null);
-  const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
+  const [fbVerifying, setFbVerifying] = useState(false);
+  const [fbVerifyResult, setFbVerifyResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  useEffect(() => {
-    api.get('/integrations/config/FACEBOOK').then(r => {
-      if (r.data?.accessToken) setFbToken(r.data.accessToken);
-    }).catch(() => {});
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [statusRes, ...configRes] = await Promise.all([
+        api.get('/integrations/status'),
+        ...INTEGRATIONS.map((i) => api.get(`/integrations/config/${i.configType}`)),
+      ]);
 
-    const saved = localStorage.getItem('fieldMappings');
-    if (saved) {
-      try { setFieldMaps(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
-    }
-    const savedLogs = localStorage.getItem('webhookLogs');
-    if (savedLogs) {
-      try { setLogs(JSON.parse(savedLogs)); } catch {}
+      setStatuses(
+        Object.fromEntries(
+          (statusRes.data || []).map((s: IntegrationStatus) => [s.type, s]),
+        ),
+      );
+
+      // Webhook URLs come from /status — the API builds them, so what is shown
+      // here is byte-identical to what gets emailed to the portal.
+      const nextMaps: Record<string, FieldMap> = {};
+      configRes.forEach((res, i) => {
+        const meta = res.data?.metadata || {};
+        if (meta.fieldMap) nextMaps[INTEGRATIONS[i].configType] = meta.fieldMap;
+        if (INTEGRATIONS[i].configType === 'FACEBOOK') {
+          setFbHasToken(!!res.data?.hasToken);
+          setFbAppSecret(meta.appSecret || '');
+          setFbVerifyToken(meta.verifyToken || '');
+        }
+      });
+      setFieldMaps(nextMaps);
+    } catch (e: any) {
+      setLoadError(
+        e?.response?.status === 403
+          ? 'Only admins can manage integrations. Ask an admin for access.'
+          : 'Could not load integration settings. Please try again.',
+      );
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  async function saveFbToken() {
-    if (!fbToken.trim()) return;
-    setFbSaving(true);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function verifyFacebook() {
+    setFbVerifying(true);
+    setFbVerifyResult(null);
     try {
-      await api.post('/integrations/config/FACEBOOK', { accessToken: fbToken.trim() });
-      setFbSaved(true);
-      setTimeout(() => setFbSaved(false), 2000);
-    } catch {
-      toast.error('Failed to save Facebook token');
+      const { data } = await api.post('/integrations/facebook/verify');
+      setFbVerifyResult(
+        data.ok
+          ? { ok: true, message: `Facebook accepted the token — connected to page "${data.pageName}".` }
+          : {
+              ok: false,
+              message: data.blocksDeliveries
+                ? `${data.error}. Until the app secret is saved, every incoming lead is rejected.`
+                : data.error,
+            },
+      );
+    } catch (e: any) {
+      setFbVerifyResult({
+        ok: false,
+        message: e?.response?.status === 403 ? 'Only admins can verify credentials' : 'Could not reach the API',
+      });
+    } finally {
+      setFbVerifying(false);
+    }
+  }
+
+  async function saveFacebook() {
+    setFbSaving(true);
+    setFbVerifyResult(null);
+    try {
+      await api.post('/integrations/config/FACEBOOK', {
+        ...(fbToken.trim() ? { accessToken: fbToken.trim() } : {}),
+        metadata: {
+          ...(fbAppSecret.trim() ? { appSecret: fbAppSecret.trim() } : {}),
+          ...(fbVerifyToken.trim() ? { verifyToken: fbVerifyToken.trim() } : {}),
+        },
+      });
+      setFbToken('');
+      toast.success('Facebook credentials saved');
+      load();
+    } catch (e: any) {
+      toast.error(
+        e?.response?.status === 403
+          ? 'Only admins can change Facebook credentials'
+          : 'Could not save Facebook credentials',
+      );
     } finally {
       setFbSaving(false);
     }
   }
 
-  // CRM-025: wire field mapping save
-  function updateFieldMap(id: string, index: number, value: string) {
-    setFieldMaps(prev => {
-      const next = { ...prev };
-      const entries = [...(next[id] || DEFAULT_MAPPINGS[id] || [])];
-      if (entries[index]) entries[index] = { ...entries[index], externalField: value };
-      next[id] = entries;
-      return next;
-    });
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-gray-500">
+        <Loader2 size={16} className="animate-spin" /> Loading integrations…
+      </div>
+    );
   }
 
-  async function saveMapping(id: string) {
-    setSavingMapping(prev => ({ ...prev, [id]: true }));
-    try {
-      await new Promise(r => setTimeout(r, 300));
-      localStorage.setItem('fieldMappings', JSON.stringify(fieldMaps));
-      toast.success('Mapping saved');
-    } catch {
-      toast.error('Failed to save mapping');
-    } finally {
-      setSavingMapping(prev => ({ ...prev, [id]: false }));
-    }
+  if (loadError) {
+    return (
+      <div className="space-y-4 py-16 text-center">
+        <p role="alert" className="text-sm text-red-600">{loadError}</p>
+        <Button onClick={load}>Retry</Button>
+      </div>
+    );
   }
-
-  function resetDefaults(id: string) {
-    setFieldMaps(prev => ({ ...prev, [id]: [...DEFAULT_MAPPINGS[id]] }));
-    toast.success('Reset to defaults');
-  }
-
-  // CRM-026: test webhook
-  function addLogEntry(id: string, entry: LogEntry) {
-    setLogs(prev => {
-      const next = { ...prev, [id]: [entry, ...(prev[id] || [])].slice(0, 20) };
-      localStorage.setItem('webhookLogs', JSON.stringify(next));
-      return next;
-    });
-  }
-
-  async function testWebhook(url: string, id: string) {
-    setTestStatus(prev => ({ ...prev, [id]: 'loading' }));
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: true, timestamp: new Date().toISOString() }),
-      });
-      addLogEntry(id, { timestamp: new Date().toISOString(), status: res.ok ? 'success' : 'error', payload: `HTTP ${res.status}` });
-      if (res.ok) {
-        toast.success('Webhook responded OK');
-        setTestStatus(prev => ({ ...prev, [id]: 'success' }));
-      } else {
-        toast.error(`Webhook returned ${res.status}`);
-        setTestStatus(prev => ({ ...prev, [id]: 'error' }));
-      }
-    } catch {
-      addLogEntry(id, { timestamp: new Date().toISOString(), status: 'error', payload: 'Unreachable' });
-      toast.error('Webhook unreachable');
-      setTestStatus(prev => ({ ...prev, [id]: 'error' }));
-    }
-  }
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
-  const integrations = [
-    {
-      id: 'facebook',
-      name: 'Facebook Lead Ads',
-      description: 'Automatically capture leads from your Facebook & Instagram ad forms.',
-      icon: <Facebook className="text-[#E04020]" />,
-      webhookUrl: `${baseUrl}/integrations/facebook`,
-      docsUrl: 'https://developers.facebook.com/docs/marketing-api/guides/lead-ads/webhooks',
-    },
-    {
-      id: 'webflow',
-      name: 'Webflow',
-      description: 'Connect your Webflow forms to Nidhivan CRM instantly.',
-      icon: <Globe className="text-[#E04020]" />,
-      webhookUrl: `${baseUrl}/integrations/webflow`,
-      docsUrl: 'https://developers.webflow.com/reference/webhooks',
-    },
-  ];
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(id);
-    toast.success('URL copied to clipboard');
-    setTimeout(() => setCopied(null), 2000);
-  };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-[#111113] tracking-tight">Integrations</h1>
-        <p className="text-gray-500 mt-2">Connect your lead sources and marketing tools to Nidhivan CRM.</p>
+        <h1 className="text-xl font-bold tracking-tight text-[#111113]">Integrations</h1>
+        <p className="mt-2 text-gray-500">
+          Connect your lead sources so enquiries reach the team without anyone re-typing them.
+        </p>
       </div>
 
       <div className="grid gap-6">
-        {integrations.map((int) => (
-          <Card key={int.id} className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex flex-col md:flex-row">
-              <div className="p-6 md:w-2/3 border-b md:border-b-0 md:border-r border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    {int.icon}
-                  </div>
-                  <CardTitle>{int.name}</CardTitle>
-                </div>
-                <CardDescription className="text-sm leading-relaxed mb-6">
-                  {int.description}
-                </CardDescription>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Webhook URL</label>
-                    <div className="flex gap-2">
-                      <Input value={int.webhookUrl} readOnly className="bg-gray-50 font-mono text-xs" />
-                      <Button variant="outline" size="icon" onClick={() => copyToClipboard(int.webhookUrl, int.id)}>
-                        {copied === int.id ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <Button variant="link" className="p-0 text-[#E04020] text-sm h-auto" onClick={() => window.open(int.docsUrl, '_blank')}>
-                      Documentation
-                    </Button>
-                    <div className="h-4 w-[1px] bg-gray-200" />
-                    <Dialog>
-                      <DialogTrigger render={<Button variant="link" className="p-0 text-gray-600 text-sm h-auto flex items-center gap-1" />}>
-                        <Settings2 size={12} />
-                        Field Mapping
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[500px]">
-                        <DialogHeader>
-                          <DialogTitle>{int.name} - Field Mapping</DialogTitle>
-                        </DialogHeader>
-                        <div className="py-4 space-y-4">
-                          <p className="text-sm text-gray-500 mb-4">Map your external form fields to Nidhivan CRM lead fields.</p>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="text-xs font-bold text-gray-400 uppercase">External Field</div>
-                            <div className="text-xs font-bold text-gray-400 uppercase">CRM Lead Field</div>
-
-                            {(fieldMaps[int.id] || DEFAULT_MAPPINGS[int.id] || []).map((entry, i) => (
-                              <Fragment key={i}>
-                                <Input
-                                  value={entry.externalField}
-                                  onChange={e => updateFieldMap(int.id, i, e.target.value)}
-                                  className="h-8 text-xs font-mono bg-gray-50"
-                                />
-                                <Input value={entry.crmField} disabled className="h-8 text-xs" />
-                              </Fragment>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2 mt-4">
-                          <Button variant="outline" onClick={() => resetDefaults(int.id)}>Reset Defaults</Button>
-                          <Button className="flex items-center gap-2" onClick={() => saveMapping(int.id)} disabled={savingMapping[int.id]}>
-                            {savingMapping[int.id] ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            {savingMapping[int.id] ? 'Saving\u2026' : 'Save Mapping'}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <div className="h-4 w-[1px] bg-gray-200" />
-                    <span className="text-xs text-gray-400">Status: <span className="text-green-500 font-medium italic">Ready to connect</span></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 md:w-1/3 bg-gray-50/50 flex flex-col justify-center">
-                <div className="space-y-3">
-                  <p className="text-xs font-medium text-gray-600">Manual Setup</p>
-                  {/* CRM-026: test webhook onClick */}
-                  <Button
-                    className="w-full justify-start text-left bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                    variant="outline"
-                    onClick={() => testWebhook(int.webhookUrl, int.id)}
-                    disabled={testStatus[int.id] === 'loading'}
-                  >
-                    {testStatus[int.id] === 'loading' ? (
-                      <><Loader2 size={14} className="animate-spin mr-2" /> Testing\u2026</>
-                    ) : testStatus[int.id] === 'success' ? (
-                      '\u2713 Tested OK'
-                    ) : testStatus[int.id] === 'error' ? (
-                      'Test Failed - Retry'
-                    ) : (
-                      'Test Webhook'
-                    )}
-                  </Button>
-                  {/* CRM-026: view logs onClick */}
-                  <Button
-                    className="w-full justify-start text-left bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                    variant="outline"
-                    onClick={() => setLogDialog(int.id)}
-                  >
-                    View Logs
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
+        {INTEGRATIONS.map((def) => (
+          <IntegrationCard
+            key={def.configType}
+            integration={def}
+            icon={ICONS[def.configType]}
+            status={statuses[def.configType]}
+            webhookUrl={statuses[def.configType]?.webhookUrl ?? null}
+            onSecretRotated={load}
+            onOpenMapping={() => setMappingFor(def)}
+            onOpenLogs={() => setLogsFor(def)}
+            onOpenSetupEmail={() => setEmailFor(def)}
+          />
         ))}
       </div>
 
-      {/* CRM-026: view logs dialog */}
-      <Dialog open={!!logDialog} onOpenChange={(open) => { if (!open) setLogDialog(null); }}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Webhook Logs - {logDialog && integrations.find(i => i.id === logDialog)?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 max-h-80 overflow-y-auto">
-            {logDialog && (!logs[logDialog] || logs[logDialog].length === 0) ? (
-              <p className="text-sm text-gray-500 text-center py-8">No webhook deliveries yet. Test your webhook to see results here.</p>
-            ) : logDialog && (
-              <div className="space-y-2">
-                {logs[logDialog].map((entry, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 text-sm border rounded-lg bg-gray-50">
-                    <div>
-                      <span className="font-mono text-xs text-gray-500">{new Date(entry.timestamp).toLocaleString()}</span>
-                      <p className="text-xs text-gray-400 mt-0.5">{entry.payload}</p>
-                    </div>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      entry.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {entry.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FieldMappingDialog
+        integration={mappingFor}
+        fieldMap={mappingFor ? fieldMaps[mappingFor.configType] || {} : {}}
+        onSaved={(configType, map) => setFieldMaps((m) => ({ ...m, [configType]: map }))}
+        onClose={() => setMappingFor(null)}
+      />
 
-      {/* Facebook Page Access Token */}
+      <DeliveryLogDialog
+        configType={logsFor?.configType ?? null}
+        name={logsFor?.name ?? ''}
+        onClose={() => setLogsFor(null)}
+      />
+
+      <SetupEmailDialog
+        integration={emailFor}
+        status={emailFor ? statuses[emailFor.configType] : undefined}
+        onSent={load}
+        onClose={() => setEmailFor(null)}
+      />
+
+      {/* Facebook credentials — the webhook cannot verify signatures without these */}
       <Card className="border-gray-200 shadow-sm">
-        <div className="p-6 flex items-start gap-4">
-          <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+        <div className="flex items-start gap-4 p-6">
+          <div className="flex-shrink-0 rounded-lg bg-gray-50 p-2">
             <KeyRound size={18} className="text-[#E04020]" />
           </div>
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-4">
             <div>
-              <h3 className="font-semibold text-gray-900">Facebook Page Access Token</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Required to fetch lead details from Facebook Lead Ads. Generate a permanent token from your Meta Business Suite → System Users.
+              <h3 className="font-semibold text-gray-900">Facebook credentials</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                All three come from your Meta app. Without the app secret, incoming webhooks are
+                rejected — Facebook signs every delivery and the CRM verifies that signature.
               </p>
             </div>
-            <div className="flex gap-2 max-w-lg">
-              <Input
-                type="password"
-                value={fbToken}
-                onChange={e => setFbToken(e.target.value)}
-                placeholder="EAAxxxxx\u2026 (permanent page access token)"
-                className="font-mono text-xs"
-              />
-              <Button onClick={saveFbToken} disabled={fbSaving || !fbToken.trim()}
-                className={fbSaved ? 'bg-green-500 hover:bg-green-500' : ''}>
-                {fbSaving ? 'Saving\u2026' : fbSaved ? '\u2713 Saved' : 'Save'}
+
+            <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label htmlFor="fb-token" className="mb-1 block text-xs font-medium text-gray-500">
+                  Page access token {fbHasToken && <span className="text-green-600">· saved</span>}
+                </label>
+                <Input
+                  id="fb-token"
+                  type="password"
+                  value={fbToken}
+                  onChange={(e) => setFbToken(e.target.value)}
+                  placeholder={fbHasToken ? 'Leave blank to keep the saved token' : 'EAAxxxxx… (permanent page access token)'}
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <label htmlFor="fb-secret" className="mb-1 block text-xs font-medium text-gray-500">
+                  App secret
+                </label>
+                <Input
+                  id="fb-secret"
+                  value={fbAppSecret}
+                  onChange={(e) => setFbAppSecret(e.target.value)}
+                  placeholder="Meta app → Settings → Basic"
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <label htmlFor="fb-verify" className="mb-1 block text-xs font-medium text-gray-500">
+                  Verify token
+                </label>
+                <Input
+                  id="fb-verify"
+                  value={fbVerifyToken}
+                  onChange={(e) => setFbVerifyToken(e.target.value)}
+                  placeholder="Any phrase — paste the same one into Meta"
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={saveFacebook} disabled={fbSaving}>
+                {fbSaving ? 'Saving…' : 'Save Facebook credentials'}
+              </Button>
+              <Button variant="outline" onClick={verifyFacebook} disabled={fbVerifying}>
+                {fbVerifying ? 'Checking…' : 'Verify with Facebook'}
               </Button>
             </div>
+
+            {fbVerifyResult && (
+              <p role="alert" className={`text-sm ${fbVerifyResult.ok ? 'text-green-700' : 'text-red-600'}`}>
+                {fbVerifyResult.ok ? '✓ ' : '✗ '}{fbVerifyResult.message}
+              </p>
+            )}
           </div>
         </div>
       </Card>
 
-      <Card className="bg-[#E04020] border-none text-white overflow-hidden relative">
-        <div className="p-8 relative z-10">
-          <h3 className="text-xl font-bold mb-2">Need a custom integration?</h3>
-          <p className="text-[#FDECE6] text-sm max-w-md mb-6">Our API is open for custom lead capture. Contact the development team for more technical details.</p>
+      {/* Paths that do not depend on a portal enabling API access */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="border-gray-200 shadow-sm">
+          <div className="flex items-start gap-4 p-6">
+            <div className="flex-shrink-0 rounded-lg bg-gray-50 p-2">
+              <Upload size={18} className="text-[#E04020]" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-900">Import a portal export</h3>
+              <p className="text-sm leading-relaxed text-gray-500">
+                Housing.com and 99acres both let you export enquiries as a spreadsheet. Import one
+                here — set the Source column to <code className="text-xs">HOUSING_COM</code> or{' '}
+                <code className="text-xs">NINETYNINE_ACRES</code> and the leads land tagged correctly.
+              </p>
+              <Link href="/leads" className="inline-block text-sm font-medium text-[#E04020] hover:underline">
+                Go to Leads → Import
+              </Link>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="border-gray-200 shadow-sm">
+          <div className="flex items-start gap-4 p-6">
+            <div className="flex-shrink-0 rounded-lg bg-gray-50 p-2">
+              <Phone size={18} className="text-[#E04020]" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-900">Exotel IVR &amp; click-to-call</h3>
+              <p className="text-sm leading-relaxed text-gray-500">
+                Calls to your ExoPhone can create leads automatically, and agents can dial from a
+                lead record. Credentials and webhook URLs live on the Telephony tab.
+              </p>
+              <Link href="/settings" className="inline-block text-sm font-medium text-[#E04020] hover:underline">
+                Go to Settings → Telephony
+              </Link>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="relative overflow-hidden border-none bg-[#E04020] text-white">
+        <div className="relative z-10 p-8">
+          <h3 className="mb-2 text-xl font-bold">Need a custom integration?</h3>
+          <p className="mb-6 max-w-md text-sm text-[#FDECE6]">
+            Any system that can POST a lead can be connected. Tell us what you want to plug in.
+          </p>
           <Button
-            className="bg-white text-[#E04020] hover:bg-[#FDECE6] font-semibold"
+            className="bg-white font-semibold text-[#E04020] hover:bg-[#FDECE6]"
             onClick={() => {
               window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Custom integration request')}&body=${encodeURIComponent('Which system do you want to connect?\n\nWhat data should flow into the CRM?\n\n')}`;
             }}
           >
-            Request Custom Integration
+            Request custom integration
           </Button>
         </div>
-        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute top-[-20%] right-[-10%] h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute bottom-[-20%] left-[-10%] h-64 w-64 rounded-full bg-white/10 blur-3xl" />
       </Card>
     </div>
   );

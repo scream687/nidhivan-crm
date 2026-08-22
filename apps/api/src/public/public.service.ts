@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ensureSystemUser } from '../common/system-user';
 
 @Injectable()
 export class PublicService {
@@ -89,7 +90,7 @@ export class PublicService {
         landingPageId: page.id,
         landingPage: slug,
         projectInterest: page.projectId,
-        createdById: page.projectId,
+        createdById: await ensureSystemUser(this.prisma),
       },
     });
 

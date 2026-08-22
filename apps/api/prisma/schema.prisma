@@ -684,6 +684,22 @@ model IntegrationConfig {
   @@map("integration_configs")
 }
 
+// One row per inbound webhook delivery, so an admin can see what a portal
+// actually sent and why a lead did or did not get created.
+model WebhookDelivery {
+  id         String   @id @default(cuid())
+  source     String // FACEBOOK | HOUSING_COM | NINETYNINE_ACRES | MAGICBRICKS | WEBFLOW | EXOTEL
+  status     String // created | duplicate | rejected | error
+  statusCode Int?
+  payload    Json
+  error      String?
+  leadId     String?
+  createdAt  DateTime @default(now())
+
+  @@index([source, createdAt])
+  @@map("webhook_deliveries")
+}
+
 // ─── Marketing Automation ─────────────────────────────────────────────────────
 
 model Segment {

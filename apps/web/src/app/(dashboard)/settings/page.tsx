@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, User, Users, Bell, Phone, MessageSquare, Shield, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -152,28 +152,72 @@ export default function SettingsPage() {
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwSaving, setPwSaving] = useState(false);
 
-  // Telephony state
-  const [telForm, setTelForm] = useState({ exotelSid: '', exotelToken: '', exotelPhone: '', virtualNumber: '' });
+  // Telephony state — the token is never sent back to the browser, so the
+  // field stays blank and an empty submit means "keep the saved one".
+  const [telForm, setTelForm] = useState({ exotelApiKey: '', exotelSid: '', exotelToken: '', exotelPhone: '', virtualNumber: '', subdomain: 'api.exotel.com' });
+  const [telMeta, setTelMeta] = useState<{ connected: boolean; hasToken: boolean; tokenLast4: string | null; passthruUrl: string | null; incomingUrl: string | null } | null>(null);
   const [telLoading, setTelLoading] = useState(true);
   const [telSaving, setTelSaving] = useState(false);
   const [telSaved, setTelSaved] = useState(false);
+  const [telTesting, setTelTesting] = useState(false);
+  const [telTestResult, setTelTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  useEffect(() => {
+  const loadTelephony = useCallback(() => {
+    setTelLoading(true);
     api.get('/telephony/config').then(r => {
-      if (r.data) setTelForm({ exotelSid: r.data.exotelSid || '', exotelToken: r.data.exotelToken || '', exotelPhone: r.data.exotelPhone || '', virtualNumber: r.data.virtualNumber || '' });
-    }).catch(() => toast.error('Failed to load telephony config')).finally(() => setTelLoading(false));
+      if (!r.data) return;
+      setTelForm(f => ({
+        ...f,
+        exotelApiKey: r.data.exotelApiKey || '',
+        exotelSid: r.data.exotelSid || '',
+        exotelToken: '',
+        exotelPhone: r.data.exotelPhone || '',
+        virtualNumber: r.data.virtualNumber || '',
+        subdomain: r.data.subdomain || 'api.exotel.com',
+      }));
+      setTelMeta({
+        connected: !!r.data.connected,
+        hasToken: !!r.data.hasToken,
+        tokenLast4: r.data.tokenLast4 ?? null,
+        passthruUrl: r.data.passthruUrl ?? null,
+        incomingUrl: r.data.incomingUrl ?? null,
+      });
+    }).catch((e) => {
+      if (e?.response?.status !== 403) toast.error('Failed to load telephony config');
+    }).finally(() => setTelLoading(false));
   }, []);
+
+  useEffect(() => { loadTelephony(); }, [loadTelephony]);
 
   async function saveTelephony() {
     setTelSaving(true);
+    setTelTestResult(null);
     try {
       await api.post('/telephony/config', telForm);
       setTelSaved(true);
       setTimeout(() => setTelSaved(false), 2000);
-    } catch {
-      toast.error('Failed to save telephony config');
+      loadTelephony();
+    } catch (e: any) {
+      toast.error(e?.response?.status === 403 ? 'Only admins can change telephony settings' : 'Failed to save telephony config');
     } finally {
       setTelSaving(false);
+    }
+  }
+
+  async function testTelephony() {
+    setTelTesting(true);
+    setTelTestResult(null);
+    try {
+      const { data } = await api.post('/telephony/test-connection');
+      setTelTestResult(
+        data.ok
+          ? { ok: true, message: `Connected to Exotel account ${data.sid} on ${data.subdomain}.` }
+          : { ok: false, message: data.details ? `${data.error} — ${data.details}` : data.error },
+      );
+    } catch (e: any) {
+      setTelTestResult({ ok: false, message: e?.response?.status === 403 ? 'Only admins can test the connection' : 'Could not reach the API' });
+    } finally {
+      setTelTesting(false);
     }
   }
 
@@ -528,21 +572,40 @@ export default function SettingsPage() {
         {active === 'telephony' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="max-w-lg space-y-4">
             <h2 className="font-semibold text-gray-900">Telephony — Exotel</h2>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
-              Exotel integration is scaffolded and ready. Enter your API credentials below to activate click-to-call, call recording, and auto-link.
-            </div>
+
+            {!telLoading && (
+              telMeta?.connected ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+                  <span className="font-medium">Credentials saved.</span> Click-to-call and IVR lead
+                  capture are active. Use Test connection below to confirm Exotel accepts them.
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+                  <span className="font-medium">Not connected.</span> Click-to-call is disabled until
+                  the API Key, API Token, SID and ExoPhone below are all filled in.
+                </div>
+              )
+            )}
+
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               {telLoading ? <div className="py-4 text-sm text-gray-400">Loading…</div> : (
                 <>
                   {[
-                    { label: 'Exotel SID', key: 'exotelSid', placeholder: 'ex...' },
-                    { label: 'Exotel Token', key: 'exotelToken', placeholder: '••••••••', type: 'password' },
+                    { label: 'Exotel API Key', key: 'exotelApiKey', placeholder: 'From Exotel → Settings → API Credentials' },
+                    {
+                      label: 'Exotel API Token',
+                      key: 'exotelToken',
+                      placeholder: telMeta?.hasToken ? `Saved (••••${telMeta.tokenLast4}) — leave blank to keep` : 'API Token',
+                      type: 'password',
+                    },
+                    { label: 'Account SID', key: 'exotelSid', placeholder: 'ex...' },
+                    { label: 'Virtual Number (ExoPhone)', key: 'virtualNumber', placeholder: 'XXXXXXXXXX' },
                     { label: 'Exotel Phone Number', key: 'exotelPhone', placeholder: '+91 XXXXX XXXXX' },
-                    { label: 'Virtual Number (ExoPhone)', key: 'virtualNumber', placeholder: 'XXXXXXXX' },
                   ].map(({ label, key, placeholder, type }) => (
                     <div key={key}>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+                      <label htmlFor={`tel-${key}`} className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
                       <input
+                        id={`tel-${key}`}
                         type={type || 'text'}
                         value={(telForm as any)[key]}
                         onChange={e => setTelForm(f => ({ ...f, [key]: e.target.value }))}
@@ -551,13 +614,71 @@ export default function SettingsPage() {
                       />
                     </div>
                   ))}
-                  <button onClick={saveTelephony} disabled={telSaving}
-                    className={cn('w-full py-2 rounded-lg text-sm font-medium transition disabled:opacity-60', telSaved ? 'bg-green-500 text-white' : 'bg-[#E04020] hover:bg-[#C02F12] text-white')}>
-                    {telSaving ? 'Saving…' : telSaved ? '✓ Saved!' : 'Save & Activate'}
-                  </button>
+
+                  <div>
+                    <label htmlFor="tel-subdomain" className="block text-xs font-medium text-gray-500 mb-1">Region</label>
+                    <select
+                      id="tel-subdomain"
+                      value={telForm.subdomain}
+                      onChange={e => setTelForm(f => ({ ...f, subdomain: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
+                    >
+                      <option value="api.exotel.com">Singapore (api.exotel.com)</option>
+                      <option value="api.in.exotel.com">Mumbai (api.in.exotel.com)</option>
+                    </select>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Exotel accounts are region-pinned. The wrong region returns an auth error.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button onClick={saveTelephony} disabled={telSaving}
+                      className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition disabled:opacity-60', telSaved ? 'bg-green-500 text-white' : 'bg-[#E04020] hover:bg-[#C02F12] text-white')}>
+                      {telSaving ? 'Saving…' : telSaved ? '✓ Saved!' : 'Save'}
+                    </button>
+                    <button onClick={testTelephony} disabled={telTesting || !telMeta?.connected}
+                      className="flex-1 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60">
+                      {telTesting ? 'Testing…' : 'Test connection'}
+                    </button>
+                  </div>
+
+                  {telTestResult && (
+                    <p role="alert" className={cn('text-sm', telTestResult.ok ? 'text-green-700' : 'text-red-600')}>
+                      {telTestResult.ok ? '✓ ' : '✗ '}{telTestResult.message}
+                    </p>
+                  )}
                 </>
               )}
             </div>
+
+            {!telLoading && telMeta?.passthruUrl && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Webhook URLs for Exotel</h3>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Paste these into your Exotel call flow. The token in each URL is what proves the
+                    request came from Exotel — treat them as secrets.
+                  </p>
+                </div>
+                {[
+                  { label: 'Call status (StatusCallback)', url: telMeta.passthruUrl },
+                  { label: 'Incoming call → create lead (Passthru applet)', url: telMeta.incomingUrl },
+                ].map(({ label, url }) => url && (
+                  <div key={label}>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+                    <div className="flex gap-2">
+                      <input readOnly value={url} className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs" />
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(url); toast.success('Copied'); }}
+                        className="shrink-0 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
 

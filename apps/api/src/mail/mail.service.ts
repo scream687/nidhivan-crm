@@ -2,6 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 
+/** Company name, sender name and URLs are admin-supplied — never interpolate raw. */
+function escapeHtml(value: string): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -83,6 +93,62 @@ export class MailService {
             <p style="color:#6b7280;font-size:13px">Nobody else knows your password — you choose it in that step.</p>
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
             <p style="color:#9ca3af;font-size:12px">Nidhivan Property CRM &copy; ${new Date().getFullYear()}</p>
+          </div>
+        `,
+    );
+  }
+
+  /**
+   * Asks a listing portal's account manager to enable lead push to our webhook.
+   *
+   * The URL carries the authentication token, so this goes to one named
+   * recipient the admin typed — never a list, and never CC'd anywhere.
+   *
+   * Throws on failure: an admin who thinks the request went out will sit
+   * waiting for leads that were never going to arrive.
+   */
+  async sendPortalSetupRequest(opts: {
+    to: string;
+    portalLabel: string;
+    webhookUrl: string;
+    companyName: string;
+    senderName: string;
+    replyTo?: string;
+  }) {
+    const { to, portalLabel, webhookUrl, companyName, senderName, replyTo } = opts;
+
+    await this.sendEmail(
+      to,
+      `${companyName} — enable CRM lead integration for our ${portalLabel} account`,
+      `
+          <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px">
+            <p style="color:#374151">Hello,</p>
+            <p style="color:#374151">
+              Please enable lead push (CRM / API integration) on our ${escapeHtml(portalLabel)}
+              account so enquiries are delivered into our CRM automatically.
+            </p>
+            <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px">
+              <tr>
+                <td style="padding:8px 0;color:#6b7280;width:90px;vertical-align:top">Endpoint</td>
+                <td style="padding:8px 0"><code style="word-break:break-all;color:#111827">${escapeHtml(webhookUrl)}</code></td>
+              </tr>
+              <tr><td style="padding:8px 0;color:#6b7280">Method</td><td style="padding:8px 0;color:#111827">POST</td></tr>
+              <tr><td style="padding:8px 0;color:#6b7280">Format</td><td style="padding:8px 0;color:#111827">JSON</td></tr>
+            </table>
+            <p style="color:#374151;font-size:14px">
+              The URL already contains our authentication token, so no additional credentials or
+              headers are required. If your system needs the token as a header instead of a query
+              parameter, we also accept it as <code>X-Nidhivan-Token</code>.
+            </p>
+            <p style="color:#374151;font-size:14px">
+              Please confirm once it is live and send a test lead so we can verify delivery.
+            </p>
+            <p style="color:#374151;font-size:14px">Thanks,<br>${escapeHtml(senderName)}<br>${escapeHtml(companyName)}</p>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+            <p style="color:#9ca3af;font-size:12px">
+              This endpoint is private to ${escapeHtml(companyName)}. Please do not forward it.
+              ${replyTo ? `Reply to ${escapeHtml(replyTo)}.` : ''}
+            </p>
           </div>
         `,
     );

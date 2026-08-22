@@ -21,7 +21,9 @@ if (process.env.SENTRY_DSN) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody is required to verify Facebook's X-Hub-Signature-256, which is an
+  // HMAC over the exact bytes received — the parsed body cannot reproduce it.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const logger = new Logger('Bootstrap');
 
   // Security headers — helmet must be applied before any routes
