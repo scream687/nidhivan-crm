@@ -165,7 +165,7 @@ export default function SettingsPage() {
   // Telephony state — the token is never sent back to the browser, so the
   // field stays blank and an empty submit means "keep the saved one".
   const [telForm, setTelForm] = useState({ exotelApiKey: '', exotelSid: '', exotelToken: '', exotelPhone: '', virtualNumber: '', subdomain: 'api.exotel.com', ivrLeadOwnerId: '' });
-  const [telMeta, setTelMeta] = useState<{ connected: boolean; hasToken: boolean; tokenLast4: string | null; passthruUrl: string | null; incomingUrl: string | null } | null>(null);
+  const [telMeta, setTelMeta] = useState<{ connected: boolean; hasToken: boolean; tokenLast4: string | null; passthruUrl: string | null; incomingUrl: string | null; publicBaseUrl: string | null } | null>(null);
   const [telLoading, setTelLoading] = useState(true);
   const [telSaving, setTelSaving] = useState(false);
   const [telSaved, setTelSaved] = useState(false);
@@ -195,6 +195,7 @@ export default function SettingsPage() {
         tokenLast4: r.data.tokenLast4 ?? null,
         passthruUrl: r.data.passthruUrl ?? null,
         incomingUrl: r.data.incomingUrl ?? null,
+        publicBaseUrl: r.data.publicBaseUrl ?? null,
       });
     }).catch((e) => {
       if (e?.response?.status !== 403) toast.error('Failed to load telephony config');
@@ -698,32 +699,63 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {!telLoading && telMeta?.passthruUrl && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+            {!telLoading && telMeta && !telMeta.publicBaseUrl && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800" role="alert">
+                <span className="font-medium">Webhook URLs unavailable.</span> The server does not
+                know its own public address, so it cannot build a URL Exotel can call. Set{' '}
+                <code className="text-xs">API_URL</code> on the API service and redeploy.
+              </div>
+            )}
+
+            {!telLoading && telMeta?.incomingUrl && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">Webhook URLs for Exotel</h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    Paste these into your Exotel call flow. The token in each URL is what proves the
-                    request came from Exotel — treat them as secrets.
+                    Each URL contains a secret token that proves the request came from Exotel. Treat
+                    them like passwords — do not share or post them anywhere public.
                   </p>
                 </div>
-                {[
-                  { label: 'Call status (StatusCallback)', url: telMeta.passthruUrl },
-                  { label: 'Incoming call → create lead (Passthru applet)', url: telMeta.incomingUrl },
-                ].map(({ label, url }) => url && (
-                  <div key={label}>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-                    <div className="flex gap-2">
-                      <input readOnly value={url} className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs" />
-                      <button
-                        onClick={() => { navigator.clipboard.writeText(url); toast.success('Copied'); }}
-                        className="shrink-0 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        Copy
-                      </button>
-                    </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    1. Incoming call → creates leads
+                  </label>
+                  <p className="mb-1.5 text-xs text-gray-500">
+                    In Exotel: <strong>App Bazaar → your call flow → add a Passthru applet</strong>,
+                    and paste this as its URL. This is the one that creates a lead when someone calls
+                    your ExoPhone.
+                  </p>
+                  <div className="flex gap-2">
+                    <input readOnly value={telMeta.incomingUrl} className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs" />
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(telMeta.incomingUrl!); toast.success('Copied'); }}
+                      className="shrink-0 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Copy
+                    </button>
                   </div>
-                ))}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    2. Call status — optional
+                  </label>
+                  <p className="mb-1.5 text-xs text-gray-500">
+                    Records call duration and recording links. <strong>It does not create leads.</strong>{' '}
+                    The CRM already sends this automatically on click-to-call, so you only need to
+                    paste it if you also want status for calls placed outside the CRM.
+                  </p>
+                  <div className="flex gap-2">
+                    <input readOnly value={telMeta.passthruUrl || ''} className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs" />
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(telMeta.passthruUrl!); toast.success('Copied'); }}
+                      className="shrink-0 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>

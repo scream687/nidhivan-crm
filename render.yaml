@@ -64,6 +64,16 @@ services:
       - key: FRONTEND_URL
         value: https://nidhivan-crm.rishabh-sharma-global.workers.dev
 
+      # This API's own public origin. The Exotel webhook URLs shown in
+      # Settings → Telephony are built from it, and those URLs are pasted into
+      # Exotel's dashboard by hand — so if this is unset the UI shows a relative
+      # path like /api/v1/telephony/... which Exotel accepts and never calls,
+      # producing silence rather than an error. Render also injects
+      # RENDER_EXTERNAL_URL, which the code falls back to, but this is set
+      # explicitly so the value is visible rather than implicit.
+      - key: API_URL
+        value: https://nidhivan-crm-api.onrender.com
+
       - key: R2_BUCKET
         value: nidhivan-crm
 

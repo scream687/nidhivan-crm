@@ -105,9 +105,29 @@ export class TelephonyService {
     return 'Basic ' + Buffer.from(`${config.apiKey}:${config.apiToken}`).toString('base64');
   }
 
-  private async callbackUrl(path: string): Promise<string> {
+  /**
+   * Public origin of this API. RENDER_EXTERNAL_URL is injected by Render, so
+   * the webhook URLs are correct even when API_URL was never configured — which
+   * it wasn't, and the result was a relative path Exotel could not call.
+   */
+  static publicBaseUrl(): string {
+    return (process.env.API_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
+  }
+
+  /**
+   * Returns null rather than a relative path when no origin is known. A URL
+   * without a host silently fails at the far end: Exotel accepts it, calls
+   * nothing, and no lead is ever created.
+   */
+  private async callbackUrl(path: string): Promise<string | null> {
+    const base = TelephonyService.publicBaseUrl();
+    if (!base) {
+      this.logger.error(
+        'Neither API_URL nor RENDER_EXTERNAL_URL is set — cannot build Exotel webhook URLs',
+      );
+      return null;
+    }
     const secret = await this.ensurePassthruSecret();
-    const base = (process.env.API_URL || '').replace(/\/$/, '');
     return `${base}/api/v1/telephony/exotel/${path}/${secret}`;
   }
 
@@ -135,9 +155,13 @@ export class TelephonyService {
       To: lead.phone,
       CallerId: config.callerId,
       CallType: 'trans',
-      StatusCallback: await this.callbackUrl('passthru'),
       StatusCallbackEvents: 'terminal',
     });
+
+    // Omitted rather than sent empty when no public origin is known: the call
+    // still connects, it just goes unlogged, which beats failing the call.
+    const statusCallback = await this.callbackUrl('passthru');
+    if (statusCallback) body.set('StatusCallback', statusCallback);
 
     try {
       const res = await fetch(url, {
@@ -496,6 +520,8 @@ export class TelephonyService {
       connected: !!resolved,
       passthruUrl: config ? await this.callbackUrl('passthru') : null,
       incomingUrl: config ? await this.callbackUrl('incoming') : null,
+      // Lets the UI say why the URLs are missing instead of rendering a broken one.
+      publicBaseUrl: TelephonyService.publicBaseUrl() || null,
       updatedAt: config?.updatedAt ?? null,
     };
   }
