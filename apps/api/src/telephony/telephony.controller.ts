@@ -55,14 +55,23 @@ export class TelephonyController {
   // Called by Exotel's servers, so no JWT. The secret in the path is what
   // stops anyone on the internet from POSTing fabricated call logs.
 
+  // Exotel's Passthru applet sends call details as query parameters on a GET,
+  // which is why the previous CRM's URL looked like "...php?appid=...". Both
+  // verbs are accepted, and query and body are merged, so the applet works
+  // whichever way it is configured.
+  @Get('exotel/passthru/:secret')
   @Post('exotel/passthru/:secret')
   @HttpCode(200)
   @Throttle({ default: { ttl: 60_000, limit: 120 } })
-  async handlePassthru(@Param('secret') secret: string, @Body() body: any) {
+  async handlePassthru(
+    @Param('secret') secret: string,
+    @Body() body: any,
+    @Query() query: any,
+  ) {
     if (!(await this.telephony.verifyPassthruSecret(secret))) {
       throw new UnauthorizedException('Invalid webhook secret');
     }
-    return this.telephony.handleExotelPassthru(body);
+    return this.telephony.handleExotelPassthru({ ...(query || {}), ...(body || {}) });
   }
 
   /**
@@ -70,14 +79,20 @@ export class TelephonyController {
    * treats as "continue down Choice A" — do not change the status code without
    * checking the call flow configured in the Exotel dashboard.
    */
+  @Get('exotel/incoming/:secret')
   @Post('exotel/incoming/:secret')
   @HttpCode(200)
   @Throttle({ default: { ttl: 60_000, limit: 120 } })
-  async handleIncoming(@Param('secret') secret: string, @Body() body: any) {
+  async handleIncoming(
+    @Param('secret') secret: string,
+    @Body() body: any,
+    @Query() query: any,
+  ) {
     if (!(await this.telephony.verifyPassthruSecret(secret))) {
       throw new UnauthorizedException('Invalid webhook secret');
     }
-    return this.telephony.handleIncomingCall(body);
+    // Body wins on conflict: a POST body is the more deliberate carrier.
+    return this.telephony.handleIncomingCall({ ...(query || {}), ...(body || {}) });
   }
 
   // ── Config (admin only — these read and write the Exotel API token) ───────
