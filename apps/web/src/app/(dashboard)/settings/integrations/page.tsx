@@ -73,6 +73,19 @@ const INTEGRATIONS: IntegrationDef[] = [
     crmFields: PORTAL_FIELDS,
     setupNote: 'Add this as a "Form submission" webhook in your Webflow site settings.',
   },
+  {
+    // Configured on the Telephony tab, but listed here so inbound calls show
+    // the same status and delivery log as every other lead source — that log is
+    // the only way to see what Exotel actually sent when a call makes no lead.
+    slug: null,
+    configType: 'EXOTEL',
+    name: 'Exotel IVR (inbound calls)',
+    description: 'Calls to your ExoPhone create or match a lead automatically.',
+    docsUrl: 'https://developer.exotel.com/docs/voice-v1/applets/passthru',
+    crmFields: PORTAL_FIELDS,
+    setupNote:
+      'Credentials and webhook URLs live on the Telephony tab. Use the "Incoming call" URL in your Exotel Passthru applet — the "Call status" URL only records duration and recordings, it does not create leads.',
+  },
 ];
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -81,6 +94,7 @@ const ICONS: Record<string, React.ReactNode> = {
   NINETYNINE_ACRES: <Building2 className="text-[#E04020]" />,
   MAGICBRICKS: <Building2 className="text-[#E04020]" />,
   WEBFLOW: <Globe className="text-[#E04020]" />,
+  EXOTEL: <Phone className="text-[#E04020]" />,
 };
 
 export default function IntegrationsPage() {

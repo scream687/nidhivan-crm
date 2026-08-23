@@ -401,7 +401,10 @@ export class IntegrationsService {
   // ── Status & delivery log ────────────────────────────────────────────────
 
   async getStatus() {
-    const types = [...Object.values(PORTALS).map((p) => p.configType), 'FACEBOOK'];
+    // EXOTEL included so inbound IVR calls appear alongside the portals — it is
+    // a lead source like any other, and its deliveries are the only way to see
+    // what Exotel actually posted when a call does not produce a lead.
+    const types = [...Object.values(PORTALS).map((p) => p.configType), 'FACEBOOK', 'EXOTEL'];
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     // Attribute by utmSource, not source: Webflow leads share LeadSource.WEBSITE
@@ -411,10 +414,14 @@ export class IntegrationsService {
       Object.values(PORTALS).map((p) => [p.configType, p.label]),
     );
 
-    const leadFilter = (type: string) =>
-      type === 'FACEBOOK'
-        ? { OR: [{ utmSource: 'Facebook Lead Ads' }, { source: LeadSource.FACEBOOK }] }
-        : { utmSource: labelByType[type] };
+    const leadFilter = (type: string) => {
+      if (type === 'FACEBOOK') {
+        return { OR: [{ utmSource: 'Facebook Lead Ads' }, { source: LeadSource.FACEBOOK }] };
+      }
+      // Inbound IVR leads are tagged by handleIncomingCall in the telephony service.
+      if (type === 'EXOTEL') return { utmSource: 'exotel-ivr' };
+      return { utmSource: labelByType[type] };
+    };
 
     return Promise.all(
       types.map(async (type) => {
@@ -441,7 +448,9 @@ export class IntegrationsService {
           configured:
             type === 'FACEBOOK'
               ? !!(config?.accessToken || process.env.FB_PAGE_ACCESS_TOKEN)
-              : !!metadata.webhookSecret,
+              : type === 'EXOTEL'
+                ? !!metadata.passthruSecret
+                : !!metadata.webhookSecret,
           hasSecret: !!metadata.webhookSecret,
           webhookUrl: await this.getWebhookUrl(type),
           accountManagerEmail: metadata.accountManagerEmail ?? null,

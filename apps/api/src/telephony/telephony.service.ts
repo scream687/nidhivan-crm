@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomBytes, timingSafeEqual } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeadsService } from '../leads/leads.service';
-import { CallType, CallStatus, LeadSource } from '@prisma/client';
+import { CallType, CallStatus, LeadSource, Prisma } from '@prisma/client';
 import { ensureSystemUser } from '../common/system-user';
 
 /** Credentials as actually used against the Exotel API. */
@@ -254,7 +254,13 @@ export class TelephonyService {
     const dialledNumber = String(body.CallTo ?? body.To ?? body.DialWhomNumber ?? '').trim();
     const callSid = body.CallSid || null;
 
-    if (!callerNumber) return { status: 'ignored', reason: 'No caller number' };
+    if (!callerNumber) {
+      // Recorded rather than silently dropped: "Exotel is calling but no lead
+      // appears" is undiagnosable without the payload it actually sent.
+      this.logger.warn(`IVR call with no caller number. Payload keys: ${Object.keys(body || {}).join(', ')}`);
+      await this.recordDelivery('rejected', body, 'No caller number in payload');
+      return { status: 'ignored', reason: 'No caller number' };
+    }
 
     const normalized = callerNumber.replace(/\D/g, '').slice(-10);
 
@@ -318,7 +324,34 @@ export class TelephonyService {
       data: { lastContactedAt: new Date() },
     });
 
+    await this.recordDelivery(created ? 'created' : 'duplicate', body, undefined, lead.id);
     return { status: created ? 'lead_created' : 'lead_matched', leadId: lead.id };
+  }
+
+  /**
+   * Mirrors the portal webhooks' delivery log for Exotel, so every inbound call
+   * is visible in Settings -> Lead Integrations -> Deliveries with the exact
+   * payload Exotel sent. Never throws: a logging failure must not lose a call.
+   */
+  private async recordDelivery(
+    status: 'created' | 'duplicate' | 'rejected' | 'error',
+    payload: unknown,
+    error?: string,
+    leadId?: string,
+  ) {
+    try {
+      await this.prisma.webhookDelivery.create({
+        data: {
+          source: 'EXOTEL',
+          status,
+          payload: (payload ?? {}) as Prisma.InputJsonValue,
+          error,
+          leadId,
+        },
+      });
+    } catch (err: unknown) {
+      this.logger.error(`Failed to record EXOTEL delivery: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   /** Real round-trip against Exotel, so the UI can report honest status. */

@@ -6,7 +6,7 @@ import { LeadKanbanBoard } from '@/components/leads/LeadKanbanBoard';
 import { cn } from '@/lib/utils';
 import { LEAD_SOURCE_LABELS, LEAD_STAGE_LABELS, LeadSource, LeadStage } from '@nidhivan/shared';
 import { STAGE_COLORS } from '@/lib/utils';
-import { Plus, Search, Filter, Download, Upload, Kanban, List, X, Save, Bookmark, ChevronDown, Brain, Inbox } from 'lucide-react';
+import { Plus, Search, Filter, Download, Upload, Kanban, List, X, Save, Bookmark, ChevronDown, Brain, Inbox, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import CreateLeadModal from '@/components/leads/CreateLeadModal';
 import ImportLeadsModal from '@/components/leads/ImportLeadsModal';
@@ -27,6 +27,7 @@ export default function LeadsPage() {
   const { user } = useAuthStore();
   const isManager = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const [view, setView] = useState<ViewMode>('kanban');
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const filteredLeads = search
     ? leads.filter(lead => {
@@ -91,6 +92,19 @@ export default function LeadsPage() {
     return () => clearTimeout(t);
   }, [search, filters]);
 
+  // Refreshes both views, since the kanban and list read separate slices of the
+  // store and a lead arriving from a webhook lands in whichever one is open.
+  async function refresh() {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchLeads(buildParams()), fetchKanban()]);
+    } catch {
+      toast.error('Could not refresh leads');
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   function clearFilters() {
     setFilters({ stages: [], source: '', assignedToId: '', isHot: '', city: '', budgetMin: '', budgetMax: '', dateFrom: '', dateTo: '' });
   }
@@ -151,6 +165,18 @@ export default function LeadsPage() {
         </div>
 
         <div className="flex items-center gap-2 ml-auto flex-wrap">
+          {/* Leads can arrive from webhooks and inbound calls while the page is
+              open, so there has to be a way to pull them in without a reload. */}
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="btn-frappe-secondary"
+            title="Check for new leads"
+            aria-label="Refresh leads"
+          >
+            <RefreshCw size={12} className={refreshing ? 'animate-spin' : undefined} />
+            <span>{refreshing ? 'Refreshing…' : 'Refresh'}</span>
+          </button>
           <button
             onClick={() => setShowFilters(v => !v)}
             className={cn('btn-frappe-secondary', (showFilters || activeFilterCount > 0) && 'bg-gray-100 font-semibold text-[#111827]')}
