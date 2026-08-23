@@ -328,6 +328,15 @@ export class TelephonyService {
       ? await this.prisma.callLog.findUnique({ where: { exotelCallSid: callSid } })
       : null;
 
+    // A flow may call this twice for one call: once up front so the lead exists
+    // even if the caller hangs up, and again afterwards carrying duration and
+    // the recording. The second hit updates rather than being discarded.
+    const rawDuration =
+      body.ConversationDuration ?? body.DialCallDuration ?? body.Duration;
+    const duration = rawDuration ? parseInt(String(rawDuration), 10) : null;
+    const recordingUrl = body.RecordingUrl || null;
+    const status = this.mapExotelStatus(body.CallStatus ?? body.Status);
+
     if (!existing) {
       await this.prisma.callLog.create({
         data: {
@@ -335,10 +344,24 @@ export class TelephonyService {
           fromNumber: callerNumber,
           toNumber: dialledNumber,
           callType: CallType.INCOMING,
-          status: this.mapExotelStatus(body.CallStatus ?? body.Status),
+          status,
+          duration: Number.isFinite(duration as number) ? duration : null,
+          recordingUrl,
           leadId: lead.id,
           callerId: lead.assignedToId,
           startTime: new Date(),
+        },
+      });
+    } else if (duration !== null || recordingUrl || status !== CallStatus.INITIATED) {
+      // Only overwrite with something better than what is already stored —
+      // a later payload missing a field must not blank out an earlier one.
+      await this.prisma.callLog.update({
+        where: { id: existing.id },
+        data: {
+          ...(Number.isFinite(duration as number) ? { duration } : {}),
+          ...(recordingUrl ? { recordingUrl } : {}),
+          ...(status !== CallStatus.INITIATED ? { status } : {}),
+          endTime: new Date(),
         },
       });
     }
