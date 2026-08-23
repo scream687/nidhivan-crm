@@ -164,7 +164,7 @@ export default function SettingsPage() {
 
   // Telephony state — the token is never sent back to the browser, so the
   // field stays blank and an empty submit means "keep the saved one".
-  const [telForm, setTelForm] = useState({ exotelApiKey: '', exotelSid: '', exotelToken: '', exotelPhone: '', virtualNumber: '', subdomain: 'api.exotel.com' });
+  const [telForm, setTelForm] = useState({ exotelApiKey: '', exotelSid: '', exotelToken: '', exotelPhone: '', virtualNumber: '', subdomain: 'api.exotel.com', ivrLeadOwnerId: '' });
   const [telMeta, setTelMeta] = useState<{ connected: boolean; hasToken: boolean; tokenLast4: string | null; passthruUrl: string | null; incomingUrl: string | null } | null>(null);
   const [telLoading, setTelLoading] = useState(true);
   const [telSaving, setTelSaving] = useState(false);
@@ -184,7 +184,11 @@ export default function SettingsPage() {
         exotelPhone: r.data.exotelPhone || '',
         virtualNumber: r.data.virtualNumber || '',
         subdomain: r.data.subdomain || 'api.exotel.com',
+        ivrLeadOwnerId: r.data.ivrLeadOwnerId || '',
       }));
+      // The owner picker needs the team list, which otherwise only loads when
+      // the Team tab is opened.
+      if (team.length === 0) loadTeam();
       setTelMeta({
         connected: !!r.data.connected,
         hasToken: !!r.data.hasToken,
@@ -649,6 +653,28 @@ export default function SettingsPage() {
                     </select>
                     <p className="mt-1 text-xs text-gray-400">
                       Exotel accounts are region-pinned. The wrong region returns an auth error.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="tel-ivr-owner" className="block text-xs font-medium text-gray-500 mb-1">
+                      IVR lead owner
+                    </label>
+                    <select
+                      id="tel-ivr-owner"
+                      value={telForm.ivrLeadOwnerId}
+                      onChange={e => setTelForm(f => ({ ...f, ivrLeadOwnerId: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E04020]"
+                    >
+                      <option value="">Round-robin across the team</option>
+                      {team.filter(m => m.isActive).map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Every lead created by an inbound call goes to this person. Leave on round-robin
+                      to spread them across the team. If the chosen person is deactivated, new IVR
+                      leads fall back to round-robin rather than going unassigned.
                     </p>
                   </div>
 

@@ -270,12 +270,20 @@ export class TelephonyService {
       // activity entry, and a notification to whoever it lands on. Writing the
       // row directly left it unassigned, which meant nobody was told it existed.
       const systemUserId = await ensureSystemUser(this.prisma);
+
+      // A configured IVR owner takes every inbound call, matching how the
+      // previous CRM behaved. leads.create() falls back to round-robin when
+      // this is unset, so an unconfigured or deactivated owner still leaves the
+      // lead assigned to somebody rather than to nobody.
+      const ivrOwnerId = await this.getIvrLeadOwnerId();
+
       const dto = {
         name: `Inbound caller ${normalized}`,
         phone: normalized,
         source: LeadSource.OTHER,
         utmSource: 'exotel-ivr',
         description: dialledNumber ? `Called ExoPhone ${dialledNumber}` : 'Inbound IVR call',
+        ...(ivrOwnerId ? { assignedToId: ivrOwnerId } : {}),
       };
       const fresh = await this.leads.create(dto as any, systemUserId);
       lead = { id: fresh.id, assignedToId: fresh.assignedToId };
@@ -449,6 +457,7 @@ export class TelephonyService {
       exotelPhone: meta.exotelPhone || '',
       virtualNumber: meta.virtualNumber || '',
       subdomain: meta.subdomain || 'api.exotel.com',
+      ivrLeadOwnerId: meta.ivrLeadOwnerId || '',
       hasToken: !!config?.accessToken,
       tokenLast4: config?.accessToken ? config.accessToken.slice(-4) : null,
       connected: !!resolved,
@@ -465,6 +474,7 @@ export class TelephonyService {
     exotelPhone?: string;
     virtualNumber?: string;
     subdomain?: string;
+    ivrLeadOwnerId?: string;
   }) {
     const existing = await this.prisma.integrationConfig.findUnique({ where: { type: 'EXOTEL' } });
     const current = (existing?.metadata as any) || {};
@@ -476,6 +486,8 @@ export class TelephonyService {
       exotelPhone: data.exotelPhone ?? current.exotelPhone ?? '',
       virtualNumber: data.virtualNumber ?? current.virtualNumber ?? '',
       subdomain: data.subdomain ?? current.subdomain ?? 'api.exotel.com',
+      // Empty string is a real choice here — it means "go back to round-robin".
+      ivrLeadOwnerId: data.ivrLeadOwnerId ?? current.ivrLeadOwnerId ?? '',
       passthruSecret: current.passthruSecret || randomBytes(24).toString('base64url'),
     };
 
@@ -490,6 +502,27 @@ export class TelephonyService {
     });
 
     return this.getConfig();
+  }
+
+  /**
+   * The configured IVR lead owner, or null to fall back to round-robin.
+   * Ignores an owner who has since been deactivated — assigning leads to a
+   * disabled account is the same as leaving them unassigned.
+   */
+  private async getIvrLeadOwnerId(): Promise<string | null> {
+    const config = await this.prisma.integrationConfig.findUnique({ where: { type: 'EXOTEL' } });
+    const ownerId = (config?.metadata as any)?.ivrLeadOwnerId;
+    if (!ownerId) return null;
+
+    const owner = await this.prisma.user.findFirst({
+      where: { id: ownerId, isActive: true },
+      select: { id: true },
+    });
+    if (!owner) {
+      this.logger.warn(`Configured IVR lead owner ${ownerId} is missing or inactive — using round-robin`);
+      return null;
+    }
+    return owner.id;
   }
 
   /** Creates the webhook secret on first use so callback URLs are always valid. */

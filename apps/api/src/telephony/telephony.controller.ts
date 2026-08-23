@@ -101,6 +101,7 @@ export class TelephonyController {
       exotelPhone?: string;
       virtualNumber?: string;
       subdomain?: string;
+      ivrLeadOwnerId?: string;
     },
   ) {
     return this.telephony.saveConfig(body);
