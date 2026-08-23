@@ -1,17 +1,27 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Settings, User, Users, Bell, Phone, MessageSquare, Shield, Building } from 'lucide-react';
+import { Settings, User, Users, Bell, Phone, MessageSquare, Shield, Building, Webhook } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import api, { toList } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-const SECTIONS = [
+// `href` entries are separate routes rendered as links; the rest are tabs on
+// this page. Lead Integrations lives at its own route but belongs in this nav —
+// without an entry here it is reachable only by typing the URL.
+const SECTIONS: {
+  id: string;
+  label: string;
+  icon: typeof User;
+  href?: string;
+}[] = [
   { id: 'profile', label: 'My Profile', icon: User },
   { id: 'team', label: 'Team Members', icon: Users },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'integrations', label: 'Lead Integrations', icon: Webhook, href: '/settings/integrations' },
   { id: 'telephony', label: 'Telephony (Exotel)', icon: Phone },
   { id: 'whatsapp', label: 'WhatsApp API', icon: MessageSquare },
   { id: 'company', label: 'Company', icon: Building },
@@ -417,14 +427,25 @@ export default function SettingsPage() {
           </div>
         </div>
         <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
-          {SECTIONS.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setActive(id)}
-              className={cn('w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition text-left font-medium',
-                active === id ? 'bg-[#f3f4f6] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f9fafb] hover:text-[#111827]')}>
-              <Icon size={13} className={active === id ? 'text-[#111827]' : 'text-[#6b7280]'} />
-              <span>{label}</span>
-            </button>
-          ))}
+          {SECTIONS.map(({ id, label, icon: Icon, href }) => {
+            const itemClass = cn(
+              'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition text-left font-medium',
+              active === id ? 'bg-[#f3f4f6] text-[#111827] font-semibold' : 'text-[#4b5563] hover:bg-[#f9fafb] hover:text-[#111827]',
+            );
+            const iconClass = active === id ? 'text-[#111827]' : 'text-[#6b7280]';
+
+            return href ? (
+              <Link key={id} href={href} className={itemClass}>
+                <Icon size={13} className={iconClass} />
+                <span>{label}</span>
+              </Link>
+            ) : (
+              <button key={id} onClick={() => setActive(id)} className={itemClass}>
+                <Icon size={13} className={iconClass} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </nav>
       </div>
 

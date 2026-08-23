@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Search, Users2, MapPin, Phone, Calculator, Package, BarChart3,
   FileCheck, CalendarClock, Settings, MessageCircle, Plus,
-  Layers, CheckSquare, Shield, ArrowRight, CornerDownLeft, Command,
+  Layers, CheckSquare, Shield, ArrowRight, CornerDownLeft, Command, Webhook,
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -84,7 +84,8 @@ export function CommandPalette({ open, onOpenChange, onCreateLead, onScheduleVis
     // Analytics & Admin
     { id: 'nav-reports', title: 'Analytics & Revenue Reports', subtitle: 'Campaign ROI, telecaller metrics, stage conversion', category: 'Navigation', icon: BarChart3, href: '/reports' },
     { id: 'nav-employees', title: 'Employee Leaderboard', subtitle: 'Agent performance, call counts, deal closures', category: 'Navigation', icon: Users2, href: '/employees' },
-    { id: 'nav-settings', title: 'Settings & Integrations', subtitle: 'WhatsApp Cloud API, Facebook Webhooks, Telephony', category: 'Settings', icon: Settings, href: '/settings' },
+    { id: 'nav-settings', title: 'Settings', subtitle: 'Profile, team, WhatsApp Cloud API, Telephony, company', category: 'Settings', icon: Settings, href: '/settings' },
+    { id: 'nav-integrations', title: 'Lead Integrations', subtitle: 'Housing.com, 99acres, MagicBricks, Facebook Lead Ads, webhooks', category: 'Settings', icon: Webhook, href: '/settings/integrations' },
   ], [router, onOpenChange, onCreateLead, onScheduleVisit]);
 
   const filteredItems = useMemo(() => {

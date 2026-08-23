@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Megaphone, Globe, KeyRound, Building2, Home, Upload, Phone, Loader2 } from 'lucide-react';
+import { Megaphone, Globe, KeyRound, Building2, Home, Upload, Phone, Loader2, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { IntegrationCard } from '@/components/integrations/IntegrationCard';
@@ -214,7 +214,14 @@ export default function IntegrationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-[#111113]">Integrations</h1>
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-[#E04020]"
+        >
+          <ChevronLeft size={14} />
+          Workspace Settings
+        </Link>
+        <h1 className="mt-2 text-xl font-bold tracking-tight text-[#111113]">Lead Integrations</h1>
         <p className="mt-2 text-gray-500">
           Connect your lead sources so enquiries reach the team without anyone re-typing them.
         </p>
