@@ -128,8 +128,16 @@ export function IntegrationCard({
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">
-                  No URL yet. <strong>Email account manager</strong> generates one and sends it to
-                  your {integration.name} contact in a single step.
+                  {integration.slug ? (
+                    <>
+                      No URL yet. <strong>Email account manager</strong> generates one and sends it
+                      to your {integration.name} contact in a single step.
+                    </>
+                  ) : (
+                    // Facebook and Exotel have no account manager to email — their
+                    // URLs come from credentials entered elsewhere.
+                    <>No URL yet. Save your credentials first, then it appears here.</>
+                  )}
                 </p>
               )}
               <p className="text-xs leading-relaxed text-gray-400">{integration.setupNote}</p>

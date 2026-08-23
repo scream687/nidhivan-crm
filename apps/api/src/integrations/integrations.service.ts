@@ -247,6 +247,15 @@ export class IntegrationsService {
     if (!base) return null;
 
     if (configType === 'FACEBOOK') return `${base}/api/v1/integrations/facebook`;
+
+    // Exotel is configured on the Telephony tab, but its lead-creating URL is
+    // shown here too so the card is not a dead end pointing somewhere else.
+    if (configType === 'EXOTEL') {
+      const config = await this.prisma.integrationConfig.findUnique({ where: { type: 'EXOTEL' } });
+      const secret = (config?.metadata as any)?.passthruSecret;
+      return secret ? `${base}/api/v1/telephony/exotel/incoming/${secret}` : null;
+    }
+
     if (!portal) return null;
 
     const config = await this.prisma.integrationConfig.findUnique({ where: { type: configType } });
