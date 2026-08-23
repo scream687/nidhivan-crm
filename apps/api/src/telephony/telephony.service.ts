@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomBytes, timingSafeEqual } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { LeadsService } from '../leads/leads.service';
 import { CallType, CallStatus, LeadSource } from '@prisma/client';
 import { ensureSystemUser } from '../common/system-user';
 
@@ -17,7 +18,10 @@ interface ResolvedExotelConfig {
 export class TelephonyService {
   private readonly logger = new Logger(TelephonyService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private leads: LeadsService,
+  ) {}
 
   async logCall(data: {
     fromNumber: string; toNumber: string; callType: CallType;
@@ -261,22 +265,25 @@ export class TelephonyService {
 
     let created = false;
     if (!lead) {
+      // Created through LeadsService, not prisma directly, so an inbound caller
+      // gets the same treatment as any other lead: round-robin assignment, an
+      // activity entry, and a notification to whoever it lands on. Writing the
+      // row directly left it unassigned, which meant nobody was told it existed.
       const systemUserId = await ensureSystemUser(this.prisma);
-      const leadNumber = `IVR-${Date.now().toString(36).toUpperCase()}`;
-      lead = await this.prisma.lead.create({
-        data: {
-          leadNumber,
-          name: `Inbound caller ${normalized}`,
-          phone: normalized,
-          source: LeadSource.OTHER,
-          utmSource: 'exotel-ivr',
-          description: dialledNumber ? `Called ExoPhone ${dialledNumber}` : 'Inbound IVR call',
-          createdById: systemUserId,
-        },
-        select: { id: true, assignedToId: true },
-      });
+      const dto = {
+        name: `Inbound caller ${normalized}`,
+        phone: normalized,
+        source: LeadSource.OTHER,
+        utmSource: 'exotel-ivr',
+        description: dialledNumber ? `Called ExoPhone ${dialledNumber}` : 'Inbound IVR call',
+      };
+      const fresh = await this.leads.create(dto as any, systemUserId);
+      lead = { id: fresh.id, assignedToId: fresh.assignedToId };
       created = true;
-      this.logger.log(`IVR lead created for inbound caller ${normalized}`);
+      this.logger.log(
+        `IVR lead ${fresh.leadNumber} created for ${normalized}` +
+          (fresh.assignedToId ? ` and assigned` : ' (unassigned — no active round-robin agents)'),
+      );
     }
 
     const existing = callSid
