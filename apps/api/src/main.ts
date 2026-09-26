@@ -51,6 +51,8 @@ async function bootstrap() {
   // Strict CORS — only allow the configured frontend origin
   const allowed = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
+    'https://crm.nidhivanproperty.com',
+    'https://nidhivan-crm.rishabh-sharma-global.workers.dev',
     'http://localhost:3000',
     'http://localhost:3005',
     'http://127.0.0.1:3005',

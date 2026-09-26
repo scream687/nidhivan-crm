@@ -22,5 +22,11 @@
 
   "observability": {
     "enabled": true
-  }
+  },
+
+  // Declared here rather than only in the dashboard, so the hostname binding is
+  // reviewable and survives a rebuild.
+  "routes": [
+    { "pattern": "crm.nidhivanproperty.com", "custom_domain": true }
+  ]
 }

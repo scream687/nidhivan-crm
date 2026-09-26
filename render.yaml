@@ -62,7 +62,7 @@ services:
       # slash, or http instead of https, silently fails every preflight with no
       # useful error. Update this if a custom domain replaces the workers.dev one.
       - key: FRONTEND_URL
-        value: https://nidhivan-crm.rishabh-sharma-global.workers.dev
+        value: https://crm.nidhivanproperty.com
 
       # This API's own public origin. The Exotel webhook URLs shown in
       # Settings → Telephony are built from it, and those URLs are pasted into
