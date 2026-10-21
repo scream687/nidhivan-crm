@@ -152,13 +152,14 @@ export class InventoryService {
   // ── Plots ────────────────────────────────────────────────────────────────────
 
   async getPlots(projectId: string, filters?: {
-    status?: string; facing?: string; block?: string;
+    status?: string; facing?: string; block?: string; saleType?: string;
     priceMin?: number; priceMax?: number;
   }) {
     const where: Prisma.PlotWhereInput = { projectId };
     if (filters?.status) where.status = filters.status;
     if (filters?.facing) where.facing = filters.facing;
     if (filters?.block) where.block = filters.block;
+    if (filters?.saleType) where.saleType = filters.saleType;
     if (filters?.priceMin !== undefined || filters?.priceMax !== undefined) {
       where.totalPrice = {};
       if (filters.priceMin !== undefined) where.totalPrice.gte = filters.priceMin;
@@ -177,7 +178,7 @@ export class InventoryService {
     plotNumber: string; block?: string; road?: string; facing?: string;
     dimensions?: string; area?: number; areaUnit?: string;
     ratePerUnit?: number; totalPrice?: number; status?: string;
-    isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
+    saleType?: string; isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
     gpsLatitude?: number; gpsLongitude?: number;
   }) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
@@ -189,7 +190,7 @@ export class InventoryService {
     plotNumber: string; block: string; road: string; facing: string;
     dimensions: string; area: number; areaUnit: string;
     ratePerUnit: number; totalPrice: number; status: string;
-    isCorner: boolean; isAvenue: boolean; roadWidth: string;
+    saleType: string; isCorner: boolean; isAvenue: boolean; roadWidth: string;
     gpsLatitude: number; gpsLongitude: number; isPublished: boolean;
   }>) {
     const plot = await this.prisma.plot.findUnique({ where: { id } });
@@ -207,7 +208,7 @@ export class InventoryService {
     plotNumber: string; block?: string; road?: string; facing?: string;
     dimensions?: string; area?: number; areaUnit?: string;
     ratePerUnit?: number; totalPrice?: number; status?: string;
-    isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
+    saleType?: string; isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
   }>) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');

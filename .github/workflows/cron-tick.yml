@@ -1,0 +1,29 @@
+name: Cron tick
+
+# Sends due follow-up reminders and fires TASK_DUE workflows by calling
+# POST /api/v1/cron/tick (apps/api/src/follow-up/cron.controller.ts).
+# Render's free plan sleeps and has no Redis, so nothing inside the API can
+# keep time on its own. Runs 01:00–16:55 UTC = 06:30–22:25 IST only, so the
+# API is not kept awake overnight. GitHub may start scheduled runs a few
+# minutes late; reminders are sent 15 min ahead to absorb that.
+#
+# Needs repo secret CRON_SECRET = the CRON_SECRET value in Render's dashboard.
+
+on:
+  schedule:
+    - cron: '*/5 1-16 * * *'
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call tick (first call may wake the sleeping instance)
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 3 --retry-delay 20 --retry-all-errors \
+            --max-time 90 -X POST \
+            -H "x-cron-secret: $CRON_SECRET" \
+            https://nidhivan-crm-api.onrender.com/api/v1/cron/tick

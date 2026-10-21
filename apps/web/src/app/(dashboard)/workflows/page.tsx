@@ -15,6 +15,7 @@ const ACTION_TYPES = [
   { value: 'SEND_NOTIFICATION', label: 'Send Notification' },
   { value: 'CREATE_TASK', label: 'Create Task' },
   { value: 'CHANGE_STAGE', label: 'Change Stage' },
+  { value: 'SEND_WHATSAPP', label: 'Send WhatsApp Template' },
 ];
 
 function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
@@ -118,6 +119,19 @@ function NewWorkflowModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
                       <option value="">— Select stage —</option>
                       {STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                     </select>
+                  )}
+                  {action.type === 'SEND_WHATSAPP' && (
+                    <div className="space-y-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input placeholder="Approved template name" value={(action.config as any).template ?? ''}
+                          onChange={e => setActionConfig(i, 'template', e.target.value)}
+                          className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0" />
+                        <input placeholder="Language (en, hi)" value={(action.config as any).language ?? ''}
+                          onChange={e => setActionConfig(i, 'language', e.target.value)}
+                          className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FDECE6]0" />
+                      </div>
+                      <p className="text-xs text-gray-500">Must match a template approved in Meta. {'{{1}}'} is filled with the lead's name.</p>
+                    </div>
                   )}
                 </div>
               ))}

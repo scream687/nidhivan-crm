@@ -562,6 +562,7 @@ model Plot {
   ratePerUnit    Decimal?  @db.Decimal(15, 2)
   totalPrice     Decimal?  @db.Decimal(15, 2)
   status         String    @default("AVAILABLE")
+  saleType       String    @default("FRESH") // FRESH | RESALE
   isCorner       Boolean   @default(false)
   isAvenue       Boolean   @default(false)
   roadWidth      String?

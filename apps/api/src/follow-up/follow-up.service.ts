@@ -3,6 +3,9 @@ import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
+const REMINDER_LEAD_MS = 15 * 60_000;
+const STALE_AFTER_MS = 24 * 60 * 60_000;
+
 @Injectable()
 export class FollowUpService {
   private readonly logger = new Logger(FollowUpService.name);
@@ -140,6 +143,43 @@ export class FollowUpService {
       });
     }
     return task;
+  }
+
+  // Called by the cron tick (cron.controller.ts), not BullMQ: Render's free plan
+  // sleeps and has no Redis, so timed jobs never fire there. A task with no
+  // explicit reminderAt is nudged 15 min before it is due, matching the
+  // "Lead Follow-up Reminder (15 min)" workflow the team ran in Cratio.
+  async sweepDueReminders() {
+    const now = new Date();
+    // Anything that came due over a day ago is stale (e.g. imported from
+    // Cratio); skipping it keeps one tick from sending thousands of nudges.
+    const staleBefore = new Date(now.getTime() - STALE_AFTER_MS);
+    const due = await this.prisma.task.findMany({
+      where: {
+        isCompleted: false,
+        reminderSent: false,
+        OR: [
+          { reminderAt: { lte: now, gte: staleBefore } },
+          {
+            reminderAt: null,
+            dueDate: { lte: new Date(now.getTime() + REMINDER_LEAD_MS), gte: staleBefore },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        followupType: true,
+        reminderNote: true,
+        leadId: true,
+        assignedToId: true,
+        lead: { select: { name: true } },
+      },
+      take: 200,
+    });
+    for (const t of due) {
+      await this.handleReminder(t.id, t.followupType ?? undefined, t.reminderNote ?? undefined);
+    }
+    return due;
   }
 
   async autoGenerateFollowUps() {

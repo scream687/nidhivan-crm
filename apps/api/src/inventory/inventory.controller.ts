@@ -160,7 +160,7 @@ export class InventoryController {
 
   @Get(':id/plots')
   getPlots(@Param('id') projectId: string, @Query() filters: {
-    status?: string; facing?: string; block?: string;
+    status?: string; facing?: string; block?: string; saleType?: string;
     priceMin?: string; priceMax?: string;
   }) {
     return this.inventoryService.getPlots(projectId, {
@@ -187,7 +187,7 @@ export class InventoryController {
     plotNumber: string; block?: string; road?: string; facing?: string;
     dimensions?: string; area?: number; areaUnit?: string;
     ratePerUnit?: number; totalPrice?: number; status?: string;
-    isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
+    saleType?: string; isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
     gpsLatitude?: number; gpsLongitude?: number;
   }) {
     return this.inventoryService.createPlot(projectId, body);
@@ -200,7 +200,7 @@ export class InventoryController {
     plotNumber: string; block: string; road: string; facing: string;
     dimensions: string; area: number; areaUnit: string;
     ratePerUnit: number; totalPrice: number; status: string;
-    isCorner: boolean; isAvenue: boolean; roadWidth: string;
+    saleType: string; isCorner: boolean; isAvenue: boolean; roadWidth: string;
     gpsLatitude: number; gpsLongitude: number; isPublished: boolean;
   }>) {
     return this.inventoryService.updatePlot(plotId, body);
@@ -220,7 +220,7 @@ export class InventoryController {
     plotNumber: string; block?: string; road?: string; facing?: string;
     dimensions?: string; area?: number; areaUnit?: string;
     ratePerUnit?: number; totalPrice?: number; status?: string;
-    isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
+    saleType?: string; isCorner?: boolean; isAvenue?: boolean; roadWidth?: string;
   }> }) {
     return this.inventoryService.bulkCreatePlots(projectId, body.plots);
   }

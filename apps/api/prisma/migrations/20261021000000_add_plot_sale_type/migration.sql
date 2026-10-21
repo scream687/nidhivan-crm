@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "plots" ADD COLUMN "saleType" TEXT NOT NULL DEFAULT 'FRESH';

@@ -77,6 +77,13 @@ services:
       - key: R2_BUCKET
         value: nidhivan-crm
 
+      # Shared secret for POST /api/v1/cron/tick, which sends due follow-up
+      # reminders and fires TASK_DUE workflows (follow-up/cron.controller.ts).
+      # An external scheduler calls it every 5 min with header x-cron-secret.
+      # Without it set, the endpoint refuses every call and no reminders go out.
+      - key: CRON_SECRET
+        generateValue: true
+
       # REDIS_URL is deliberately unset. CacheService is @Optional() and no-ops
       # with a warning when Redis is absent, so caching simply stays off.
       #

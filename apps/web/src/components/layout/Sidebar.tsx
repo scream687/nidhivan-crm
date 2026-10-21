@@ -8,7 +8,7 @@ import {
   Zap, BarChart3, Phone, TrendingUp, Trophy,
   MessageSquare, Megaphone, Bot,
   Settings, LogOut, Building2, MapPin, Calculator, FileCheck,
-  GitBranch, UserCog, StickyNote, ChevronDown, Sparkles,
+  GitBranch, UserCog, StickyNote, ChevronDown, Sparkles, BellRing, Inbox,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -35,7 +35,9 @@ const navSections: { label: string; items: NavItem[] }[] = [
     label: 'ACTIVITIES',
     items: [
       { href: '/site-visits', icon: MapPin, label: 'Site Visits & Dispatch' },
+      { href: '/visit-requests', icon: Inbox, label: 'Visit Requests' },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks & Reminders' },
+      { href: '/follow-ups', icon: BellRing, label: 'Follow-ups' },
       { href: '/notes', icon: StickyNote, label: 'Quick Notes' },
       { href: '/calculator', icon: Calculator, label: 'EMI & Rate Calculator' },
     ],

@@ -37,7 +37,7 @@ interface Plot {
   id: string; projectId: string;
   block: string; road: string; plotNumber: string; facing: string;
   dimensions: string | null; area: number; ratePerUnit: number;
-  status: string; isCorner: boolean; isAvenue: boolean;
+  status: string; saleType: 'FRESH' | 'RESALE'; isCorner: boolean; isAvenue: boolean;
   roadWidth: number | null; gpsLat: number | null; gpsLng: number | null;
   totalPrice: number;
 }
@@ -621,7 +621,10 @@ export default function ProjectDetailPage() {
                         {selectedPlotIds.has(plot.id) ? <CheckSquare size={14} className="text-[#E04020]" /> : <Square size={14} />}
                       </button>
                     </td>
-                    <td className="px-3 py-2 font-medium text-gray-900">{plot.plotNumber}</td>
+                    <td className="px-3 py-2 font-medium text-gray-900">
+                      {plot.plotNumber}
+                      {plot.saleType === 'RESALE' && <span className="ml-1.5 text-[10px] font-semibold uppercase text-gray-500">Resale</span>}
+                    </td>
                     <td className="px-3 py-2 text-gray-600">{plot.block || '—'}</td>
                     <td className="px-3 py-2 text-gray-600">{plot.road || '—'}</td>
                     <td className="px-3 py-2">
@@ -680,6 +683,7 @@ export default function ProjectDetailPage() {
                   </span>
                 </div>
                 <div className="space-y-0.5 text-[11px] text-gray-500">
+                  {plot.saleType === 'RESALE' && <p className="font-semibold uppercase">Resale</p>}
                   {plot.block && <p>Block: {plot.block}</p>}
                   <div className="flex items-center gap-1">
                     <PlotFacing facing={plot.facing} />
@@ -777,6 +781,7 @@ function PlotFormModal({
     road: plot?.road || '',
     plotNumber: plot?.plotNumber || '',
     facing: plot?.facing || 'NORTH',
+    saleType: plot?.saleType || 'FRESH',
     dimensions: plot?.dimensions || '',
     area: plot?.area?.toString() || '',
     ratePerUnit: plot?.ratePerUnit?.toString() || '',
@@ -807,6 +812,7 @@ function PlotFormModal({
         road: form.road.trim() || undefined,
         plotNumber: form.plotNumber.trim(),
         facing: form.facing,
+        saleType: form.saleType as Plot['saleType'],
         dimensions: form.dimensions.trim() || undefined,
         area,
         ratePerUnit: rate,
@@ -850,10 +856,16 @@ function PlotFormModal({
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Field label="Facing">
               <select value={form.facing} onChange={e => set('facing', e.target.value)} className={inputCls}>
                 {PLOT_FACINGS.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </Field>
+            <Field label="Sale type">
+              <select value={form.saleType} onChange={e => set('saleType', e.target.value)} className={inputCls}>
+                <option value="FRESH">Fresh</option>
+                <option value="RESALE">Resale</option>
               </select>
             </Field>
             <Field label="Dimensions">

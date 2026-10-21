@@ -4,12 +4,14 @@ import Redis from 'ioredis';
 import { ConfigService } from '@nestjs/config';
 import { FollowUpService } from './follow-up.service';
 import { FollowUpController } from './follow-up.controller';
+import { CronController } from './cron.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { WorkflowsModule } from '../workflows/workflows.module';
 
 @Module({
-  imports: [NotificationsModule, PrismaModule],
-  controllers: [FollowUpController],
+  imports: [NotificationsModule, PrismaModule, WorkflowsModule],
+  controllers: [FollowUpController, CronController],
   providers: [
     FollowUpService,
     {

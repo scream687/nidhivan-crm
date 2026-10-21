@@ -408,6 +408,15 @@ export class LeadsService {
     if (updated.assignedToId) {
       this.gateway.emitToUser(updated.assignedToId, "lead:updated", updated);
     }
+    if (updated.isHot && !existing.isHot) {
+      this.workflows
+        .fire("MARKED_HOT", {
+          leadId: id,
+          name: updated.name,
+          assignedToId: updated.assignedToId,
+        })
+        .catch((e) => console.error("async", e));
+    }
 
     return updated;
   }
@@ -524,6 +533,15 @@ export class LeadsService {
     this.gateway.emitToAdmin("lead:updated", updated);
     if (updated.assignedToId) {
       this.gateway.emitToUser(updated.assignedToId, "lead:updated", updated);
+    }
+    if (isHot && !lead.isHot) {
+      this.workflows
+        .fire("MARKED_HOT", {
+          leadId: id,
+          name: updated.name,
+          assignedToId: updated.assignedToId,
+        })
+        .catch((e) => console.error("async", e));
     }
     return updated;
   }

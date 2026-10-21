@@ -27,6 +27,24 @@ export class WhatsAppService {
   }
 
   async sendMessage(to: string, body: string, agentId?: string) {
+    return this.send(to, { type: 'text', text: { body } }, body, 'text', agentId);
+  }
+
+  // First contact with a lead must be an approved template: Meta rejects free
+  // text outside the 24h customer-service window. {{1}} gets the lead's name.
+  async sendTemplate(to: string, name: string, language = 'en', bodyParams: string[] = []) {
+    const components = bodyParams.length
+      ? [{ type: 'body', parameters: bodyParams.map((text) => ({ type: 'text', text })) }]
+      : [];
+    return this.send(
+      toWaNumber(to),
+      { type: 'template', template: { name, language: { code: language }, components } },
+      `[template] ${name}`,
+      'template',
+    );
+  }
+
+  private async send(to: string, content: Record<string, unknown>, body: string, type: string, agentId?: string) {
     const config = await this.getConfig();
     if (!config || !config.isActive) {
       throw new BadRequestException('WhatsApp is not configured or inactive');
@@ -45,12 +63,7 @@ export class WhatsAppService {
         Authorization: `Bearer ${config.accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to,
-        type: 'text',
-        text: { body },
-      }),
+      body: JSON.stringify({ messaging_product: 'whatsapp', to, ...content }),
     });
 
     const result: any = await response.json();
@@ -67,7 +80,7 @@ export class WhatsAppService {
         waMessageId,
         contactId: contact.id,
         direction: 'out',
-        type: 'text',
+        type,
         body,
         status: 'sent',
         agentId,
@@ -76,7 +89,10 @@ export class WhatsAppService {
 
     let activityUserId = agentId || 'system';
     if (!contact.leadId) {
-      const foundLead = await this.prisma.lead.findFirst({ where: { phone: to } });
+      // Leads are stored as 10 digits, WhatsApp numbers carry the 91 prefix.
+      const foundLead = await this.prisma.lead.findFirst({
+        where: { phone: { in: [to, to.slice(-10)] } },
+      });
       if (foundLead) {
         await this.prisma.whatsAppContact.update({ where: { id: contact.id }, data: { leadId: foundLead.id } });
         contact.leadId = foundLead.id;
@@ -89,7 +105,7 @@ export class WhatsAppService {
           type: 'WHATSAPP' as any,
           title: 'WhatsApp message sent',
           description: body.substring(0, 200),
-          metadata: { waMessageId: message.id, direction: 'out', type: 'text' },
+          metadata: { waMessageId: message.id, direction: 'out', type },
           userId: activityUserId,
           leadId: contact.leadId,
         },
@@ -581,4 +597,11 @@ export class WhatsAppService {
     if (!flow) throw new NotFoundException('Flow not found');
     return this.prisma.chatbotFlow.update({ where: { id }, data: { isActive: !flow.isActive } });
   }
+}
+
+// "098765 43210" / "+91 9876543210" / "9876543210" -> "919876543210".
+// ponytail: assumes Indian numbers; anything not 10 digits is passed through.
+export function toWaNumber(phone: string) {
+  const digits = phone.replace(/\D/g, '').replace(/^0+/, '');
+  return digits.length === 10 ? `91${digits}` : digits;
 }

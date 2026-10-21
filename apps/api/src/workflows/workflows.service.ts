@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 
 export type WorkflowTrigger = 'LEAD_CREATED' | 'STAGE_CHANGED' | 'MARKED_HOT' | 'TASK_DUE';
 
@@ -11,6 +12,7 @@ export class WorkflowsService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private whatsapp: WhatsAppService,
   ) {}
 
   async list() {
@@ -78,6 +80,24 @@ export class WorkflowsService {
                     : undefined,
                 },
               });
+            }
+            break;
+          }
+          case 'SEND_WHATSAPP': {
+            // config: { template: 'welcome_lead', language?: 'en' }; {{1}} = lead name
+            if (context.leadId && action.config?.template) {
+              const lead = await this.prisma.lead.findUnique({
+                where: { id: context.leadId },
+                select: { phone: true, name: true },
+              });
+              if (lead?.phone) {
+                await this.whatsapp.sendTemplate(
+                  lead.phone,
+                  action.config.template,
+                  action.config.language ?? 'en',
+                  [lead.name],
+                );
+              }
             }
             break;
           }
